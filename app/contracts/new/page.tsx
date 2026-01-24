@@ -10,11 +10,13 @@ import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import Link from "next/link";
 import { generateUUID } from "@/lib/utils";
+import { useToast } from "@/components/ui/toaster";
 
 function NewContractForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { blueprints, addContract } = useStore();
+  const { addToast } = useToast();
   const [selectedBlueprintId, setSelectedBlueprintId] = useState("");
   const [contractName, setContractName] = useState("");
   const initializedRef = useRef(false);
@@ -36,7 +38,11 @@ function NewContractForm() {
 
   const handleCreate = () => {
     if (!selectedBlueprint || !contractName.trim()) {
-      alert("Please select a blueprint and provide a contract name");
+      addToast({
+        title: "Validation Error",
+        description: "Please select a blueprint and provide a contract name.",
+        variant: "error",
+      });
       return;
     }
 
@@ -54,6 +60,11 @@ function NewContractForm() {
     };
 
     addContract(contract);
+    addToast({
+      title: "Contract Created",
+      description: `"${contractName}" has been created successfully.`,
+      variant: "success",
+    });
     router.push(`/contracts/${contract.id}?edit=true`);
   };
 

@@ -13,14 +13,26 @@ import { Search, X, Filter, ChevronDown, Pencil, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { generateUUID } from "@/lib/utils";
+import { useToast } from "@/components/ui/toaster";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 export default function BlueprintManager() {
   const { blueprints, addBlueprint, deleteBlueprint } = useStore();
   const router = useRouter();
+  const { addToast } = useToast();
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFieldTypes, setSelectedFieldTypes] = useState<FieldType[]>([]);
   const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [blueprintToDelete, setBlueprintToDelete] = useState<{ id: string; name: string } | null>(null);
   const [formData, setFormData] = useState<{
     name: string;
     description: string;
@@ -85,6 +97,11 @@ export default function BlueprintManager() {
       addBlueprint(blueprint);
       setFormData({ name: "", description: "", headerImageUrl: "", fields: [] });
       setShowCreateForm(false);
+      addToast({
+        title: "Blueprint Created",
+        description: `"${blueprint.name}" has been created successfully.`,
+        variant: "success",
+      });
     }
   };
 
@@ -547,9 +564,8 @@ export default function BlueprintManager() {
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
-                              if (confirm(`Are you sure you want to delete "${blueprint.name}"? This action cannot be undone.`)) {
-                                deleteBlueprint(blueprint.id);
-                              }
+                              setBlueprintToDelete({ id: blueprint.id, name: blueprint.name });
+                              setDeleteDialogOpen(true);
                             }}
                             title="Delete blueprint"
                           >
@@ -565,6 +581,46 @@ export default function BlueprintManager() {
           </Card>
         </div>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Blueprint</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete &quot;{blueprintToDelete?.name}&quot;? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setDeleteDialogOpen(false);
+                setBlueprintToDelete(null);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                if (blueprintToDelete) {
+                  deleteBlueprint(blueprintToDelete.id);
+                  addToast({
+                    title: "Blueprint Deleted",
+                    description: `"${blueprintToDelete.name}" has been deleted successfully.`,
+                    variant: "success",
+                  });
+                  setDeleteDialogOpen(false);
+                  setBlueprintToDelete(null);
+                }
+              }}
+            >
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -12,12 +12,14 @@ import { Pencil } from "lucide-react";
 import type { Field } from "@/types/field";
 import { DocumentRenderer } from "@/components/document-renderer";
 import { capitalizeWords } from "@/lib/utils";
+import { useToast } from "@/components/ui/toaster";
 
 function ContractViewPageContent() {
   const params = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
   const { getContract, updateContract, getBlueprint } = useStore();
+  const { addToast } = useToast();
   const contract = getContract(params.id as string);
   const blueprint = contract ? getBlueprint(contract.blueprintId) : undefined;
 
@@ -84,6 +86,11 @@ function ContractViewPageContent() {
       fields: localFields,
     });
     setHasUnsavedChanges(false);
+    addToast({
+      title: "Contract Updated",
+      description: `"${contract.name}" has been updated successfully.`,
+      variant: "success",
+    });
     router.push("/");
   };
 

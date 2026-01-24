@@ -16,12 +16,14 @@ import type { DocumentSection } from "@/types/blueprint";
 import { generateUUID } from "@/lib/utils";
 import { DocumentRenderer } from "@/components/document-renderer";
 import { capitalizeWords } from "@/lib/utils";
+import { useToast } from "@/components/ui/toaster";
 
 function BlueprintViewPageContent() {
   const params = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
   const { getBlueprint, updateBlueprint } = useStore();
+  const { addToast } = useToast();
   const blueprint = getBlueprint(params.id as string);
 
   const isEditMode = searchParams.get("edit") === "true";
@@ -101,7 +103,11 @@ function BlueprintViewPageContent() {
 
   const handleUpdate = () => {
     if (!blueprint || !formData.name.trim()) {
-      alert("Please provide a blueprint name");
+      addToast({
+        title: "Validation Error",
+        description: "Please provide a blueprint name.",
+        variant: "error",
+      });
       return;
     }
 
@@ -111,6 +117,12 @@ function BlueprintViewPageContent() {
       headerImageUrl: formData.headerImageUrl.trim() || undefined,
       fields: formData.fields,
       sections: blueprint.sections || [],
+    });
+
+    addToast({
+      title: "Blueprint Updated",
+      description: `"${formData.name}" has been updated successfully.`,
+      variant: "success",
     });
 
     router.push("/blueprints");

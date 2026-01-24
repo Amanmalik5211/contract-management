@@ -13,13 +13,25 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FileText, Layout, Calendar, Pencil, Trash2, Search, X, Filter, ChevronDown } from "lucide-react";
 import type { ContractStatus } from "@/types/contract";
+import { useToast } from "@/components/ui/toaster";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 export default function Dashboard() {
   const { contracts, blueprints, deleteContract } = useStore();
   const router = useRouter();
+  const { addToast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStatuses, setSelectedStatuses] = useState<ContractStatus[]>([]);
   const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [contractToDelete, setContractToDelete] = useState<{ id: string; name: string } | null>(null);
 
   // Calculate status counts
   const statusCounts = {
@@ -141,13 +153,30 @@ export default function Dashboard() {
     e.preventDefault();
     e.stopPropagation();
     router.push(`/contracts/${contractId}?edit=true`);
+    addToast({
+      title: "Opening Editor",
+      description: "Contract editor opened. Make your changes and click Update to save.",
+      variant: "default",
+    });
   };
 
   const handleDelete = (contractId: string, contractName: string, e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (confirm(`Are you sure you want to delete "${contractName}"? This action cannot be undone.`)) {
-      deleteContract(contractId);
+    setContractToDelete({ id: contractId, name: contractName });
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (contractToDelete) {
+      deleteContract(contractToDelete.id);
+      addToast({
+        title: "Contract Deleted",
+        description: `"${contractToDelete.name}" has been deleted successfully.`,
+        variant: "success",
+      });
+      setDeleteDialogOpen(false);
+      setContractToDelete(null);
     }
   };
 
@@ -462,6 +491,35 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Contract</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete &quot;{contractToDelete?.name}&quot;? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setDeleteDialogOpen(false);
+                setContractToDelete(null);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={confirmDelete}
+            >
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

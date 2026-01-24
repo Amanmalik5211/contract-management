@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useStore } from "@/lib/store";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,6 +13,15 @@ import {
 } from "@/lib/contract-utils";
 import { ArrowRight, X } from "lucide-react";
 import type { ContractStatus } from "@/types/contract";
+import { useToast } from "@/components/ui/toaster";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 const STATUS_FLOW: ContractStatus[] = [
   "created",
@@ -25,7 +35,9 @@ export default function ContractStatusPage() {
   const params = useParams();
   const router = useRouter();
   const { getContract, updateContractStatus } = useStore();
+  const { addToast } = useToast();
   const contract = getContract(params.id as string);
+  const [revokeDialogOpen, setRevokeDialogOpen] = useState(false);
 
   if (!contract) {
     return <div>Contract not found</div>;
@@ -34,13 +46,30 @@ export default function ContractStatusPage() {
   const handleStatusChange = (newStatus: ContractStatus) => {
     if (canTransitionTo(contract.status, newStatus)) {
       updateContractStatus(contract.id, newStatus);
+      addToast({
+        title: "Status Updated",
+        description: `Contract status changed to "${getStatusLabel(newStatus)}".`,
+        variant: "success",
+      });
       router.push(`/contracts/${contract.id}`);
     }
   };
 
   const handleRevoke = () => {
     if (contract.status === "created" || contract.status === "sent") {
+      setRevokeDialogOpen(true);
+    }
+  };
+
+  const confirmRevoke = () => {
+    if (contract.status === "created" || contract.status === "sent") {
       updateContractStatus(contract.id, "revoked");
+      addToast({
+        title: "Contract Revoked",
+        description: "Contract has been revoked successfully.",
+        variant: "warning",
+      });
+      setRevokeDialogOpen(false);
       router.push(`/contracts/${contract.id}`);
     }
   };
@@ -160,6 +189,32 @@ export default function ContractStatusPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Revoke Confirmation Dialog */}
+      <Dialog open={revokeDialogOpen} onOpenChange={setRevokeDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Revoke Contract</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to revoke &quot;{contract.name}&quot;? This action will mark the contract as revoked and it cannot proceed further. This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setRevokeDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={confirmRevoke}
+            >
+              Revoke Contract
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
