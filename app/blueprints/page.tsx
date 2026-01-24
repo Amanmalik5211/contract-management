@@ -1,27 +1,18 @@
 "use client";
 
-import { useState, useMemo, useRef, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { useStore } from "@/lib/store";
 import type { Blueprint } from "@/types/blueprint";
 import type { Field, FieldType } from "@/types/field";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { Search, X, Filter, ChevronDown, Pencil, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { generateUUID } from "@/lib/utils";
 import { useToast } from "@/components/ui/toaster";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog";
+import { BlueprintCard } from "@/components/blueprints/blueprint-card";
+import { BlueprintForm } from "@/components/blueprints/blueprint-form";
+import { SearchAndFilter } from "@/components/shared/search-and-filter";
+import { DeleteConfirmationDialog } from "@/components/shared/delete-confirmation-dialog";
 
 export default function BlueprintManager() {
   const { blueprints, addBlueprint, deleteBlueprint } = useStore();
@@ -30,86 +21,8 @@ export default function BlueprintManager() {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFieldTypes, setSelectedFieldTypes] = useState<FieldType[]>([]);
-  const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [blueprintToDelete, setBlueprintToDelete] = useState<{ id: string; name: string } | null>(null);
-  const [formData, setFormData] = useState<{
-    name: string;
-    description: string;
-    headerImageUrl: string;
-    fields: Field[];
-  }>({
-    name: "",
-    description: "",
-    headerImageUrl: "",
-    fields: [],
-  });
-  const [newField, setNewField] = useState<{
-    label: string;
-    type: FieldType;
-  }>({
-    label: "",
-    type: "text",
-  });
-
-  const handleAddField = () => {
-    if (newField.label.trim()) {
-      const field: Field = {
-        id: `field-${generateUUID()}`,
-        type: newField.type,
-        label: newField.label,
-        position: {
-          x: Math.random() * 800,
-          y: Math.random() * 400,
-        },
-        required: true,
-      };
-
-      setFormData({
-        ...formData,
-        fields: [...formData.fields, field],
-      });
-
-      setNewField({ label: "", type: "text" });
-    }
-  };
-
-  const handleRemoveField = (fieldId: string) => {
-    setFormData({
-      ...formData,
-      fields: formData.fields.filter((f) => f.id !== fieldId),
-    });
-  };
-
-  const handleCreateBlueprint = () => {
-    if (formData.name.trim() && formData.fields.length > 0) {
-      const blueprint: Blueprint = {
-        id: `bp-${generateUUID()}`,
-        name: formData.name,
-        description: formData.description,
-        headerImageUrl: formData.headerImageUrl.trim() || undefined,
-        fields: formData.fields,
-        sections: [], // Empty sections by default - will be populated in editor
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-
-      addBlueprint(blueprint);
-      setFormData({ name: "", description: "", headerImageUrl: "", fields: [] });
-      setShowCreateForm(false);
-      addToast({
-        title: "Blueprint Created",
-        description: `"${blueprint.name}" has been created successfully.`,
-        variant: "success",
-      });
-    }
-  };
-
-  const resetForm = () => {
-    setFormData({ name: "", description: "", headerImageUrl: "", fields: [] });
-    setNewField({ label: "", type: "text" });
-    setShowCreateForm(false);
-  };
 
   const fieldTypeLabels: Record<FieldType, string> = {
     text: "Text Input",
@@ -147,57 +60,62 @@ export default function BlueprintManager() {
     );
   }, [blueprints, selectedFieldTypes, searchQuery]);
 
-  const handleFieldTypeToggle = (fieldType: FieldType) => {
-    setSelectedFieldTypes((prev) =>
-      prev.includes(fieldType)
-        ? prev.filter((t) => t !== fieldType)
-        : [...prev, fieldType]
-    );
-  };
-
-  const handleClearFilters = () => {
-    setSelectedFieldTypes([]);
-    setSearchQuery("");
-  };
-
-  // Calculate field type counts
-  const fieldTypeCounts = useMemo(() => {
-    const counts: Record<FieldType, number> = {
-      text: 0,
-      date: 0,
-      signature: 0,
-      checkbox: 0,
+  const handleCreateBlueprint = (formData: {
+    name: string;
+    description: string;
+    headerImageUrl: string;
+    fields: Field[];
+  }) => {
+    const blueprint: Blueprint = {
+      id: `bp-${generateUUID()}`,
+      name: formData.name,
+      description: formData.description,
+      headerImageUrl: formData.headerImageUrl.trim() || undefined,
+      fields: formData.fields,
+      sections: [],
+      createdAt: new Date(),
+      updatedAt: new Date(),
     };
 
-    blueprints.forEach((bp) => {
-      bp.fields.forEach((field) => {
-        counts[field.type]++;
-      });
+    addBlueprint(blueprint);
+    setShowCreateForm(false);
+    addToast({
+      title: "Blueprint Created",
+      description: `"${blueprint.name}" has been created successfully.`,
+      variant: "success",
     });
+  };
 
-    return counts;
-  }, [blueprints]);
+  const handleEdit = (blueprintId: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    router.push(`/blueprints/${blueprintId}?edit=true`);
+  };
 
-  // Close dropdown when clicking outside
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
-        setIsFilterDropdownOpen(false);
-      }
-    };
+  const handleDelete = (blueprintId: string, blueprintName: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setBlueprintToDelete({ id: blueprintId, name: blueprintName });
+    setDeleteDialogOpen(true);
+  };
 
-    if (isFilterDropdownOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
+  const confirmDelete = () => {
+    if (blueprintToDelete) {
+      deleteBlueprint(blueprintToDelete.id);
+      addToast({
+        title: "Blueprint Deleted",
+        description: `"${blueprintToDelete.name}" has been deleted successfully.`,
+        variant: "success",
+      });
+      setDeleteDialogOpen(false);
+      setBlueprintToDelete(null);
     }
+  };
 
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [isFilterDropdownOpen]);
+  const fieldTypeFilterOptions = fieldTypes.map((type) => ({
+    value: type,
+    label: fieldTypeLabels[type],
+  }));
 
   return (
     <div className="min-h-screen">
@@ -216,253 +134,39 @@ export default function BlueprintManager() {
             </Button>
           </div>
 
-          {/* Create/Edit Form */}
           {showCreateForm && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Create New Blueprint</CardTitle>
-                <CardDescription>Define a reusable contract template with fields</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {/* Basic Info */}
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="name">Blueprint Name</Label>
-                    <Input
-                      id="name"
-                      placeholder="e.g., Service Agreement"
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className="mt-2"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="description">Description</Label>
-                    <textarea
-                      id="description"
-                      placeholder="Brief description of this template"
-                      value={formData.description}
-                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                      className="mt-2 flex min-h-[80px] w-full rounded-md border px-3 py-2 text-sm ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 break-words overflow-auto resize-none"
-                      rows={3}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="headerImageUrl">Header Image URL (optional)</Label>
-                    <Input
-                      id="headerImageUrl"
-                      type="url"
-                      placeholder="https://example.com/logo.png"
-                      value={formData.headerImageUrl}
-                      onChange={(e) => setFormData({ ...formData, headerImageUrl: e.target.value })}
-                      className="mt-2"
-                    />
-                  </div>
-                </div>
-
-                {/* Add Fields */}
-                <div className="space-y-4 rounded-lg border p-4">
-                  <h3 className="font-semibold">Add Fields</h3>
-                  <div className="grid gap-4 md:grid-cols-3">
-                    <div>
-                      <Label htmlFor="fieldLabel">Field Label</Label>
-                      <Input
-                        id="fieldLabel"
-                        placeholder="e.g., Signature"
-                        value={newField.label}
-                        onChange={(e) => setNewField({ ...newField, label: e.target.value })}
-                        className="mt-2"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="fieldType">Field Type</Label>
-                      <select
-                        id="fieldType"
-                        value={newField.type}
-                        onChange={(e) => setNewField({ ...newField, type: e.target.value as FieldType })}
-                        className="mt-2 flex h-10 w-full rounded-md border px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                      >
-                        <option value="text">Text Input</option>
-                        <option value="date">Date Picker</option>
-                        <option value="signature">Signature</option>
-                        <option value="checkbox">Checkbox</option>
-                      </select>
-                    </div>
-                    <div className="flex items-end">
-                      <Button
-                        onClick={handleAddField}
-                        variant="outline"
-                        className="w-full"
-                      >
-                        Add Field
-                      </Button>
-                    </div>
-                  </div>
-
-                  {/* Fields List */}
-                  {formData.fields.length > 0 && (
-                    <div className="space-y-2 border-t pt-4">
-                      <p className="text-sm font-medium">
-                        {formData.fields.length} field{formData.fields.length !== 1 ? "s" : ""} added
-                      </p>
-                      <div className="space-y-2">
-                        {formData.fields.map((field) => (
-                          <div
-                            key={field.id}
-                            className="flex items-center justify-between rounded-lg border p-3"
-                          >
-                            <div className="flex-1">
-                              <p className="font-medium">{field.label}</p>
-                              <p className="text-xs">{fieldTypeLabels[field.type]}</p>
-                            </div>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleRemoveField(field.id)}
-                            >
-                              Remove
-                            </Button>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Form Actions */}
-                <div className="flex gap-2 border-t pt-4">
-                  <Button
-                    onClick={handleCreateBlueprint}
-                    disabled={!formData.name.trim() || formData.fields.length === 0}
-                    className="flex-1"
-                  >
-                    Create Blueprint
-                  </Button>
-                  <Button
-                    onClick={resetForm}
-                    variant="outline"
-                  >
-                    Clear
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+            <BlueprintForm
+              onSubmit={handleCreateBlueprint}
+              onCancel={() => setShowCreateForm(false)}
+              submitLabel="Create Blueprint"
+            />
           )}
 
-          {/* Search and Filters */}
           {blueprints.length > 0 && (
             <Card>
               <CardHeader>
                 <CardTitle>Search & Filter Blueprints</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                {/* Search Input and Filters in Same Row */}
-                <div className="flex flex-col sm:flex-row gap-4">
-                  {/* Search Input */}
-                  <div className="flex-1 space-y-2">
-                    <Label htmlFor="search">Search by Blueprint Name or Description</Label>
-                    <div className="relative">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                      <Input
-                        id="search"
-                        type="text"
-                        placeholder="Search blueprints..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="pl-10 pr-10"
-                      />
-                      {searchQuery && (
-                        <button
-                          onClick={() => setSearchQuery("")}
-                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                        >
-                          <X className="h-4 w-4" />
-                        </button>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Field Type Filters Dropdown and Clear Button */}
-                  <div className="flex-1 space-y-2">
-                    <Label>Filter by Field Type</Label>
-                    <div className="flex gap-2">
-                      <div className="relative flex-1" ref={dropdownRef}>
-                        <Button
-                          variant="outline"
-                          onClick={() => setIsFilterDropdownOpen(!isFilterDropdownOpen)}
-                          className="w-full justify-between"
-                        >
-                          <span className="flex items-center gap-2">
-                            <Filter className="h-4 w-4" />
-                            Filters
-                            {selectedFieldTypes.length > 0 && (
-                              <Badge className="ml-2 bg-blue-600 text-white">
-                                {selectedFieldTypes.length}
-                              </Badge>
-                            )}
-                          </span>
-                          <ChevronDown
-                            className={`h-4 w-4 transition-transform ${
-                              isFilterDropdownOpen ? "rotate-180" : ""
-                            }`}
-                          />
-                        </Button>
-                        {isFilterDropdownOpen && (
-                          <div className="absolute z-10 w-full mt-2 bg-white border rounded-md shadow-lg">
-                            <div className="p-2 space-y-2 max-h-64 overflow-y-auto">
-                              {fieldTypes.map((fieldType) => {
-                                const count = fieldTypeCounts[fieldType];
-                                const isSelected = selectedFieldTypes.includes(fieldType);
-                                return (
-                                  <label
-                                    key={fieldType}
-                                    className="flex items-center space-x-2 p-2 hover:bg-gray-100 rounded cursor-pointer"
-                                  >
-                                    <input
-                                      type="checkbox"
-                                      checked={isSelected}
-                                      onChange={() => handleFieldTypeToggle(fieldType)}
-                                      className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                                    />
-                                    <span className="flex-1 text-sm">
-                                      {fieldTypeLabels[fieldType]}
-                                    </span>
-                                    <Badge variant="secondary">
-                                      {count}
-                                    </Badge>
-                                  </label>
-                                );
-                              })}
-                            </div>
-                            {selectedFieldTypes.length > 0 && (
-                              <div className="border-t p-2">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => setSelectedFieldTypes([])}
-                                  className="w-full text-sm"
-                                >
-                                  Clear Selection
-                                </Button>
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                      {(searchQuery || selectedFieldTypes.length > 0) && (
-                        <Button
-                          variant="outline"
-                          onClick={handleClearFilters}
-                          className="flex-shrink-0"
-                          title="Clear all filters"
-                        >
-                          <X className="h-4 w-4 mr-2" />
-                          Clear Filters
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                </div>
+              <CardContent>
+                <SearchAndFilter
+                  searchQuery={searchQuery}
+                  onSearchChange={setSearchQuery}
+                  selectedFilters={selectedFieldTypes}
+                  onFilterToggle={(fieldType) => {
+                    setSelectedFieldTypes((prev) =>
+                      prev.includes(fieldType)
+                        ? prev.filter((t) => t !== fieldType)
+                        : [...prev, fieldType]
+                    );
+                  }}
+                  onClearFilters={() => {
+                    setSelectedFieldTypes([]);
+                    setSearchQuery("");
+                  }}
+                  filterOptions={fieldTypeFilterOptions}
+                  searchPlaceholder="Search blueprints..."
+                  filterLabel="Filters"
+                />
               </CardContent>
             </Card>
           )}
@@ -499,7 +203,10 @@ export default function BlueprintManager() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={handleClearFilters}
+                        onClick={() => {
+                          setSelectedFieldTypes([]);
+                          setSearchQuery("");
+                        }}
                       >
                         Clear Filters
                       </Button>
@@ -509,71 +216,13 @@ export default function BlueprintManager() {
               ) : (
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                   {filteredBlueprints.map((blueprint) => (
-                    <div
+                    <BlueprintCard
                       key={blueprint.id}
-                      className="group relative"
-                    >
-                      <Card className="hover:shadow-md transition-shadow overflow-hidden h-full flex flex-col">
-                        <Link
-                          href={`/blueprints/${blueprint.id}`}
-                          className="flex-1 flex flex-col"
-                        >
-                          <CardHeader className="pb-3">
-                            <div className="flex items-start justify-between gap-4">
-                              <div className="flex-1 min-w-0">
-                                <CardTitle className="text-lg break-words">{blueprint.name}</CardTitle>
-                                {blueprint.description && (
-                                  <CardDescription className="mt-1 text-sm text-gray-600 line-clamp-2 break-words whitespace-pre-wrap">
-                                    {blueprint.description}
-                                  </CardDescription>
-                                )}
-                              </div>
-                            </div>
-                          </CardHeader>
-                          <CardContent className="space-y-3 pb-12">
-                            <div className="text-sm">
-                              <p className="font-medium">{blueprint.fields.length} fields</p>
-                              <ul className="mt-2 space-y-1">
-                                {blueprint.fields.map((field) => (
-                                  <li key={field.id} className="text-xs break-words">
-                                    • {field.label} ({fieldTypeLabels[field.type]})
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          </CardContent>
-                        </Link>
-                        <div className="absolute bottom-4 right-4 flex items-center gap-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-8 w-8 p-0"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              router.push(`/blueprints/${blueprint.id}?edit=true`);
-                            }}
-                            title="Edit blueprint"
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              setBlueprintToDelete({ id: blueprint.id, name: blueprint.name });
-                              setDeleteDialogOpen(true);
-                            }}
-                            title="Delete blueprint"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </Card>
-                    </div>
+                      blueprint={blueprint}
+                      fieldTypeLabels={fieldTypeLabels}
+                      onEdit={handleEdit}
+                      onDelete={handleDelete}
+                    />
                   ))}
                 </div>
               )}
@@ -582,45 +231,16 @@ export default function BlueprintManager() {
         </div>
       </div>
 
-      {/* Delete Confirmation Dialog */}
-      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Delete Blueprint</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to delete &quot;{blueprintToDelete?.name}&quot;? This action cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setDeleteDialogOpen(false);
-                setBlueprintToDelete(null);
-              }}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={() => {
-                if (blueprintToDelete) {
-                  deleteBlueprint(blueprintToDelete.id);
-                  addToast({
-                    title: "Blueprint Deleted",
-                    description: `"${blueprintToDelete.name}" has been deleted successfully.`,
-                    variant: "success",
-                  });
-                  setDeleteDialogOpen(false);
-                  setBlueprintToDelete(null);
-                }
-              }}
-            >
-              Delete
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <DeleteConfirmationDialog
+        open={deleteDialogOpen}
+        onOpenChange={(open) => {
+          setDeleteDialogOpen(open);
+          if (!open) setBlueprintToDelete(null);
+        }}
+        itemName={blueprintToDelete?.name || ""}
+        itemType="blueprint"
+        onConfirm={confirmDelete}
+      />
     </div>
   );
 }

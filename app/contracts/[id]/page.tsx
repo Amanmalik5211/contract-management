@@ -116,7 +116,6 @@ function ContractViewPageContent() {
               <p className="mt-2 break-words">
                 Blueprint: {contract.blueprintName}
               </p>
-             
             </div>
             <Badge variant={getStatusVariant(contract.status)} className="flex-shrink-0">
               {getStatusLabel(contract.status)}
@@ -128,9 +127,7 @@ function ContractViewPageContent() {
         {canEdit && (
           <Card className="mb-6">
             <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle>Edit Contract</CardTitle>
-              </div>
+              <CardTitle>Edit Contract</CardTitle>
               <p className="text-sm text-blue-600 break-words mt-2">
                 You are in edit mode. Click Update to save your changes.
                 {hasUnsavedChanges && (
