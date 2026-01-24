@@ -144,69 +144,83 @@ function BlueprintViewPageContent() {
 
   return (
     <div className="min-h-screen">
-      <div className="mx-auto max-w-[90rem] px-4 sm:px-6 lg:px-4 py-4 sm:py-6 lg:py-8">
-        <div className="mb-8">
-          <Button variant="ghost" onClick={() => router.back()} className="mb-4">
-            ← Back
-          </Button>
+      <div className="relative overflow-hidden from-primary/5 via-background to-secondary/30">
+        <div className="mx-auto max-w-[90rem] px-4 sm:px-6 lg:px-4 py-4 sm:py-6 lg:py-8">
+          <div className="mb-8 sm:mb-12">
+            <Button variant="ghost" onClick={() => router.back()} className="mb-4 sm:mb-6">
+              ← Back
+            </Button>
+            {!isEditMode ? (
+              <>
+                <section className="space-y-4 sm:space-y-6">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div className="flex-1 min-w-0 space-y-3 sm:space-y-4">
+                      <h1 className="text-3xl font-bold tracking-tight xs:text-4xl sm:text-5xl lg:text-6xl leading-tight break-words">
+                        <span className="text-primary">{capitalizeWords(blueprint.name)}</span>
+                      </h1>
+                      <p className="text-base text-muted-foreground sm:text-lg lg:text-xl leading-relaxed">
+                        Created {format(new Date(blueprint.createdAt), "MMM d, yyyy")}
+                      </p>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="lg"
+                      onClick={() => router.push(`/blueprints/${blueprint.id}?edit=true`)}
+                      className="flex items-center gap-2 w-full sm:w-auto"
+                    >
+                      <Pencil className="h-4 w-4" />
+                      Edit
+                    </Button>
+                  </div>
+                </section>
+              </>
+            ) : (
+              <section className="space-y-3 sm:space-y-4">
+                <h1 className="text-3xl font-bold tracking-tight xs:text-4xl sm:text-5xl lg:text-6xl leading-tight break-words">
+                  Edit <span className="text-primary">Blueprint</span>
+                </h1>
+                <p className="text-base text-muted-foreground sm:text-lg leading-relaxed">
+                  Make your changes and click Update to save.
+                </p>
+              </section>
+            )}
+          </div>
+
           {!isEditMode ? (
             <>
-              <div className="flex items-center justify-between gap-4">
-                <div className="flex-1 min-w-0">
-          <h1 className="text-3xl font-bold wrap-break-words">{capitalizeWords(blueprint.name)}</h1>
-        
-          <p className="mt-2 text-sm">
-            Created {format(new Date(blueprint.createdAt), "MMM d, yyyy")}
-          </p>
+              {/* Document Preview Section */}
+              <section className="py-6 sm:py-8 mb-8">
+                <div className="rounded-2xl sm:rounded-3xl border border-border/50 bg-gradient-to-br from-background to-muted/30 shadow-lg overflow-hidden">
+                  <DocumentRenderer
+                    title={blueprint.name}
+                    description={blueprint.description}
+                    headerImageUrl={blueprint.headerImageUrl}
+                    sections={blueprint.sections || []}
+                    fields={blueprint.fields}
+                    fieldValues={{}}
+                    isEditable={false}
+                  />
                 </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => router.push(`/blueprints/${blueprint.id}?edit=true`)}
-                  className="flex items-center gap-2"
-                >
-                  <Pencil className="h-4 w-4" />
-                  Edit
-                </Button>
-              </div>
+              </section>
+
+              <section className="py-6 sm:py-8">
+                <div className="flex justify-end">
+                  <Link href={`/contracts/new?blueprintId=${blueprint.id}`}>
+                    <Button size="lg" className="w-full sm:w-auto">
+                      Create Contract from This Blueprint
+                    </Button>
+                  </Link>
+                </div>
+              </section>
             </>
           ) : (
-            <div>
-              <h1 className="text-3xl font-bold wrap-break-words">Edit Blueprint</h1>
-              <p className="mt-2 text-sm text-blue-600">
-                Make your changes and click Update to save.
-              </p>
-            </div>
-          )}
-        </div>
-
-        {!isEditMode ? (
-          <>
-            {/* Document Preview */}
-            <div className="mb-8">
-              <DocumentRenderer
-                title={blueprint.name}
-                description={blueprint.description}
-                headerImageUrl={blueprint.headerImageUrl}
-                sections={blueprint.sections || []}
-                fields={blueprint.fields}
-                fieldValues={{}}
-                isEditable={false}
-              />
-            </div>
-
-            <div className="mt-6 flex justify-end">
-              <Link href={`/contracts/new?blueprintId=${blueprint.id}`}>
-                <Button>Create Contract from This Blueprint</Button>
-              </Link>
-            </div>
-          </>
-        ) : (
-        <Card>
-          <CardHeader>
-              <CardTitle>Edit Blueprint</CardTitle>
-          </CardHeader>
-            <CardContent className="space-y-6">
+            <section className="py-6 sm:py-8">
+              <Card className="group relative overflow-hidden rounded-2xl sm:rounded-3xl border-border/50 bg-gradient-to-br from-background to-muted/30 shadow-lg">
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent opacity-100" />
+                <CardHeader className="relative z-10">
+                  <CardTitle className="text-xl sm:text-2xl">Edit Blueprint</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6 relative z-10">
               {/* Basic Info */}
               <div className="space-y-4">
                 <div>
@@ -243,9 +257,9 @@ function BlueprintViewPageContent() {
                 </div>
               </div>
 
-              {/* Add Fields */}
-              <div className="space-y-4 rounded-lg border p-4">
-                <h3 className="font-semibold">Add Fields</h3>
+                  {/* Add Fields */}
+                  <div className="space-y-4 rounded-xl sm:rounded-2xl border border-border/50 bg-muted/20 p-4 sm:p-6">
+                    <h3 className="font-semibold text-base sm:text-lg">Add Fields</h3>
                 <div className="grid gap-4 md:grid-cols-3">
                   <div>
                     <Label htmlFor="fieldLabel">Field Label</Label>
@@ -290,10 +304,10 @@ function BlueprintViewPageContent() {
                     </p>
                     <div className="space-y-2">
                       {formData.fields.map((field) => (
-                  <div
-                    key={field.id}
-                          className="flex items-center justify-between rounded-lg border p-3"
-                        >
+                    <div
+                      key={field.id}
+                      className="flex items-center justify-between rounded-lg border border-border/50 bg-background/50 p-3 hover:bg-muted/30 transition-colors"
+                    >
                           <div className="flex-1">
                             <p className="font-medium">{field.label}</p>
                             <p className="text-xs">{fieldTypeLabels[field.type]}</p>
@@ -312,24 +326,28 @@ function BlueprintViewPageContent() {
                 )}
               </div>
 
-              {/* Form Actions */}
-              <div className="flex justify-end gap-2 border-t pt-4">
-                <Button
-                  variant="outline"
-                  onClick={() => router.push(`/blueprints/${blueprint.id}`)}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  onClick={handleUpdate}
-                  disabled={!formData.name.trim()}
-                >
-                  Update
-                </Button>
-              </div>
-          </CardContent>
-        </Card>
-        )}
+                  {/* Form Actions */}
+                  <div className="flex justify-end gap-2 border-t border-border/50 pt-4">
+                    <Button
+                      variant="outline"
+                      onClick={() => router.push(`/blueprints/${blueprint.id}`)}
+                      size="lg"
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      onClick={handleUpdate}
+                      disabled={!formData.name.trim()}
+                      size="lg"
+                    >
+                      Update
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </section>
+          )}
+        </div>
       </div>
     </div>
   );

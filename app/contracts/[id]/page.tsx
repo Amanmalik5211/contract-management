@@ -103,63 +103,73 @@ function ContractViewPageContent() {
 
   return (
     <div className="min-h-screen">
-      <div className="mx-auto max-w-[90rem] px-4 sm:px-6 lg:px-4 py-4 sm:py-6 lg:py-8">
-        <div className="mb-8">
-          <Button variant="ghost" onClick={() => router.back()} className="mb-4">
-            ← Back
-          </Button>
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex-1 min-w-0">
-              <h1 className="text-3xl font-bold break-words">
-                {capitalizeWords(contract.name)}
-              </h1>
-              <p className="mt-2 break-words">
-                Blueprint: {contract.blueprintName}
-              </p>
-            </div>
-            <Badge variant={getStatusVariant(contract.status)} className="flex-shrink-0">
-              {getStatusLabel(contract.status)}
-            </Badge>
+      <div className="relative overflow-hidden from-primary/5 via-background to-secondary/30">
+        <div className="mx-auto max-w-[90rem] px-4 sm:px-6 lg:px-4 py-4 sm:py-6 lg:py-8">
+          <div className="mb-8 sm:mb-12">
+            <Button variant="ghost" onClick={() => router.back()} className="mb-4 sm:mb-6">
+              ← Back
+            </Button>
+            <section className="space-y-4 sm:space-y-6">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="flex-1 min-w-0 space-y-3 sm:space-y-4">
+                  <h1 className="text-3xl font-bold tracking-tight xs:text-4xl sm:text-5xl lg:text-6xl leading-tight break-words">
+                    <span className="text-primary">{capitalizeWords(contract.name)}</span>
+                  </h1>
+                  <p className="text-base text-muted-foreground sm:text-lg lg:text-xl leading-relaxed break-words">
+                    Blueprint: {contract.blueprintName}
+                  </p>
+                </div>
+                <Badge variant={getStatusVariant(contract.status)} className="flex-shrink-0 text-sm sm:text-base px-4 py-2">
+                  {getStatusLabel(contract.status)}
+                </Badge>
+              </div>
+            </section>
           </div>
-        </div>
 
-        {/* Edit Mode Info */}
-        {canEdit && (
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle>Edit Contract</CardTitle>
-              <p className="text-sm text-blue-600 break-words mt-2">
-                You are in edit mode. Click Update to save your changes.
-                {hasUnsavedChanges && (
-                  <span className="ml-2 text-orange-600 font-medium">• Unsaved changes</span>
-                )}
-              </p>
-            </CardHeader>
-          </Card>
-        )}
-        {!canEdit && !isCreated && (
-          <Card className="mb-6">
-            <CardHeader>
-              <p className="text-sm text-gray-600 break-words">
-                This contract is in read-only mode. Editing is only available for contracts in Created status.
-              </p>
-              {isLocked && (
-                <p className="text-sm break-words mt-2">
-                  This contract is locked and cannot be edited.
-                </p>
-              )}
-              {isRevoked && (
-                <p className="text-sm text-red-600 break-words mt-2">
-                  This contract has been revoked.
-                </p>
-              )}
-            </CardHeader>
-          </Card>
-        )}
+          {/* Edit Mode Info */}
+          {canEdit && (
+            <section className="py-6 sm:py-8 mb-6 sm:mb-8">
+              <Card className="group relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent opacity-100" />
+                <CardHeader className="relative z-10">
+                  <CardTitle className="text-xl sm:text-2xl">Edit Contract</CardTitle>
+                  <p className="text-sm sm:text-base text-primary break-words mt-2 leading-relaxed">
+                    You are in edit mode. Click Update to save your changes.
+                    {hasUnsavedChanges && (
+                      <span className="ml-2 text-orange-600 font-medium">• Unsaved changes</span>
+                    )}
+                  </p>
+                </CardHeader>
+              </Card>
+            </section>
+          )}
+          {!canEdit && !isCreated && (
+            <section className="py-6 sm:py-8 mb-6 sm:mb-8">
+              <Card className="group relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-primary/2 to-transparent opacity-100" />
+                <CardHeader className="relative z-10">
+                  <p className="text-sm sm:text-base text-muted-foreground break-words leading-relaxed">
+                    This contract is in read-only mode. Editing is only available for contracts in Created status.
+                  </p>
+                  {isLocked && (
+                    <p className="text-sm sm:text-base break-words mt-2 text-muted-foreground">
+                      This contract is locked and cannot be edited.
+                    </p>
+                  )}
+                  {isRevoked && (
+                    <p className="text-sm sm:text-base text-red-600 break-words mt-2">
+                      This contract has been revoked.
+                    </p>
+                  )}
+                </CardHeader>
+              </Card>
+            </section>
+          )}
 
-        {/* Document Renderer */}
-        <div className="mb-8">
-          <DocumentRenderer
+          {/* Document Renderer */}
+          <section className="py-6 sm:py-8 mb-8">
+            <div className="rounded-2xl sm:rounded-3xl border border-border/50 bg-gradient-to-br from-background to-muted/30 shadow-lg overflow-hidden">
+              <DocumentRenderer
             title={contract.name}
             description={contract.blueprintDescription || blueprint?.description}
             headerImageUrl={blueprint?.headerImageUrl}
@@ -168,59 +178,66 @@ function ContractViewPageContent() {
             fieldValues={canEdit ? localFieldValues : contract.fieldValues}
             isEditable={canEdit}
             onFieldChange={canEdit ? handleFieldChange : undefined}
-            onFieldsReorder={canEdit ? handleFieldsReorder : undefined}
-          />
-        </div>
+                onFieldsReorder={canEdit ? handleFieldsReorder : undefined}
+              />
+            </div>
+          </section>
 
-        <div className="mt-6 flex justify-between items-center gap-4">
-          <div className="text-sm break-words">
-            Created: {format(new Date(contract.createdAt), "MMM d, yyyy")}
-          </div>
-          <div className="flex gap-2">
-            {canEdit ? (
-              <>
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setLocalFieldValues(contract.fieldValues);
-                    setLocalFields(contract.fields);
-                    setHasUnsavedChanges(false);
-                    router.push(`/contracts/${contract.id}`);
-                  }}
-                  className="flex-shrink-0"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  onClick={handleSave}
-                  className="flex-shrink-0"
-                  disabled={!hasUnsavedChanges}
-                >
-                  Update
-                </Button>
-              </>
-            ) : (
-              <>
-                {isCreated && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => router.push(`/contracts/${contract.id}?edit=true`)}
-                    className="flex items-center gap-2"
-                  >
-                    <Pencil className="h-4 w-4" />
-                    Edit
-                  </Button>
+          <section className="py-6 sm:py-8">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div className="text-sm sm:text-base text-muted-foreground break-words">
+                Created: {format(new Date(contract.createdAt), "MMM d, yyyy")}
+              </div>
+              <div className="flex gap-2 sm:gap-3">
+                {canEdit ? (
+                  <>
+                    <Button
+                      variant="outline"
+                      size="lg"
+                      onClick={() => {
+                        setLocalFieldValues(contract.fieldValues);
+                        setLocalFields(contract.fields);
+                        setHasUnsavedChanges(false);
+                        router.push(`/contracts/${contract.id}`);
+                      }}
+                      className="flex-shrink-0"
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      size="lg"
+                      onClick={handleSave}
+                      className="flex-shrink-0"
+                      disabled={!hasUnsavedChanges}
+                    >
+                      Update
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    {isCreated && (
+                      <Button
+                        variant="outline"
+                        size="lg"
+                        onClick={() => router.push(`/contracts/${contract.id}?edit=true`)}
+                        className="flex items-center gap-2"
+                      >
+                        <Pencil className="h-4 w-4" />
+                        Edit
+                      </Button>
+                    )}
+                    <Button
+                      size="lg"
+                      onClick={() => router.push(`/contracts/${contract.id}/status`)}
+                      className="flex-shrink-0"
+                    >
+                      Manage Status
+                    </Button>
+                  </>
                 )}
-                <Button
-                  onClick={() => router.push(`/contracts/${contract.id}/status`)}
-                  className="flex-shrink-0"
-                >
-                  Manage Status
-                </Button>
-              </>
-            )}
-          </div>
+              </div>
+            </div>
+          </section>
         </div>
       </div>
     </div>

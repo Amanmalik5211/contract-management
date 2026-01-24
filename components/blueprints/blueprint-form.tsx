@@ -88,12 +88,13 @@ export function BlueprintForm({
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{submitLabel}</CardTitle>
-        <CardDescription>Define a reusable contract template with fields</CardDescription>
+    <Card className="group relative overflow-hidden rounded-2xl sm:rounded-3xl border-border/50 bg-gradient-to-br from-background to-muted/30 shadow-lg">
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent opacity-100" />
+      <CardHeader className="relative z-10">
+        <CardTitle className="text-xl sm:text-2xl">{submitLabel}</CardTitle>
+        <CardDescription className="text-sm sm:text-base">Define a reusable contract template with fields</CardDescription>
       </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent className="space-y-6 relative z-10">
         {/* Basic Info */}
         <div className="space-y-4">
           <div>
@@ -131,8 +132,8 @@ export function BlueprintForm({
         </div>
 
         {/* Add Fields */}
-        <div className="space-y-4 rounded-lg border p-4">
-          <h3 className="font-semibold">Add Fields</h3>
+        <div className="space-y-4 rounded-xl sm:rounded-2xl border border-border/50 bg-muted/20 p-4 sm:p-6">
+          <h3 className="font-semibold text-base sm:text-lg">Add Fields</h3>
           <div className="grid gap-4 md:grid-cols-3">
             <div>
               <Label htmlFor="fieldLabel">Field Label</Label>
@@ -179,7 +180,7 @@ export function BlueprintForm({
                 {formData.fields.map((field) => (
                   <div
                     key={field.id}
-                    className="flex items-center justify-between rounded-lg border p-3"
+                    className="flex items-center justify-between rounded-lg border border-border/50 bg-background/50 p-3 hover:bg-muted/30 transition-colors"
                   >
                     <div className="flex-1">
                       <p className="font-medium">{field.label}</p>

@@ -104,12 +104,17 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen">
-      <div className="mx-auto max-w-[90rem] px-4 sm:px-6 lg:px-4 py-4 sm:py-6 lg:py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-          <p className="mt-2 text-muted-foreground">Overview of your contracts and templates</p>
-        </div>
+      <div className="relative overflow-hidden from-primary/5 via-background to-secondary/30">
+        <div className="mx-auto max-w-[90rem] px-4 sm:px-6 lg:px-4 py-4 sm:py-6 lg:py-8">
+          {/* Header Section */}
+          <section className="mb-8 sm:mb-12 space-y-3 sm:space-y-4">
+            <h1 className="text-3xl font-bold tracking-tight xs:text-4xl sm:text-5xl lg:text-6xl leading-tight">
+              <span className="text-primary">Dashboard</span>
+            </h1>
+            <p className="text-base text-muted-foreground sm:text-lg lg:text-xl leading-relaxed">
+              Overview of your contracts and templates
+            </p>
+          </section>
 
         <StatusOverviewCards
           totalBlueprints={blueprints.length}
@@ -117,13 +122,18 @@ export default function Dashboard() {
           statusCounts={statusCounts}
         />
 
-        {/* Search and Filters */}
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle>Search & Filter Contracts</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <SearchAndFilter
+          {/* Search and Filters */}
+          <section className="py-6 sm:py-8 mb-8">
+            <Card className="group relative overflow-visible">
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-primary/2 to-transparent opacity-100 rounded-2xl sm:rounded-3xl" />
+              <CardHeader className="relative z-10">
+                <CardTitle className="text-xl sm:text-2xl">Search & Filter Contracts</CardTitle>
+                <p className="text-sm sm:text-base text-muted-foreground mt-2">
+                  Find contracts by name or filter by status
+                </p>
+              </CardHeader>
+              <CardContent className="relative z-20">
+                <SearchAndFilter
               searchQuery={searchQuery}
               onSearchChange={setSearchQuery}
               selectedFilters={selectedStatuses}
@@ -141,58 +151,64 @@ export default function Dashboard() {
               filterOptions={statusFilterOptions}
               searchPlaceholder="Search contracts..."
               filterLabel="Filters"
-            />
-          </CardContent>
-        </Card>
+                />
+              </CardContent>
+            </Card>
+          </section>
 
-        {/* Contracts List */}
-        <Card>
-          <CardHeader>
-            <CardTitle>
-              {selectedStatuses.length === 0
-                ? "All Contracts"
-                : selectedStatuses.length === 1
-                ? `${getStatusLabel(selectedStatuses[0])} Contracts`
-                : "Filtered Contracts"}
-            </CardTitle>
-            <p className="text-sm mt-1">
-              {filteredContracts.length === 0
-                ? "No contracts found"
-                : `Showing ${filteredContracts.length} contract${filteredContracts.length !== 1 ? "s" : ""}`}
-            </p>
-          </CardHeader>
-          <CardContent>
+          {/* Contracts List Section */}
+          <section className="py-6 sm:py-8">
+            <div className="text-center mb-8 sm:mb-12">
+              <h2 className="text-2xl font-bold tracking-tight sm:text-3xl lg:text-4xl px-2">
+                {selectedStatuses.length === 0
+                  ? "All Contracts"
+                  : selectedStatuses.length === 1
+                  ? `${getStatusLabel(selectedStatuses[0])} Contracts`
+                  : "Filtered Contracts"}
+              </h2>
+              <p className="mt-3 sm:mt-4 text-base sm:text-lg text-muted-foreground px-2">
+                {filteredContracts.length === 0
+                  ? "No contracts found"
+                  : `Showing ${filteredContracts.length} contract${filteredContracts.length !== 1 ? "s" : ""}`}
+              </p>
+            </div>
+
             {filteredContracts.length === 0 ? (
-              <div className="py-12 text-center">
-                <p>
-                  {searchQuery || selectedStatuses.length > 0
-                    ? "No contracts match your search or filter criteria."
-                    : "No contracts found."}
-                </p>
-                {!searchQuery && selectedStatuses.length === 0 && (
-                  <Link
-                    href="/contracts/new"
-                    className="text-blue-600 hover:underline mt-2 inline-block"
-                  >
-                    Create your first contract
-                  </Link>
-                )}
-                {(searchQuery || selectedStatuses.length > 0) && (
-                  <div className="mt-4">
-                    <button
-                      className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-3"
-                      onClick={() => {
-                        setSelectedStatuses([]);
-                        setSearchQuery("");
-                      }}
+              <Card className="rounded-2xl sm:rounded-3xl border-border/50 bg-gradient-to-br from-background to-muted/30 shadow-lg">
+                <CardContent className="py-12 text-center">
+                  <p className="text-base sm:text-lg text-muted-foreground">
+                    {searchQuery || selectedStatuses.length > 0
+                      ? "No contracts match your search or filter criteria."
+                      : "No contracts found."}
+                  </p>
+                  {!searchQuery && selectedStatuses.length === 0 && (
+                    <Link
+                      href="/contracts/new"
+                      className="mt-4 inline-block"
                     >
-                      Clear Filters
-                    </button>
-                  </div>
-                )}
-              </div>
+                      <Button size="lg">
+                        Create your first contract
+                      </Button>
+                    </Link>
+                  )}
+                  {(searchQuery || selectedStatuses.length > 0) && (
+                    <div className="mt-4">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setSelectedStatuses([]);
+                          setSearchQuery("");
+                        }}
+                      >
+                        Clear Filters
+                      </Button>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-4 sm:space-y-6">
                 {filteredContracts.map((contract) => {
                   const canEdit = contract.status === "created";
                   const canDelete = contract.status === "created" || contract.status === "revoked";
@@ -210,8 +226,8 @@ export default function Dashboard() {
                 })}
               </div>
             )}
-          </CardContent>
-        </Card>
+          </section>
+        </div>
       </div>
 
       <DeleteConfirmationDialog

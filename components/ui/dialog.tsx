@@ -42,7 +42,7 @@ const Dialog: React.FC<DialogProps> = ({ open, onOpenChange, children }) => {
       className="fixed inset-0 z-50 flex items-center justify-center"
       onClick={() => onOpenChange(false)}
     >
-      <div className="fixed inset-0 bg-black/50" />
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" />
       <div
         className="relative z-50 w-full max-w-lg mx-4"
         onClick={(e) => e.stopPropagation()}
@@ -60,11 +60,14 @@ const DialogContent: React.FC<DialogContentProps> = ({
   return (
     <div
       className={cn(
-        "bg-white rounded-lg shadow-lg p-6 w-full",
+        "bg-background rounded-2xl sm:rounded-3xl border border-border/50 shadow-2xl p-6 sm:p-8 w-full relative overflow-hidden",
         className
       )}
     >
-      {children}
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-primary/2 to-transparent opacity-100 rounded-2xl sm:rounded-3xl" />
+      <div className="relative z-10">
+        {children}
+      </div>
     </div>
   );
 };
@@ -75,7 +78,7 @@ const DialogHeader: React.FC<DialogHeaderProps> = ({ children }) => {
 
 const DialogTitle: React.FC<DialogTitleProps> = ({ children, className }) => {
   return (
-    <h2 className={cn("text-xl font-semibold text-gray-900", className)}>
+    <h2 className={cn("text-xl sm:text-2xl font-bold tracking-tight text-foreground", className)}>
       {children}
     </h2>
   );
@@ -86,12 +89,12 @@ const DialogDescription: React.FC<DialogDescriptionProps> = ({
   className,
 }) => {
   return (
-    <p className={cn("text-sm text-gray-600 mt-2", className)}>{children}</p>
+    <p className={cn("text-sm sm:text-base text-muted-foreground mt-2 leading-relaxed", className)}>{children}</p>
   );
 };
 
 const DialogFooter: React.FC<DialogFooterProps> = ({ children }) => {
-  return <div className="flex justify-end gap-2 mt-6">{children}</div>;
+  return <div className="flex justify-end gap-2 sm:gap-3 mt-6">{children}</div>;
 };
 
 export {

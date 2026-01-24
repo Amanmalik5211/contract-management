@@ -44,58 +44,61 @@ export function ContractCard({
   };
 
   return (
-    <div className="group relative p-4 border rounded-lg hover:shadow-md transition-colors overflow-hidden">
-      <Link href={`/contracts/${contract.id}`} className="block">
-        <div className="flex items-start justify-between gap-4 pb-12">
-          <div className="flex-1 min-w-0">
-            <div className="font-medium text-lg break-words">{contract.name}</div>
-            {contract.blueprintDescription && (
-              <div className="text-sm mt-1 break-words whitespace-pre-wrap">
-                {contract.blueprintDescription}
-              </div>
-            )}
-            <div className="mt-2 space-y-1">
-              <div className="text-xs text-gray-500">
-                Blueprint: {contract.blueprintName}
-              </div>
-              <div className="text-xs text-gray-500">
-                {filledFieldsCount} of {contract.fields.length} fields filled
-              </div>
-              <div className="text-xs text-gray-500">
-                Updated: {format(new Date(contract.updatedAt), "MMM d, yyyy")}
+    <Card className="group relative overflow-hidden rounded-2xl sm:rounded-3xl border-border/50 bg-gradient-to-br from-background to-muted/30 shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 hover:scale-[1.01] hover:border-primary/20">
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent opacity-100 group-hover:opacity-100 group-hover:from-primary/15 group-hover:via-primary/8 transition-opacity duration-500" />
+      <div className="relative z-10 p-4 sm:p-6">
+        <Link href={`/contracts/${contract.id}`} className="block">
+          <div className="flex items-start justify-between gap-4 pb-12">
+            <div className="flex-1 min-w-0">
+              <div className="font-semibold text-lg sm:text-xl break-words group-hover:text-primary transition-colors duration-300">{contract.name}</div>
+              {contract.blueprintDescription && (
+                <div className="text-sm sm:text-base mt-1 break-words whitespace-pre-wrap text-muted-foreground leading-relaxed">
+                  {contract.blueprintDescription}
+                </div>
+              )}
+              <div className="mt-3 sm:mt-4 space-y-1.5">
+                <div className="text-xs sm:text-sm text-muted-foreground">
+                  Blueprint: {contract.blueprintName}
+                </div>
+                <div className="text-xs sm:text-sm text-muted-foreground">
+                  {filledFieldsCount} of {contract.fields.length} fields filled
+                </div>
+                <div className="text-xs sm:text-sm text-muted-foreground">
+                  Updated: {format(new Date(contract.updatedAt), "MMM d, yyyy")}
+                </div>
               </div>
             </div>
+            <Badge variant={getStatusVariant(contract.status)} className="flex-shrink-0">
+              {getStatusLabel(contract.status)}
+            </Badge>
           </div>
-          <Badge variant={getStatusVariant(contract.status)} className="flex-shrink-0">
-            {getStatusLabel(contract.status)}
-          </Badge>
+        </Link>
+        <div className="absolute bottom-4 right-4 flex items-center gap-2 z-20">
+          {canEdit && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 w-8 p-0 hover:bg-primary/10"
+              onClick={(e) => onEdit(contract.id, e)}
+              title="Edit contract"
+            >
+              <Pencil className="h-4 w-4" />
+            </Button>
+          )}
+          {canDelete && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+              onClick={(e) => onDelete(contract.id, contract.name, e)}
+              title="Delete contract"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          )}
         </div>
-      </Link>
-      <div className="absolute bottom-4 right-4 flex items-center gap-2">
-        {canEdit && (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-8 w-8 p-0"
-            onClick={(e) => onEdit(contract.id, e)}
-            title="Edit contract"
-          >
-            <Pencil className="h-4 w-4" />
-          </Button>
-        )}
-        {canDelete && (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
-            onClick={(e) => onDelete(contract.id, contract.name, e)}
-            title="Delete contract"
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        )}
       </div>
-    </div>
+    </Card>
   );
 }
 

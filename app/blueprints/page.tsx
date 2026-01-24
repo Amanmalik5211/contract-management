@@ -119,102 +119,124 @@ export default function BlueprintManager() {
 
   return (
     <div className="min-h-screen">
-      <div className="mx-auto max-w-[90rem] px-4 sm:px-6 lg:px-4 py-4 sm:py-6 lg:py-8">
-        <div className="space-y-6">
-          {/* Header */}
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold">Blueprints</h1>
-              <p className="mt-2">Create and manage contract templates</p>
-            </div>
-            <Button
-              onClick={() => setShowCreateForm(!showCreateForm)}
-            >
-              {showCreateForm ? "Cancel" : "Create Blueprint"}
-            </Button>
-          </div>
-
-          {showCreateForm && (
-            <BlueprintForm
-              onSubmit={handleCreateBlueprint}
-              onCancel={() => setShowCreateForm(false)}
-              submitLabel="Create Blueprint"
-            />
-          )}
-
-          {blueprints.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Search & Filter Blueprints</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <SearchAndFilter
-                  searchQuery={searchQuery}
-                  onSearchChange={setSearchQuery}
-                  selectedFilters={selectedFieldTypes}
-                  onFilterToggle={(fieldType) => {
-                    setSelectedFieldTypes((prev) =>
-                      prev.includes(fieldType)
-                        ? prev.filter((t) => t !== fieldType)
-                        : [...prev, fieldType]
-                    );
-                  }}
-                  onClearFilters={() => {
-                    setSelectedFieldTypes([]);
-                    setSearchQuery("");
-                  }}
-                  filterOptions={fieldTypeFilterOptions}
-                  searchPlaceholder="Search blueprints..."
-                  filterLabel="Filters"
-                />
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Blueprints List */}
-          <Card>
-            <CardHeader>
-              <CardTitle>
-                {selectedFieldTypes.length === 0
-                  ? "All Blueprints"
-                  : selectedFieldTypes.length === 1
-                  ? `${fieldTypeLabels[selectedFieldTypes[0]]} Blueprints`
-                  : "Filtered Blueprints"}
-              </CardTitle>
-              <CardDescription>
-                {filteredBlueprints.length === 0
-                  ? "No blueprints found"
-                  : `Showing ${filteredBlueprints.length} blueprint${filteredBlueprints.length !== 1 ? "s" : ""}`}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {filteredBlueprints.length === 0 ? (
-                <div className="py-12 text-center">
-                  <p>
-                    {searchQuery || selectedFieldTypes.length > 0
-                      ? "No blueprints match your search or filter criteria."
-                      : "No blueprints found."}
+      <div className="relative overflow-hidden from-primary/5 via-background to-secondary/30">
+        <div className="mx-auto max-w-[90rem] px-4 sm:px-6 lg:px-4 py-4 sm:py-6 lg:py-8">
+          <div className="space-y-6 sm:space-y-8">
+            {/* Header Section */}
+            <section className="space-y-4 sm:space-y-6">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="space-y-3 sm:space-y-4">
+                  <h1 className="text-3xl font-bold tracking-tight xs:text-4xl sm:text-5xl lg:text-6xl leading-tight">
+                    <span className="text-primary">Blueprint</span> Management
+                  </h1>
+                  <p className="text-base text-muted-foreground sm:text-lg lg:text-xl leading-relaxed">
+                    Create and manage reusable contract templates with structured fields
                   </p>
-                  {!searchQuery && selectedFieldTypes.length === 0 && blueprints.length === 0 && (
-                    <p className="text-sm mt-2">Create your first blueprint to get started</p>
-                  )}
-                  {(searchQuery || selectedFieldTypes.length > 0) && (
-                    <div className="mt-4">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          setSelectedFieldTypes([]);
-                          setSearchQuery("");
-                        }}
-                      >
-                        Clear Filters
-                      </Button>
-                    </div>
-                  )}
+                  <p className="text-sm text-muted-foreground/80 sm:text-base lg:text-lg leading-relaxed">
+                    Design templates once and generate consistent contracts from them
+                  </p>
                 </div>
+                <Button
+                  size="lg"
+                  onClick={() => setShowCreateForm(!showCreateForm)}
+                  className="w-full sm:w-auto"
+                >
+                  {showCreateForm ? "Cancel" : "Create Blueprint"}
+                </Button>
+              </div>
+            </section>
+
+            {showCreateForm && (
+              <section className="py-6 sm:py-8">
+                <BlueprintForm
+                  onSubmit={handleCreateBlueprint}
+                  onCancel={() => setShowCreateForm(false)}
+                  submitLabel="Create Blueprint"
+                />
+              </section>
+            )}
+
+            {blueprints.length > 0 && (
+              <section className="py-6 sm:py-8">
+                <Card className="group relative overflow-visible rounded-2xl sm:rounded-3xl border-border/50 bg-gradient-to-br from-background to-muted/30 shadow-lg">
+                  <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-primary/2 to-transparent opacity-100 rounded-2xl sm:rounded-3xl" />
+                  <CardHeader className="relative z-10">
+                    <CardTitle className="text-xl sm:text-2xl">Search & Filter Blueprints</CardTitle>
+                    <CardDescription className="text-sm sm:text-base">
+                      Find blueprints by name or filter by field types
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="relative z-20">
+                    <SearchAndFilter
+                      searchQuery={searchQuery}
+                      onSearchChange={setSearchQuery}
+                      selectedFilters={selectedFieldTypes}
+                      onFilterToggle={(fieldType) => {
+                        setSelectedFieldTypes((prev) =>
+                          prev.includes(fieldType)
+                            ? prev.filter((t) => t !== fieldType)
+                            : [...prev, fieldType]
+                        );
+                      }}
+                      onClearFilters={() => {
+                        setSelectedFieldTypes([]);
+                        setSearchQuery("");
+                      }}
+                      filterOptions={fieldTypeFilterOptions}
+                      searchPlaceholder="Search blueprints..."
+                      filterLabel="Filters"
+                    />
+                  </CardContent>
+                </Card>
+              </section>
+            )}
+
+            {/* Blueprints List Section */}
+            <section className="py-6 sm:py-8">
+              <div className="text-center mb-8 sm:mb-12">
+                <h2 className="text-2xl font-bold tracking-tight sm:text-3xl lg:text-4xl px-2">
+                  {selectedFieldTypes.length === 0
+                    ? "All Blueprints"
+                    : selectedFieldTypes.length === 1
+                    ? `${fieldTypeLabels[selectedFieldTypes[0]]} Blueprints`
+                    : "Filtered Blueprints"}
+                </h2>
+                <p className="mt-3 sm:mt-4 text-base sm:text-lg text-muted-foreground px-2">
+                  {filteredBlueprints.length === 0
+                    ? "No blueprints found"
+                    : `Showing ${filteredBlueprints.length} blueprint${filteredBlueprints.length !== 1 ? "s" : ""}`}
+                </p>
+              </div>
+
+              {filteredBlueprints.length === 0 ? (
+                <Card className="rounded-2xl sm:rounded-3xl border-border/50 bg-gradient-to-br from-background to-muted/30 shadow-lg">
+                  <CardContent className="py-12 text-center">
+                    <p className="text-base sm:text-lg">
+                      {searchQuery || selectedFieldTypes.length > 0
+                        ? "No blueprints match your search or filter criteria."
+                        : "No blueprints found."}
+                    </p>
+                    {!searchQuery && selectedFieldTypes.length === 0 && blueprints.length === 0 && (
+                      <p className="text-sm mt-2 text-muted-foreground">Create your first blueprint to get started</p>
+                    )}
+                    {(searchQuery || selectedFieldTypes.length > 0) && (
+                      <div className="mt-4">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setSelectedFieldTypes([]);
+                            setSearchQuery("");
+                          }}
+                        >
+                          Clear Filters
+                        </Button>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
               ) : (
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                <div className="grid gap-6 sm:gap-8 md:grid-cols-2 lg:grid-cols-3">
                   {filteredBlueprints.map((blueprint) => (
                     <BlueprintCard
                       key={blueprint.id}
@@ -226,8 +248,8 @@ export default function BlueprintManager() {
                   ))}
                 </div>
               )}
-            </CardContent>
-          </Card>
+            </section>
+          </div>
         </div>
       </div>
 

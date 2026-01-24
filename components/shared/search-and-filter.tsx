@@ -63,11 +63,11 @@ export function SearchAndFilter<T extends string>({
           className="pl-10"
         />
       </div>
-      <div className="relative" ref={dropdownRef}>
+      <div className="relative z-50" ref={dropdownRef}>
         <Button
           variant="outline"
           onClick={() => setIsFilterDropdownOpen(!isFilterDropdownOpen)}
-          className="w-full sm:w-auto justify-between"
+          className="w-full sm:w-auto justify-between relative z-10"
         >
           <span className="flex items-center gap-2">
             <Filter className="h-4 w-4" />
@@ -85,18 +85,18 @@ export function SearchAndFilter<T extends string>({
           />
         </Button>
         {isFilterDropdownOpen && (
-          <div className="absolute z-10 w-full sm:w-64 mt-2 bg-white border rounded-md shadow-lg">
+          <div className="absolute z-[100] top-full left-0 right-0 sm:right-auto mt-2 w-full sm:w-64 bg-background border border-border rounded-lg shadow-xl">
             <div className="p-2 space-y-1 max-h-64 overflow-y-auto">
               {filterOptions.map((option) => (
                 <label
                   key={option.value}
-                  className="flex items-center space-x-2 p-2 hover:bg-gray-50 rounded cursor-pointer"
+                  className="flex items-center space-x-2 p-2 hover:bg-muted rounded cursor-pointer transition-colors"
                 >
                   <input
                     type="checkbox"
                     checked={selectedFilters.includes(option.value)}
                     onChange={() => onFilterToggle(option.value)}
-                    className="rounded border-gray-300"
+                    className="rounded border-gray-300 text-primary focus:ring-primary"
                   />
                   <span className="text-sm">{option.label}</span>
                 </label>

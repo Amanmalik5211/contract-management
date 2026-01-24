@@ -88,106 +88,115 @@ export default function ContractStatusPage() {
 
   return (
     <div className="min-h-screen">
-      <div className="mx-auto max-w-[90rem] px-4 sm:px-6 lg:px-4 py-4 sm:py-6 lg:py-8">
-        <div className="mb-8">
-          <Button variant="ghost" onClick={() => router.back()} className="mb-4">
-            ← Back
-          </Button>
-          <h1 className="text-3xl font-bold">
-            Manage Contract Status
-          </h1>
-          <p className="mt-2">{contract.name}</p>
-        </div>
+      <div className="relative overflow-hidden from-primary/5 via-background to-secondary/30">
+        <div className="mx-auto max-w-[90rem] px-4 sm:px-6 lg:px-4 py-4 sm:py-6 lg:py-8">
+          <div className="mb-8 sm:mb-12">
+            <Button variant="ghost" onClick={() => router.back()} className="mb-4 sm:mb-6">
+              ← Back
+            </Button>
+            <section className="space-y-3 sm:space-y-4">
+              <h1 className="text-3xl font-bold tracking-tight xs:text-4xl sm:text-5xl lg:text-6xl leading-tight">
+                Manage Contract <span className="text-primary">Status</span>
+              </h1>
+              <p className="text-base text-muted-foreground sm:text-lg lg:text-xl leading-relaxed">{contract.name}</p>
+            </section>
+          </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Current Status</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="mb-6">
-              <Badge variant={getStatusVariant(contract.status)} className="text-lg px-4 py-2">
-                {getStatusLabel(contract.status)}
-              </Badge>
-            </div>
-
-            {isRevoked && (
-              <div className="rounded-md bg-red-50 p-4 text-sm text-red-800 dark:bg-red-900/20 dark:text-red-300">
-                This contract has been revoked and cannot proceed further.
-              </div>
-            )}
-
-            {isLocked && (
-              <div className="rounded-md bg-green-50 p-4 text-sm text-green-800 dark:bg-green-900/20 dark:text-green-300">
-                This contract is locked and cannot be modified.
-              </div>
-            )}
-
-            {!isRevoked && !isLocked && (
-              <>
+          <section className="py-6 sm:py-8">
+            <Card className="group relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent opacity-100" />
+              <CardHeader className="relative z-10">
+                <CardTitle className="text-xl sm:text-2xl">Current Status</CardTitle>
+              </CardHeader>
+              <CardContent className="relative z-10">
                 <div className="mb-6">
-                  <h3 className="mb-4 text-sm font-medium">
-                    Status Flow
-                  </h3>
-                  <div className="flex items-center gap-2">
-                    {STATUS_FLOW.map((status, index) => {
-                      const isCurrent = contract.status === status;
-                      const isPast = STATUS_FLOW.indexOf(contract.status) > index;
-                      const isNext = nextStatus === status;
+                  <Badge variant={getStatusVariant(contract.status)} className="text-base sm:text-lg px-4 sm:px-6 py-2 sm:py-3">
+                    {getStatusLabel(contract.status)}
+                  </Badge>
+                </div>
 
-                      return (
-                        <div key={status} className="flex items-center">
-                          <div
-                            className={`rounded-md px-3 py-2 text-sm ${
-                              isCurrent
-                                ? "bg-blue-100 text-blue-800 font-medium"
-                                : isPast
-                                ? ""
-                                : ""
-                            }`}
-                          >
-                            {getStatusLabel(status)}
-                          </div>
-                          {index < STATUS_FLOW.length - 1 && (
-                            <ArrowRight className="mx-2 h-4 w-4" />
-                          )}
-                        </div>
-                      );
-                    })}
+                {isRevoked && (
+                  <div className="rounded-xl sm:rounded-2xl bg-red-50 border border-red-200 p-4 sm:p-6 text-sm sm:text-base text-red-800 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800 mb-6">
+                    This contract has been revoked and cannot proceed further.
                   </div>
-                </div>
+                )}
 
-                <div className="space-y-3">
-                  {nextStatus && (
-                    <Button
-                      onClick={() => handleStatusChange(nextStatus)}
-                      className="w-full"
-                    >
-                      Advance to {getStatusLabel(nextStatus)}
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </Button>
-                  )}
+                {isLocked && (
+                  <div className="rounded-xl sm:rounded-2xl bg-green-50 border border-green-200 p-4 sm:p-6 text-sm sm:text-base text-green-800 dark:bg-green-900/20 dark:text-green-300 dark:border-green-800 mb-6">
+                    This contract is locked and cannot be modified.
+                  </div>
+                )}
 
-                  {canRevoke && (
-                    <Button
-                      variant="destructive"
-                      onClick={handleRevoke}
-                      className="w-full"
-                    >
-                      <X className="mr-2 h-4 w-4" />
-                      Revoke Contract
-                    </Button>
-                  )}
+                {!isRevoked && !isLocked && (
+                  <>
+                    <div className="mb-6 sm:mb-8">
+                      <h3 className="mb-4 text-base sm:text-lg font-semibold">
+                        Status Flow
+                      </h3>
+                      <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                        {STATUS_FLOW.map((status, index) => {
+                          const isCurrent = contract.status === status;
+                          const isPast = STATUS_FLOW.indexOf(contract.status) > index;
+                          const isNext = nextStatus === status;
 
-                  {!nextStatus && !canRevoke && (
-                    <p className="text-sm">
-                      No further actions available for this contract.
-                    </p>
-                  )}
-                </div>
-              </>
-            )}
-          </CardContent>
-        </Card>
+                          return (
+                            <div key={status} className="flex items-center">
+                              <div
+                                className={`rounded-xl sm:rounded-2xl px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base font-medium transition-all ${
+                                  isCurrent
+                                    ? "bg-primary/20 text-primary border border-primary/30 shadow-md"
+                                    : isPast
+                                    ? "bg-muted/50 text-muted-foreground border border-border/50"
+                                    : "bg-background text-muted-foreground border border-border/50"
+                                }`}
+                              >
+                                {getStatusLabel(status)}
+                              </div>
+                              {index < STATUS_FLOW.length - 1 && (
+                                <ArrowRight className="mx-2 h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    <div className="space-y-3 sm:space-4">
+                      {nextStatus && (
+                        <Button
+                          size="lg"
+                          onClick={() => handleStatusChange(nextStatus)}
+                          className="w-full"
+                        >
+                          Advance to {getStatusLabel(nextStatus)}
+                          <ArrowRight className="ml-2 h-4 w-4" />
+                        </Button>
+                      )}
+
+                      {canRevoke && (
+                        <Button
+                          variant="destructive"
+                          size="lg"
+                          onClick={handleRevoke}
+                          className="w-full"
+                        >
+                          <X className="mr-2 h-4 w-4" />
+                          Revoke Contract
+                        </Button>
+                      )}
+
+                      {!nextStatus && !canRevoke && (
+                        <p className="text-sm sm:text-base text-muted-foreground">
+                          No further actions available for this contract.
+                        </p>
+                      )}
+                    </div>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+          </section>
+        </div>
       </div>
 
       {/* Revoke Confirmation Dialog */}
