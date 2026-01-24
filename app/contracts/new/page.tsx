@@ -118,7 +118,7 @@ function NewContractForm() {
                     <strong>Name:</strong> {selectedBlueprint.name}
                   </p>
                   {selectedBlueprint.description && (
-                    <p className="mt-1 text-sm break-words overflow-hidden">
+                    <p className="mt-1 text-sm break-words whitespace-pre-wrap">
                       <strong>Description:</strong> {selectedBlueprint.description}
                     </p>
                   )}

@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState, useEffect } from "react";
+import { Suspense, useState, useEffect, useRef } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useStore } from "@/lib/store";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,7 +12,10 @@ import { format } from "date-fns";
 import { Pencil } from "lucide-react";
 import Link from "next/link";
 import type { Field, FieldType } from "@/types/field";
+import type { DocumentSection } from "@/types/blueprint";
 import { generateUUID } from "@/lib/utils";
+import { DocumentRenderer } from "@/components/document-renderer";
+import { capitalizeWords } from "@/lib/utils";
 
 function BlueprintViewPageContent() {
   const params = useParams();
@@ -23,11 +26,13 @@ function BlueprintViewPageContent() {
 
   const isEditMode = searchParams.get("edit") === "true";
 
-  const [formData, setFormData] = useState({
-    name: "",
-    description: "",
-    fields: [] as Field[],
-  });
+  // Initialize form data with blueprint data if available
+  const [formData, setFormData] = useState(() => ({
+    name: blueprint?.name || "",
+    description: blueprint?.description || "",
+    headerImageUrl: blueprint?.headerImageUrl || "",
+    fields: blueprint?.fields || [] as Field[],
+  }));
   const [newField, setNewField] = useState<{
     label: string;
     type: FieldType;
@@ -35,6 +40,7 @@ function BlueprintViewPageContent() {
     label: "",
     type: "text",
   });
+  const initializedRef = useRef(false);
 
   const fieldTypeLabels: Record<FieldType, string> = {
     text: "Text Input",
@@ -43,15 +49,25 @@ function BlueprintViewPageContent() {
     checkbox: "Checkbox",
   };
 
-  // Initialize form data when blueprint loads or edit mode changes
+  // Update form data when blueprint ID changes or entering edit mode (only once per blueprint)
   useEffect(() => {
-    if (blueprint) {
-      setFormData({
-        name: blueprint.name,
-        description: blueprint.description || "",
-        fields: blueprint.fields,
-      });
+    if (blueprint && isEditMode && !initializedRef.current) {
+      initializedRef.current = true;
+      // Use setTimeout to defer state update and avoid synchronous setState in effect
+      const timeoutId = setTimeout(() => {
+        setFormData({
+          name: blueprint.name,
+          description: blueprint.description || "",
+          headerImageUrl: blueprint.headerImageUrl || "",
+          fields: blueprint.fields || [],
+        });
+      }, 0);
+      return () => clearTimeout(timeoutId);
     }
+    if (!isEditMode) {
+      initializedRef.current = false;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [blueprint?.id, isEditMode]);
 
   const handleAddField = () => {
@@ -92,7 +108,9 @@ function BlueprintViewPageContent() {
     updateBlueprint(blueprint.id, {
       name: formData.name,
       description: formData.description,
+      headerImageUrl: formData.headerImageUrl.trim() || undefined,
       fields: formData.fields,
+      sections: blueprint.sections || [],
     });
 
     router.push("/blueprints");
@@ -123,15 +141,11 @@ function BlueprintViewPageContent() {
             <>
               <div className="flex items-center justify-between gap-4">
                 <div className="flex-1 min-w-0">
-                  <h1 className="text-3xl font-bold wrap-break-words">{blueprint.name}</h1>
-                  {blueprint.description && (
-                    <p className="mt-2 text-sm wrap-break-words overflow-hidden">
-                      {blueprint.description}
-                    </p>
-                  )}
-                  <p className="mt-2 text-sm">
-                    Created {format(new Date(blueprint.createdAt), "MMM d, yyyy")}
-                  </p>
+          <h1 className="text-3xl font-bold wrap-break-words">{capitalizeWords(blueprint.name)}</h1>
+        
+          <p className="mt-2 text-sm">
+            Created {format(new Date(blueprint.createdAt), "MMM d, yyyy")}
+          </p>
                 </div>
                 <Button
                   variant="outline"
@@ -148,7 +162,7 @@ function BlueprintViewPageContent() {
             <div>
               <h1 className="text-3xl font-bold wrap-break-words">Edit Blueprint</h1>
               <p className="mt-2 text-sm text-blue-600">
-                Make your changes and click "Update" to save.
+                Make your changes and click Update to save.
               </p>
             </div>
           )}
@@ -156,33 +170,18 @@ function BlueprintViewPageContent() {
 
         {!isEditMode ? (
           <>
-            <Card>
-              <CardHeader>
-                <CardTitle>Blueprint Fields</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {blueprint.fields.length === 0 ? (
-                  <p>No fields defined in this blueprint.</p>
-                ) : (
-                  <div className="space-y-4">
-                    {blueprint.fields.map((field) => (
-                      <div
-                        key={field.id}
-                        className="flex items-center justify-between rounded-md border p-4"
-                      >
-                        <div>
-                          <div className="font-medium">{field.label}</div>
-                          <div className="mt-1 text-sm">
-                            Type: {field.type}
-                          </div>
-                        </div>
-                        <Badge variant="secondary">{field.type}</Badge>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            {/* Document Preview */}
+            <div className="mb-8">
+              <DocumentRenderer
+                title={blueprint.name}
+                description={blueprint.description}
+                headerImageUrl={blueprint.headerImageUrl}
+                sections={blueprint.sections || []}
+                fields={blueprint.fields}
+                fieldValues={{}}
+                isEditable={false}
+              />
+            </div>
 
             <div className="mt-6 flex justify-end">
               <Link href={`/contracts/new?blueprintId=${blueprint.id}`}>
@@ -191,10 +190,10 @@ function BlueprintViewPageContent() {
             </div>
           </>
         ) : (
-          <Card>
-            <CardHeader>
+        <Card>
+          <CardHeader>
               <CardTitle>Edit Blueprint</CardTitle>
-            </CardHeader>
+          </CardHeader>
             <CardContent className="space-y-6">
               {/* Basic Info */}
               <div className="space-y-4">
@@ -217,6 +216,17 @@ function BlueprintViewPageContent() {
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     className="mt-2 flex min-h-[80px] w-full rounded-md border px-3 py-2 text-sm ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 break-words overflow-auto resize-none"
                     rows={3}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="headerImageUrl">Header Image URL (optional)</Label>
+                  <Input
+                    id="headerImageUrl"
+                    type="url"
+                    placeholder="https://example.com/logo.png"
+                    value={formData.headerImageUrl}
+                    onChange={(e) => setFormData({ ...formData, headerImageUrl: e.target.value })}
+                    className="mt-2"
                   />
                 </div>
               </div>
@@ -268,8 +278,8 @@ function BlueprintViewPageContent() {
                     </p>
                     <div className="space-y-2">
                       {formData.fields.map((field) => (
-                        <div
-                          key={field.id}
+                  <div
+                    key={field.id}
                           className="flex items-center justify-between rounded-lg border p-3"
                         >
                           <div className="flex-1">
@@ -283,7 +293,7 @@ function BlueprintViewPageContent() {
                           >
                             Remove
                           </Button>
-                        </div>
+                      </div>
                       ))}
                     </div>
                   </div>
@@ -305,8 +315,8 @@ function BlueprintViewPageContent() {
                   Update
                 </Button>
               </div>
-            </CardContent>
-          </Card>
+          </CardContent>
+        </Card>
         )}
       </div>
     </div>

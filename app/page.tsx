@@ -401,7 +401,7 @@ export default function Dashboard() {
                           <div className="flex-1 min-w-0">
                             <div className="font-medium text-lg break-words">{contract.name}</div>
                             {contract.blueprintDescription && (
-                              <div className="text-sm mt-1 break-words overflow-hidden">
+                              <div className="text-sm mt-1 break-words whitespace-pre-wrap">
                                 {contract.blueprintDescription}
                               </div>
                             )}

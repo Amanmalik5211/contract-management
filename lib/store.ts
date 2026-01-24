@@ -100,6 +100,7 @@ export const useStore = create<AppState>()(
         if (state) {
           state.blueprints = state.blueprints.map((bp: any) => ({
             ...bp,
+            sections: bp.sections || [], // Ensure sections array exists
             createdAt: new Date(bp.createdAt),
             updatedAt: new Date(bp.updatedAt),
           }));

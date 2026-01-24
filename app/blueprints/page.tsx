@@ -24,10 +24,12 @@ export default function BlueprintManager() {
   const [formData, setFormData] = useState<{
     name: string;
     description: string;
+    headerImageUrl: string;
     fields: Field[];
   }>({
     name: "",
     description: "",
+    headerImageUrl: "",
     fields: [],
   });
   const [newField, setNewField] = useState<{
@@ -73,19 +75,21 @@ export default function BlueprintManager() {
         id: `bp-${generateUUID()}`,
         name: formData.name,
         description: formData.description,
+        headerImageUrl: formData.headerImageUrl.trim() || undefined,
         fields: formData.fields,
+        sections: [], // Empty sections by default - will be populated in editor
         createdAt: new Date(),
         updatedAt: new Date(),
       };
 
       addBlueprint(blueprint);
-      setFormData({ name: "", description: "", fields: [] });
+      setFormData({ name: "", description: "", headerImageUrl: "", fields: [] });
       setShowCreateForm(false);
     }
   };
 
   const resetForm = () => {
-    setFormData({ name: "", description: "", fields: [] });
+    setFormData({ name: "", description: "", headerImageUrl: "", fields: [] });
     setNewField({ label: "", type: "text" });
     setShowCreateForm(false);
   };
@@ -224,6 +228,17 @@ export default function BlueprintManager() {
                       onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                       className="mt-2 flex min-h-[80px] w-full rounded-md border px-3 py-2 text-sm ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 break-words overflow-auto resize-none"
                       rows={3}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="headerImageUrl">Header Image URL (optional)</Label>
+                    <Input
+                      id="headerImageUrl"
+                      type="url"
+                      placeholder="https://example.com/logo.png"
+                      value={formData.headerImageUrl}
+                      onChange={(e) => setFormData({ ...formData, headerImageUrl: e.target.value })}
+                      className="mt-2"
                     />
                   </div>
                 </div>
@@ -491,7 +506,7 @@ export default function BlueprintManager() {
                               <div className="flex-1 min-w-0">
                                 <CardTitle className="text-lg break-words">{blueprint.name}</CardTitle>
                                 {blueprint.description && (
-                                  <CardDescription className="mt-1 text-sm text-gray-600 line-clamp-2 break-words overflow-hidden">
+                                  <CardDescription className="mt-1 text-sm text-gray-600 line-clamp-2 break-words whitespace-pre-wrap">
                                     {blueprint.description}
                                   </CardDescription>
                                 )}
