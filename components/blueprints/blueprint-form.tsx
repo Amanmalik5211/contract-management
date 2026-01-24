@@ -58,10 +58,7 @@ export function BlueprintForm({
         id: `field-${generateUUID()}`,
         type: newField.type,
         label: newField.label,
-        position: {
-          x: Math.random() * 800,
-          y: Math.random() * 400,
-        },
+        position: formData.fields.length,
         required: true,
       };
 

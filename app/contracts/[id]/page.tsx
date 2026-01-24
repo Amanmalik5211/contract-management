@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState, useEffect, useCallback } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useStore } from "@/lib/store";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -84,7 +84,7 @@ function ContractViewPageContent() {
     );
   }
 
-  const handleFieldChange = useCallback((fieldId: string, value: string | boolean) => {
+  const handleFieldChange = (fieldId: string, value: string | boolean) => {
     if (!canEdit) return;
 
     setLocalFieldValues((prev) => ({
@@ -92,20 +92,14 @@ function ContractViewPageContent() {
       [fieldId]: value,
     }));
     setHasUnsavedChanges(true);
-  }, [canEdit]);
+  };
 
-  const handleFieldsReorder = useCallback((reorderedFields: Field[]) => {
+  const handleFieldsReorder = (reorderedFields: Field[]) => {
     if (!canEdit) return;
 
-    // Update positions based on new order
-    const updatedFields = reorderedFields.map((field, index) => ({
-      ...field,
-      position: index,
-    }));
-
-    setLocalFields(updatedFields);
+    setLocalFields(reorderedFields);
     setHasUnsavedChanges(true);
-  }, [canEdit]);
+  };
 
   const handleSave = () => {
     if (!canEdit) return;

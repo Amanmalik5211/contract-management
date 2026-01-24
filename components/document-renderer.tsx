@@ -36,6 +36,7 @@ export function DocumentRenderer({
   className = "",
 }: DocumentRendererProps) {
   const [draggedFieldIndex, setDraggedFieldIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   
   // Sort fields by position for consistent ordering
   const orderedFields = [...fields].sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
@@ -57,20 +58,21 @@ export function DocumentRenderer({
       return;
     }
     
-    // Allow drag only if explicitly started from handle (which has draggable=true)
-    
     e.dataTransfer.effectAllowed = "move";
     e.dataTransfer.setData("text/plain", index.toString());
     setDraggedFieldIndex(index);
-    
-    // Create a custom drag image if needed, or let browser handle it
   };
 
-  const handleDragOver = (e: React.DragEvent) => {
+  const handleDragOver = (e: React.DragEvent, dropIndex: number) => {
     if (!isEditable || !onFieldsReorder) return;
     e.preventDefault();
     e.stopPropagation();
     e.dataTransfer.dropEffect = "move";
+    setDragOverIndex(dropIndex);
+  };
+
+  const handleDragLeave = () => {
+    setDragOverIndex(null);
   };
 
   const handleDrop = (e: React.DragEvent, dropIndex: number) => {
@@ -81,6 +83,7 @@ export function DocumentRenderer({
     const dragIndex = draggedFieldIndex ?? parseInt(e.dataTransfer.getData("text/plain") || "-1");
     if (dragIndex === -1 || dragIndex === dropIndex) {
       setDraggedFieldIndex(null);
+      setDragOverIndex(null);
       return;
     }
 
@@ -88,12 +91,20 @@ export function DocumentRenderer({
     const [draggedField] = newFields.splice(dragIndex, 1);
     newFields.splice(dropIndex, 0, draggedField);
 
-    onFieldsReorder(newFields);
+    // Update positions in the reordered fields
+    const updatedFields = newFields.map((field, idx) => ({
+      ...field,
+      position: idx,
+    }));
+
+    onFieldsReorder(updatedFields);
     setDraggedFieldIndex(null);
+    setDragOverIndex(null);
   };
 
   const handleDragEnd = () => {
     setDraggedFieldIndex(null);
+    setDragOverIndex(null);
   };
 
   const renderField = (field: Field) => {
@@ -192,11 +203,11 @@ export function DocumentRenderer({
               <Label className="text-sm font-semibold">
                 {capitalizeWords(field.label)}
               </Label>
-              <div className="px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-md text-sm min-h-[60px] whitespace-pre-wrap break-words">
+              <div className="px-4 py-3 text-sm min-h-[60px] whitespace-pre-wrap break-words">
                 {value ? (
                   (value as string)
                 ) : (
-                  <span className="italic">Not filled</span>
+                  <span className="italic text-muted-foreground">Not filled</span>
                 )}
               </div>
             </div>
@@ -207,13 +218,13 @@ export function DocumentRenderer({
               <Label className="text-sm font-semibold">
                 {capitalizeWords(field.label)}
               </Label>
-              <div className="px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-md text-sm">
+              <div className="px-4 py-3 text-sm">
                 {value ? (
                   value instanceof Date
                     ? format(value, "MMMM d, yyyy")
                     : format(new Date(value as string), "MMMM d, yyyy")
                 ) : (
-                  <span className="italic">Not filled</span>
+                  <span className="italic text-muted-foreground">Not filled</span>
                 )}
               </div>
             </div>
@@ -221,7 +232,7 @@ export function DocumentRenderer({
         case "checkbox":
           return (
             <div key={fieldId} className="flex items-center space-x-3 py-2">
-              <div className="h-5 w-5 rounded border-2 border-gray-300 dark:border-gray-700 flex items-center justify-center flex-shrink-0">
+              <div className="h-5 w-5 rounded flex items-center justify-center flex-shrink-0">
                 {(value as boolean) ? (
                   <span className="text-lg">✓</span>
                 ) : null}
@@ -237,11 +248,11 @@ export function DocumentRenderer({
               <Label className="text-sm font-semibold">
                 {capitalizeWords(field.label)}
               </Label>
-              <div className="flex h-32 items-center justify-center rounded-md border-2 border-dashed border-gray-300 dark:border-gray-700">
+              <div className="flex h-32 items-center justify-center">
                 {value ? (
                   <div className="text-sm font-medium">✓ Signature captured</div>
                 ) : (
-                  <div className="text-sm">No signature</div>
+                  <div className="text-sm text-muted-foreground">No signature</div>
                 )}
               </div>
             </div>
@@ -254,15 +265,17 @@ export function DocumentRenderer({
 
   const renderDraggableField = (field: Field, index: number) => {
     const isDragging = draggedFieldIndex === index;
-    const isDragOver = draggedFieldIndex !== null && draggedFieldIndex !== index;
+    const isDragOver = dragOverIndex === index && draggedFieldIndex !== null && draggedFieldIndex !== index;
     
     return (
       <div
         key={field.id}
         draggable={isEditable && !!onFieldsReorder}
         onDragStart={(e) => handleDragStart(e, index)}
-        onDragOver={handleDragOver}
+        onDragOver={(e) => handleDragOver(e, index)}
+        onDragLeave={handleDragLeave}
         onDrop={(e) => handleDrop(e, index)}
+        onDragEnd={handleDragEnd}
         className={`relative group ${
           isEditable && onFieldsReorder ? "cursor-move" : ""
         } ${
@@ -283,9 +296,9 @@ export function DocumentRenderer({
           </div>
         )}
         <div
-          className={`border border-gray-200 dark:border-gray-700 rounded-lg p-4 ${
+          className={`${
             isEditable && onFieldsReorder
-              ? "hover:border-blue-300 dark:hover:border-blue-600"
+              ? "border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:border-blue-300 dark:hover:border-blue-600"
               : ""
           } transition-colors`}
         >

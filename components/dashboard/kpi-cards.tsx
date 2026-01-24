@@ -4,10 +4,24 @@ import { Card, CardContent } from "@/components/ui/card";
 import { FileText, Activity, Clock, Layers, TrendingUp, TrendingDown } from "lucide-react";
 import type { Contract } from "@/types/contract";
 import type { Blueprint } from "@/types/blueprint";
+import type { LucideIcon } from "lucide-react";
 
 interface KPICardsProps {
   contracts: Contract[];
   blueprints: Blueprint[];
+}
+
+interface KPIData {
+  title: string;
+  value: number;
+  change: number | null;
+  icon: LucideIcon;
+  color: string;
+  bgGradient: string;
+  iconBg: string;
+  iconColor: string;
+  valueColor: string;
+  isCritical: boolean;
 }
 
 export function KPICards({ contracts, blueprints }: KPICardsProps) {
@@ -103,7 +117,7 @@ export function KPICards({ contracts, blueprints }: KPICardsProps) {
   
   const blueprintsChange = getPercentageChange(blueprintsLastMonth, blueprintsPreviousMonth);
 
-  const kpiData = [
+  const kpiData: KPIData[] = [
     {
       title: "Total Contracts",
       value: totalContracts,
@@ -114,6 +128,7 @@ export function KPICards({ contracts, blueprints }: KPICardsProps) {
       iconBg: "from-blue-500/20 to-blue-500/10",
       iconColor: "text-blue-600",
       valueColor: "text-blue-600",
+      isCritical: false,
     },
     {
       title: "Active Contracts",
@@ -125,6 +140,7 @@ export function KPICards({ contracts, blueprints }: KPICardsProps) {
       iconBg: "from-green-500/20 to-green-500/10",
       iconColor: "text-green-600",
       valueColor: "text-green-600",
+      isCritical: false,
     },
     {
       title: "Pending Approval",
@@ -136,6 +152,7 @@ export function KPICards({ contracts, blueprints }: KPICardsProps) {
       iconBg: "from-yellow-500/20 to-yellow-500/10",
       iconColor: "text-yellow-600",
       valueColor: "text-yellow-600",
+      isCritical: pendingApproval > 10,
     },
     {
       title: "Total Blueprints",
@@ -147,6 +164,7 @@ export function KPICards({ contracts, blueprints }: KPICardsProps) {
       iconBg: "from-purple-500/20 to-purple-500/10",
       iconColor: "text-purple-600",
       valueColor: "text-purple-600",
+      isCritical: false,
     },
   ];
 

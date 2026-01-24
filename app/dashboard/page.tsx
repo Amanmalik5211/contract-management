@@ -13,7 +13,7 @@ import { ContractsListSection } from "@/components/dashboard/contracts-list-sect
 import { DeleteConfirmationDialog } from "@/components/shared/delete-confirmation-dialog";
 
 export default function Dashboard() {
-  const { contracts, blueprints, deleteContract, deleteBlueprint } = useStore();
+  const { contracts, blueprints, deleteContract, deleteBlueprint, updateContractStatus } = useStore();
   const router = useRouter();
   const { addToast } = useToast();
   const [viewType, setViewType] = useState<"contract" | "blueprint">("contract");
@@ -102,6 +102,25 @@ export default function Dashboard() {
     label: fieldTypeLabels[type],
   }));
 
+  const handleView = (id: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (viewType === "contract") {
+      router.push(`/contracts/${id}`);
+    } else {
+      router.push(`/blueprints/${id}`);
+    }
+  };
+
+  const handleStatusChange = (contractId: string, newStatus: ContractStatus) => {
+    updateContractStatus(contractId, newStatus);
+    addToast({
+      title: "Status Updated",
+      description: `Contract status changed to "${getStatusLabel(newStatus)}".`,
+      variant: "success",
+    });
+  };
+
   const handleEdit = (id: string, e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -167,9 +186,11 @@ export default function Dashboard() {
             selectedStatuses={selectedStatuses}
             selectedFieldTypes={selectedFieldTypes}
             searchQuery={searchQuery}
-            searchPlaceholder={viewType === "contract" ? "Search contracts..." : "Search blueprints..."}
+            searchPlaceholder="Search"
             filterOptions={viewType === "contract" ? statusFilterOptions : fieldTypeFilterOptions}
             fieldTypeLabels={fieldTypeLabels}
+            onView={handleView}
+            onStatusChange={viewType === "contract" ? handleStatusChange : undefined}
             onEdit={handleEdit}
             onDelete={handleDelete}
             onSearchChange={setSearchQuery}

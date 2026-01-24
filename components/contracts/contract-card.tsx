@@ -5,7 +5,7 @@ import { format } from "date-fns";
 import { Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { getStatusLabel } from "@/lib/contract-utils";
 import type { Contract } from "@/types/contract";
 
@@ -24,19 +24,6 @@ export function ContractCard({
   onEdit,
   onDelete,
 }: ContractCardProps) {
-  const filledFieldsCount = contract.fields.filter((field) => {
-    const value = contract.fieldValues[field.id];
-    if (value === null || value === undefined) return false;
-
-    if (field.type === "text" || field.type === "date" || field.type === "signature") {
-      return String(value).trim() !== "";
-    }
-    if (field.type === "checkbox") {
-      return value === true;
-    }
-    return false;
-  }).length;
-
   const getStatusVariant = (status: string) => {
     if (status === "signed" || status === "locked") return "success";
     if (status === "revoked") return "destructive";
@@ -66,30 +53,32 @@ export function ContractCard({
             {getStatusLabel(contract.status)}
           </Badge>
         </div>
-        <div className="absolute bottom-4 right-4 flex items-center gap-2 z-0">
-          {canEdit && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 w-8 p-0 hover:bg-primary/10"
-              onClick={(e) => onEdit(contract.id, e)}
-              title="Edit contract"
-            >
-              <Pencil className="h-4 w-4" />
-            </Button>
-          )}
-          {canDelete && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
-              onClick={(e) => onDelete(contract.id, contract.name, e)}
-              title="Delete contract"
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          )}
-        </div>
+        {(canEdit || canDelete) && (
+          <div className="absolute bottom-4 right-4 flex items-center gap-2 z-0">
+            {canEdit && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 p-0 hover:bg-primary/10"
+                onClick={(e) => onEdit(contract.id, e)}
+                title="Edit contract"
+              >
+                <Pencil className="h-4 w-4" />
+              </Button>
+            )}
+            {canDelete && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                onClick={(e) => onDelete(contract.id, contract.name, e)}
+                title="Delete contract"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
+        )}
       </div>
     </Card>
   );
