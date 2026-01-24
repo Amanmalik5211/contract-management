@@ -36,25 +36,25 @@ const Toast: React.FC<ToastProps> = ({
   return (
     <div
       className={cn(
-        "relative flex w-full items-center justify-between space-x-4 overflow-hidden rounded-md border p-4 pr-8 shadow-lg transition-all",
+        "relative flex w-full items-center justify-between space-x-2 sm:space-x-4 overflow-hidden rounded-md border p-2 sm:p-4 pr-6 sm:pr-8 shadow-lg transition-all",
         variantStyles[variant]
       )}
     >
-      <div className="flex-1">
+      <div className="flex-1 min-w-0">
         {title && (
-          <div className={cn("text-sm font-semibold", iconColors[variant])}>
+          <div className={cn("text-xs sm:text-sm font-semibold", iconColors[variant])}>
             {title}
           </div>
         )}
         {description && (
-          <div className="text-sm text-gray-600 mt-1">{description}</div>
+          <div className="text-xs sm:text-sm text-gray-600 mt-1">{description}</div>
         )}
       </div>
       <button
         onClick={onClose}
-        className="absolute right-2 top-2 rounded-md p-1 text-gray-400 hover:text-gray-600 focus:outline-none"
+        className="absolute right-1.5 sm:right-2 top-1.5 sm:top-2 rounded-md p-1 text-gray-400 hover:text-gray-600 focus:outline-none shrink-0"
       >
-        <X className="h-4 w-4" />
+        <X className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
       </button>
     </div>
   );
