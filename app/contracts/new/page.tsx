@@ -70,7 +70,7 @@ function NewContractForm() {
 
   return (
     <div className="min-h-screen">
-      <div className="mx-auto max-w-2xl px-0 py-8">
+      <div className="mx-auto max-w-[90rem] px-4 sm:px-6 lg:px-4 py-4 sm:py-6 lg:py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold">Create Contract</h1>
           <p className="mt-2">

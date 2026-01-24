@@ -119,7 +119,7 @@ export default function BlueprintManager() {
 
   return (
     <div className="min-h-screen">
-      <div className="mx-auto max-w-7xl px-0 py-8">
+      <div className="mx-auto max-w-[90rem] px-4 sm:px-6 lg:px-4 py-4 sm:py-6 lg:py-8">
         <div className="space-y-6">
           {/* Header */}
           <div className="flex items-center justify-between">

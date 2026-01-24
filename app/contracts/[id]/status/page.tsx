@@ -88,7 +88,7 @@ export default function ContractStatusPage() {
 
   return (
     <div className="min-h-screen">
-      <div className="mx-auto max-w-2xl px-0 py-8">
+      <div className="mx-auto max-w-[90rem] px-4 sm:px-6 lg:px-4 py-4 sm:py-6 lg:py-8">
         <div className="mb-8">
           <Button variant="ghost" onClick={() => router.back()} className="mb-4">
             ← Back
