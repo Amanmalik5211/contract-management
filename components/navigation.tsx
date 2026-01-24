@@ -58,7 +58,7 @@ export function Navigation() {
   }, [pathname]);
 
   return (
-    <nav className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <nav className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 relative">
       <div className="mx-auto max-w-[90rem] px-4 sm:px-6 lg:px-4">
         <div className="flex h-16 items-center justify-between">
           {/* Logo and App Name - Always visible */}
@@ -147,7 +147,7 @@ export function Navigation() {
         {isMobileMenuOpen && (
           <div
             ref={mobileMenuRef}
-            className="lg:hidden border-t bg-background"
+            className="lg:hidden absolute top-full left-0 right-0 border-t bg-background shadow-lg z-50"
           >
             <div className="py-2 space-y-1">
               {navItems.map((item) => {
