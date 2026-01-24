@@ -117,7 +117,7 @@ export function DocumentRenderer({
         case "text":
           return (
             <div key={fieldId} className="space-y-2">
-              <Label htmlFor={fieldId} className="text-sm font-semibold">
+              <Label htmlFor={fieldId} className="text-sm font-semibold break-words overflow-wrap-anywhere">
                 {capitalizeWords(field.label)}
                 {field.required && <span className="ml-1">*</span>}
               </Label>
@@ -125,7 +125,7 @@ export function DocumentRenderer({
                 id={fieldId}
                 value={(value as string) || ""}
                 onChange={(e) => onFieldChange(fieldId, e.target.value)}
-                className="w-full min-h-[100px] rounded-md border border-gray-300 dark:border-gray-700 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent resize-y"
+                className="w-full min-h-[100px] rounded-md border border-gray-300 dark:border-gray-700 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent resize-y break-words overflow-wrap-anywhere"
                 rows={4}
                 placeholder="Enter text..."
               />
@@ -135,7 +135,7 @@ export function DocumentRenderer({
         case "date":
           return (
             <div key={fieldId} className="space-y-2">
-              <Label htmlFor={fieldId} className="text-sm font-semibold">
+              <Label htmlFor={fieldId} className="text-sm font-semibold break-words overflow-wrap-anywhere">
                 {capitalizeWords(field.label)}
                 {field.required && <span className="ml-1">*</span>}
               </Label>
@@ -160,9 +160,9 @@ export function DocumentRenderer({
                 id={fieldId}
                 checked={(value as boolean) || false}
                 onChange={(e) => onFieldChange(fieldId, e.target.checked)}
-                className="mt-1 h-4 w-4 rounded border-gray-300 dark:border-gray-700 focus:ring-blue-500 dark:focus:ring-blue-400"
+                className="mt-1 h-4 w-4 rounded border-gray-300 dark:border-gray-700 focus:ring-blue-500 dark:focus:ring-blue-400 shrink-0"
               />
-              <Label htmlFor={fieldId} className="text-sm font-semibold cursor-pointer">
+              <Label htmlFor={fieldId} className="text-sm font-semibold cursor-pointer break-words overflow-wrap-anywhere">
                 {capitalizeWords(field.label)}
                 {field.required && <span className="ml-1">*</span>}
               </Label>
@@ -171,7 +171,7 @@ export function DocumentRenderer({
         case "signature":
           return (
             <div key={fieldId} className="space-y-2">
-              <Label className="text-sm font-semibold">
+              <Label className="text-sm font-semibold break-words overflow-wrap-anywhere">
                 {capitalizeWords(field.label)}
                 {field.required && <span className="ml-1">*</span>}
               </Label>
@@ -200,10 +200,10 @@ export function DocumentRenderer({
         case "text":
           return (
             <div key={fieldId} className="space-y-2">
-              <Label className="text-sm font-semibold">
+              <Label className="text-sm font-semibold break-words overflow-wrap-anywhere">
                 {capitalizeWords(field.label)}
               </Label>
-              <div className="px-4 py-3 text-sm min-h-[60px] whitespace-pre-wrap break-words">
+              <div className="px-4 py-3 text-sm min-h-[60px] whitespace-pre-wrap break-words overflow-wrap-anywhere">
                 {value ? (
                   (value as string)
                 ) : (
@@ -215,10 +215,10 @@ export function DocumentRenderer({
         case "date":
           return (
             <div key={fieldId} className="space-y-2">
-              <Label className="text-sm font-semibold">
+              <Label className="text-sm font-semibold break-words overflow-wrap-anywhere">
                 {capitalizeWords(field.label)}
               </Label>
-              <div className="px-4 py-3 text-sm">
+              <div className="px-4 py-3 text-sm break-words overflow-wrap-anywhere">
                 {value ? (
                   value instanceof Date
                     ? format(value, "MMMM d, yyyy")
@@ -237,7 +237,7 @@ export function DocumentRenderer({
                   <span className="text-lg">✓</span>
                 ) : null}
               </div>
-              <Label className="text-sm font-semibold">
+              <Label className="text-sm font-semibold break-words overflow-wrap-anywhere">
                 {capitalizeWords(field.label)}
               </Label>
             </div>
@@ -245,7 +245,7 @@ export function DocumentRenderer({
         case "signature":
           return (
             <div key={fieldId} className="space-y-2">
-              <Label className="text-sm font-semibold">
+              <Label className="text-sm font-semibold break-words overflow-wrap-anywhere">
                 {capitalizeWords(field.label)}
               </Label>
               <div className="flex h-32 items-center justify-center">
@@ -313,11 +313,11 @@ export function DocumentRenderer({
       case "section":
         return (
           <div key={section.id} className="mt-10 mb-8">
-            <h2 className="text-2xl font-bold border-b-2 border-gray-300 dark:border-gray-700 pb-3 tracking-tight">
+            <h2 className="text-2xl font-bold border-b-2 border-gray-300 dark:border-gray-700 pb-3 tracking-tight break-words overflow-wrap-anywhere">
               {section.title ? capitalizeWords(section.title) : "Section"}
             </h2>
             {section.content && (
-              <p className="mt-4 leading-relaxed whitespace-pre-wrap break-words text-base">
+              <p className="mt-4 leading-relaxed whitespace-pre-wrap break-words overflow-wrap-anywhere text-base">
                 {section.content}
               </p>
             )}
@@ -327,12 +327,12 @@ export function DocumentRenderer({
         return (
           <div key={section.id} className="my-6">
             {section.title && (
-              <h3 className="text-lg font-semibold mb-3 tracking-tight">
+              <h3 className="text-lg font-semibold mb-3 tracking-tight break-words overflow-wrap-anywhere">
                 {capitalizeWords(section.title)}
               </h3>
             )}
             {section.content && (
-              <p className="leading-relaxed whitespace-pre-wrap break-words text-base">
+              <p className="leading-relaxed whitespace-pre-wrap break-words overflow-wrap-anywhere text-base">
                 {section.content}
               </p>
             )}
@@ -389,7 +389,7 @@ export function DocumentRenderer({
       
       {/* Document Container */}
       <div 
-        className="relative max-w-4xl mx-auto px-10 py-14 border border-gray-100 dark:border-gray-800   shadow-2xl"
+        className="relative max-w-4xl mx-auto px-10 py-14 border border-gray-100 dark:border-gray-800 shadow-2xl overflow-hidden"
         style={{ 
           minHeight: "11in",
         }}
@@ -397,7 +397,7 @@ export function DocumentRenderer({
         
           {/* Document Title */}
           <div className="text-center mb-8 border-b-2 border-gray-300 dark:border-gray-700 pb-6">
-            <h1 className="text-4xl font-bold mb-3 tracking-tight">
+            <h1 className="text-4xl font-bold mb-3 tracking-tight break-words overflow-wrap-anywhere">
               {capitalizeWords(title)}
             </h1>
           </div>
@@ -418,7 +418,7 @@ export function DocumentRenderer({
           {/* Description */}
           {description && (
             <div className="mb-12 text-center">
-              <p className="text-lg max-w-3xl mx-auto leading-relaxed break-words whitespace-pre-wrap">
+              <p className="text-lg max-w-3xl mx-auto leading-relaxed break-words whitespace-pre-wrap overflow-wrap-anywhere">
                 {description}
               </p>
             </div>
