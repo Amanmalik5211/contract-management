@@ -37,9 +37,9 @@ export default function RootLayout({
         <ThemeProvider>
           <ToasterProvider>
             <div className="min-h-screen bg-background">
-              <Navigation />
+            <Navigation />
               <main className="page-transition">
-                {children}
+            {children}
               </main>
             </div>
           </ToasterProvider>
