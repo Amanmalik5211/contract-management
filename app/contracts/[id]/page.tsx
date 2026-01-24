@@ -1,24 +1,45 @@
 "use client";
 
-import { Suspense, useState, useEffect } from "react";
+import { Suspense, useState, useEffect, useCallback } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useStore } from "@/lib/store";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { getStatusLabel } from "@/lib/contract-utils";
+import {
+  canTransitionTo,
+  getNextStatus,
+  getStatusLabel,
+} from "@/lib/contract-utils";
 import { format } from "date-fns";
-import { Pencil } from "lucide-react";
+import { Pencil, ArrowRight, X } from "lucide-react";
 import type { Field } from "@/types/field";
+import type { ContractStatus } from "@/types/contract";
 import { DocumentRenderer } from "@/components/document-renderer";
 import { capitalizeWords } from "@/lib/utils";
 import { useToast } from "@/components/ui/toaster";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+
+const STATUS_FLOW: ContractStatus[] = [
+  "created",
+  "approved",
+  "sent",
+  "signed",
+  "locked",
+];
 
 function ContractViewPageContent() {
   const params = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { getContract, updateContract, getBlueprint } = useStore();
+  const { getContract, updateContract, getBlueprint, updateContractStatus } = useStore();
   const { addToast } = useToast();
   const contract = getContract(params.id as string);
   const blueprint = contract ? getBlueprint(contract.blueprintId) : undefined;
@@ -27,6 +48,8 @@ function ContractViewPageContent() {
   const [localFieldValues, setLocalFieldValues] = useState(contract?.fieldValues || {});
   const [localFields, setLocalFields] = useState(contract?.fields || []);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [statusModalOpen, setStatusModalOpen] = useState(false);
+  const [revokeDialogOpen, setRevokeDialogOpen] = useState(false);
 
   const isEditMode = searchParams.get("edit") === "true";
   const isCreated = contract?.status === "created";
@@ -61,7 +84,7 @@ function ContractViewPageContent() {
     );
   }
 
-  const handleFieldChange = (fieldId: string, value: string | boolean) => {
+  const handleFieldChange = useCallback((fieldId: string, value: string | boolean) => {
     if (!canEdit) return;
 
     setLocalFieldValues((prev) => ({
@@ -69,14 +92,20 @@ function ContractViewPageContent() {
       [fieldId]: value,
     }));
     setHasUnsavedChanges(true);
-  };
+  }, [canEdit]);
 
-  const handleFieldsReorder = (reorderedFields: Field[]) => {
+  const handleFieldsReorder = useCallback((reorderedFields: Field[]) => {
     if (!canEdit) return;
 
-    setLocalFields(reorderedFields);
+    // Update positions based on new order
+    const updatedFields = reorderedFields.map((field, index) => ({
+      ...field,
+      position: index,
+    }));
+
+    setLocalFields(updatedFields);
     setHasUnsavedChanges(true);
-  };
+  }, [canEdit]);
 
   const handleSave = () => {
     if (!canEdit) return;
@@ -91,7 +120,7 @@ function ContractViewPageContent() {
       description: `"${contract.name}" has been updated successfully.`,
       variant: "success",
     });
-    router.push("/");
+    router.push("/dashboard");
   };
 
   const getStatusVariant = (status: string) => {
@@ -101,14 +130,46 @@ function ContractViewPageContent() {
     return "default";
   };
 
+  // Status management handlers
+  const handleStatusChange = (newStatus: ContractStatus) => {
+    if (!contract) return;
+    if (canTransitionTo(contract.status, newStatus)) {
+      updateContractStatus(contract.id, newStatus);
+      addToast({
+        title: "Status Updated",
+        description: `Contract status changed to "${getStatusLabel(newStatus)}".`,
+        variant: "success",
+      });
+      setStatusModalOpen(false);
+    }
+  };
+
+  const handleRevoke = () => {
+    if (!contract) return;
+    if (contract.status === "created" || contract.status === "sent") {
+      setRevokeDialogOpen(true);
+    }
+  };
+
+  const confirmRevoke = () => {
+    if (!contract) return;
+    if (contract.status === "created" || contract.status === "sent") {
+      updateContractStatus(contract.id, "revoked");
+      addToast({
+        title: "Contract Revoked",
+        description: "Contract has been revoked successfully.",
+        variant: "warning",
+      });
+      setRevokeDialogOpen(false);
+      setStatusModalOpen(false);
+    }
+  };
+
   return (
     <div className="min-h-screen">
       <div className="relative overflow-hidden from-primary/5 via-background to-secondary/30">
         <div className="mx-auto max-w-[90rem] px-4 sm:px-6 lg:px-4 py-4 sm:py-6 lg:py-8">
           <div className="mb-8 sm:mb-12">
-            <Button variant="ghost" onClick={() => router.back()} className="mb-4 sm:mb-6">
-              ← Back
-            </Button>
             <section className="space-y-4 sm:space-y-6">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div className="flex-1 min-w-0 space-y-3 sm:space-y-4">
@@ -119,9 +180,22 @@ function ContractViewPageContent() {
                     Blueprint: {contract.blueprintName}
                   </p>
                 </div>
-                <Badge variant={getStatusVariant(contract.status)} className="flex-shrink-0 text-sm sm:text-base px-4 py-2">
-                  {getStatusLabel(contract.status)}
-                </Badge>
+                <div className="flex items-center gap-3">
+                  {!canEdit && isCreated && (
+                    <Button
+                      variant="outline"
+                      size="lg"
+                      onClick={() => router.push(`/contracts/${contract.id}?edit=true`)}
+                      className="flex items-center gap-2 flex-shrink-0"
+                    >
+                      <Pencil className="h-4 w-4" />
+                      Edit
+                    </Button>
+                  )}
+                  <Badge variant={getStatusVariant(contract.status)} className="flex-shrink-0 text-sm sm:text-base px-4 py-2">
+                    {getStatusLabel(contract.status)}
+                  </Badge>
+                </div>
               </div>
             </section>
           </div>
@@ -129,14 +203,14 @@ function ContractViewPageContent() {
           {/* Edit Mode Info */}
           {canEdit && (
             <section className="py-6 sm:py-8 mb-6 sm:mb-8">
-              <Card className="group relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent opacity-100" />
+              <Card className="group relative overflow-hidden border-gray-400 dark:border-gray-700">
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent opacity-100 dark:from-primary/20 dark:via-primary/10" />
                 <CardHeader className="relative z-10">
                   <CardTitle className="text-xl sm:text-2xl">Edit Contract</CardTitle>
-                  <p className="text-sm sm:text-base text-primary break-words mt-2 leading-relaxed">
+                  <p className="text-sm sm:text-base break-words mt-2 leading-relaxed">
                     You are in edit mode. Click Update to save your changes.
                     {hasUnsavedChanges && (
-                      <span className="ml-2 text-orange-600 font-medium">• Unsaved changes</span>
+                      <span className="ml-2 font-medium">• Unsaved changes</span>
                     )}
                   </p>
                 </CardHeader>
@@ -145,19 +219,19 @@ function ContractViewPageContent() {
           )}
           {!canEdit && !isCreated && (
             <section className="py-6 sm:py-8 mb-6 sm:mb-8">
-              <Card className="group relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-primary/2 to-transparent opacity-100" />
+              <Card className="group relative overflow-hidden border-gray-300 dark:border-gray-700">
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-primary/2 to-transparent opacity-100 dark:from-primary/10 dark:via-primary/5" />
                 <CardHeader className="relative z-10">
-                  <p className="text-sm sm:text-base text-muted-foreground break-words leading-relaxed">
+                  <p className="text-sm sm:text-base break-words leading-relaxed">
                     This contract is in read-only mode. Editing is only available for contracts in Created status.
                   </p>
                   {isLocked && (
-                    <p className="text-sm sm:text-base break-words mt-2 text-muted-foreground">
+                    <p className="text-sm sm:text-base break-words mt-2">
                       This contract is locked and cannot be edited.
                     </p>
                   )}
                   {isRevoked && (
-                    <p className="text-sm sm:text-base text-red-600 break-words mt-2">
+                    <p className="text-sm sm:text-base break-words mt-2">
                       This contract has been revoked.
                     </p>
                   )}
@@ -168,24 +242,22 @@ function ContractViewPageContent() {
 
           {/* Document Renderer */}
           <section className="py-6 sm:py-8 mb-8">
-            <div className="rounded-2xl sm:rounded-3xl border border-border/50 bg-gradient-to-br from-background to-muted/30 shadow-lg overflow-hidden">
-              <DocumentRenderer
-            title={contract.name}
-            description={contract.blueprintDescription || blueprint?.description}
-            headerImageUrl={blueprint?.headerImageUrl}
-            sections={blueprint?.sections || []}
-            fields={canEdit ? localFields : contract.fields}
-            fieldValues={canEdit ? localFieldValues : contract.fieldValues}
-            isEditable={canEdit}
-            onFieldChange={canEdit ? handleFieldChange : undefined}
-                onFieldsReorder={canEdit ? handleFieldsReorder : undefined}
-              />
-            </div>
+            <DocumentRenderer
+              title={contract.name}
+              description={contract.blueprintDescription || blueprint?.description}
+              headerImageUrl={blueprint?.headerImageUrl}
+              sections={blueprint?.sections || []}
+              fields={canEdit ? localFields : contract.fields}
+              fieldValues={canEdit ? localFieldValues : contract.fieldValues}
+              isEditable={canEdit}
+              onFieldChange={canEdit ? handleFieldChange : undefined}
+              onFieldsReorder={canEdit ? handleFieldsReorder : undefined}
+            />
           </section>
 
           <section className="py-6 sm:py-8">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-              <div className="text-sm sm:text-base text-muted-foreground break-words">
+              <div className="text-sm sm:text-base break-words">
                 Created: {format(new Date(contract.createdAt), "MMM d, yyyy")}
               </div>
               <div className="flex gap-2 sm:gap-3">
@@ -214,32 +286,153 @@ function ContractViewPageContent() {
                     </Button>
                   </>
                 ) : (
-                  <>
-                    {isCreated && (
-                      <Button
-                        variant="outline"
-                        size="lg"
-                        onClick={() => router.push(`/contracts/${contract.id}?edit=true`)}
-                        className="flex items-center gap-2"
-                      >
-                        <Pencil className="h-4 w-4" />
-                        Edit
-                      </Button>
-                    )}
-                    <Button
-                      size="lg"
-                      onClick={() => router.push(`/contracts/${contract.id}/status`)}
-                      className="flex-shrink-0"
-                    >
-                      Manage Status
-                    </Button>
-                  </>
+                  <Button
+                    size="lg"
+                    onClick={() => setStatusModalOpen(true)}
+                    className="flex-shrink-0"
+                  >
+                    Manage Status
+                  </Button>
                 )}
               </div>
             </div>
           </section>
         </div>
       </div>
+
+      {/* Status Management Modal */}
+      {contract && (() => {
+        const modalNextStatus = getNextStatus(contract.status);
+        const modalCanRevoke = contract.status === "created" || contract.status === "sent";
+        const modalIsRevoked = contract.status === "revoked";
+        const modalIsLocked = contract.status === "locked";
+        
+        return (
+          <Dialog open={statusModalOpen} onOpenChange={setStatusModalOpen}>
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle className="text-2xl">Manage Contract Status</DialogTitle>
+                <DialogDescription className="text-base">
+                  {contract.name}
+                </DialogDescription>
+              </DialogHeader>
+              
+              <div className="space-y-6 py-4">
+                <div>
+                  <h3 className="mb-3 text-lg font-semibold">Current Status</h3>
+                  <Badge variant={getStatusVariant(contract.status)} className="text-base px-4 py-2">
+                    {getStatusLabel(contract.status)}
+                  </Badge>
+                </div>
+
+                {modalIsRevoked && (
+                  <div className="rounded-xl bg-red-50 border border-red-200 p-4 text-base text-red-800 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800">
+                    This contract has been revoked and cannot proceed further.
+                  </div>
+                )}
+
+                {modalIsLocked && (
+                  <div className="rounded-xl bg-green-50 border border-green-200 p-4 text-base text-green-800 dark:bg-green-900/20 dark:text-green-300 dark:border-green-800">
+                    This contract is locked and cannot be modified.
+                  </div>
+                )}
+
+                {!modalIsRevoked && !modalIsLocked && (
+                  <>
+                    <div>
+                      <h3 className="mb-4 text-lg font-semibold">Status Flow</h3>
+                      <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                        {STATUS_FLOW.map((status, index) => {
+                          const isCurrent = contract.status === status;
+                          const isPast = STATUS_FLOW.indexOf(contract.status) > index;
+
+                          return (
+                            <div key={status} className="flex items-center">
+                              <div
+                                className={`rounded-xl px-4 py-2.5 text-base font-medium transition-all ${
+                                  isCurrent
+                                    ? "bg-primary/20 text-primary border border-primary/30 shadow-md"
+                                    : isPast
+                                    ? "bg-muted/50 text-muted-foreground border border-border/50"
+                                    : "bg-background text-muted-foreground border border-border/50"
+                                }`}
+                              >
+                                {getStatusLabel(status)}
+                              </div>
+                              {index < STATUS_FLOW.length - 1 && (
+                                <ArrowRight className="mx-2 h-5 w-5 text-muted-foreground" />
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    <div className="space-y-3">
+                      {modalNextStatus && (
+                        <Button
+                          size="lg"
+                          onClick={() => handleStatusChange(modalNextStatus)}
+                          className="w-full"
+                        >
+                          Advance to {getStatusLabel(modalNextStatus)}
+                          <ArrowRight className="ml-2 h-4 w-4" />
+                        </Button>
+                      )}
+
+                      {modalCanRevoke && (
+                        <Button
+                          variant="destructive"
+                          size="lg"
+                          onClick={handleRevoke}
+                          className="w-full"
+                        >
+                          <X className="mr-2 h-4 w-4" />
+                          Revoke Contract
+                        </Button>
+                      )}
+
+                      {!modalNextStatus && !modalCanRevoke && (
+                        <p className="text-base text-muted-foreground">
+                          No further actions available for this contract.
+                        </p>
+                      )}
+                    </div>
+                  </>
+                )}
+              </div>
+            </DialogContent>
+          </Dialog>
+        );
+      })()}
+
+      {/* Revoke Confirmation Dialog */}
+      {contract && (
+        <Dialog open={revokeDialogOpen} onOpenChange={setRevokeDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Revoke Contract</DialogTitle>
+              <DialogDescription>
+                Are you sure you want to revoke &quot;{contract.name}&quot;? This action will mark the contract as revoked and it cannot proceed further. This action cannot be undone.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setRevokeDialogOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={confirmRevoke}
+              >
+                Revoke Contract
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }

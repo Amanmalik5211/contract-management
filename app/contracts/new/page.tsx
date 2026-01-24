@@ -53,7 +53,10 @@ function NewContractForm() {
       blueprintName: selectedBlueprint.name,
       blueprintDescription: selectedBlueprint.description,
       status: "created" as const,
-      fields: selectedBlueprint.fields,
+      fields: selectedBlueprint.fields.map((f, index) => ({
+        ...f,
+        position: index,
+      })),
       fieldValues: {},
       createdAt: new Date(),
       updatedAt: new Date(),

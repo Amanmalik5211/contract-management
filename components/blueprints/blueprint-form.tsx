@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { generateUUID } from "@/lib/utils";
@@ -84,74 +84,83 @@ export function BlueprintForm({
   const handleSubmit = () => {
     if (formData.name.trim() && formData.fields.length > 0) {
       onSubmit(formData);
+      // Reset form after submission
+      setFormData({
+        name: "",
+        description: "",
+        headerImageUrl: "",
+        fields: [],
+      });
+      setNewField({
+        label: "",
+        type: "text",
+      });
     }
   };
 
   return (
-    <Card className="group relative overflow-hidden rounded-2xl sm:rounded-3xl border-border/50 bg-gradient-to-br from-background to-muted/30 shadow-lg">
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent opacity-100" />
+    <Card className="group relative overflow-hidden rounded-2xl sm:rounded-3xl border border-gray-300 dark:border-gray-700 shadow-xl">
       <CardHeader className="relative z-10">
         <CardTitle className="text-xl sm:text-2xl">{submitLabel}</CardTitle>
-        <CardDescription className="text-sm sm:text-base">Define a reusable contract template with fields</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6 relative z-10">
         {/* Basic Info */}
         <div className="space-y-4">
           <div>
-            <Label htmlFor="name">Blueprint Name</Label>
+            <Label htmlFor="name" className="text-sm font-medium">Blueprint Name</Label>
             <Input
               id="name"
               placeholder="e.g., Service Agreement"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="mt-2"
+              className="mt-2 h-11 sm:h-12 rounded-xl sm:rounded-2xl border-gray-300 dark:border-gray-700 transition-colors focus:border-gray-400 dark:focus:border-gray-600 shadow-sm"
             />
           </div>
           <div>
-            <Label htmlFor="description">Description</Label>
+            <Label htmlFor="description" className="text-sm font-medium">Description</Label>
             <textarea
               id="description"
               placeholder="Brief description of this template"
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="mt-2 flex min-h-[80px] w-full rounded-md border px-3 py-2 text-sm ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 break-words overflow-auto resize-none"
+              className="mt-2 flex min-h-[100px] w-full rounded-xl sm:rounded-2xl border border-gray-300 dark:border-gray-700 px-4 py-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:border-gray-400 dark:focus-visible:border-gray-600 disabled:cursor-not-allowed disabled:opacity-50 break-words overflow-auto resize-none transition-colors shadow-sm"
               rows={3}
             />
           </div>
           <div>
-            <Label htmlFor="headerImageUrl">Header Image URL (optional)</Label>
+            <Label htmlFor="headerImageUrl" className="text-sm font-medium">Header Image URL (optional)</Label>
             <Input
               id="headerImageUrl"
               type="url"
               placeholder="https://example.com/logo.png"
               value={formData.headerImageUrl}
               onChange={(e) => setFormData({ ...formData, headerImageUrl: e.target.value })}
-              className="mt-2"
+              className="mt-2 h-11 sm:h-12 rounded-xl sm:rounded-2xl border-gray-300 dark:border-gray-700 transition-colors focus:border-gray-400 dark:focus:border-gray-600 shadow-sm"
             />
           </div>
         </div>
 
         {/* Add Fields */}
-        <div className="space-y-4 rounded-xl sm:rounded-2xl border border-border/50 bg-muted/20 p-4 sm:p-6">
+        <div className="space-y-4 rounded-xl sm:rounded-2xl border border-gray-300 dark:border-gray-700 p-4 sm:p-6 shadow-md">
           <h3 className="font-semibold text-base sm:text-lg">Add Fields</h3>
           <div className="grid gap-4 md:grid-cols-3">
             <div>
-              <Label htmlFor="fieldLabel">Field Label</Label>
+              <Label htmlFor="fieldLabel" className="text-sm font-medium">Field Label</Label>
               <Input
                 id="fieldLabel"
                 placeholder="e.g., Signature"
                 value={newField.label}
                 onChange={(e) => setNewField({ ...newField, label: e.target.value })}
-                className="mt-2"
+                className="mt-2 h-11 sm:h-12 rounded-xl sm:rounded-2xl border-gray-300 dark:border-gray-700 transition-colors focus:border-gray-400 dark:focus:border-gray-600 shadow-sm"
               />
             </div>
             <div>
-              <Label htmlFor="fieldType">Field Type</Label>
+              <Label htmlFor="fieldType" className="text-sm font-medium">Field Type</Label>
               <select
                 id="fieldType"
                 value={newField.type}
                 onChange={(e) => setNewField({ ...newField, type: e.target.value as FieldType })}
-                className="mt-2 flex h-10 w-full rounded-md border px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                className="mt-2 flex h-11 sm:h-12 w-full rounded-xl sm:rounded-2xl border border-gray-300 dark:border-gray-700 px-4 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:border-gray-400 dark:focus-visible:border-gray-600 disabled:cursor-not-allowed disabled:opacity-50 transition-colors shadow-sm"
               >
                 <option value="text">Text Input</option>
                 <option value="date">Date Picker</option>
@@ -163,7 +172,9 @@ export function BlueprintForm({
               <Button
                 onClick={handleAddField}
                 variant="outline"
-                className="w-full"
+                size="lg"
+                className="w-full h-11 sm:h-12 shadow-md"
+                disabled={!newField.label.trim()}
               >
                 Add Field
               </Button>
@@ -172,7 +183,7 @@ export function BlueprintForm({
 
           {/* Fields List */}
           {formData.fields.length > 0 && (
-            <div className="space-y-2 border-t pt-4">
+            <div className="space-y-2 border-t border-gray-300 dark:border-gray-700 pt-4">
               <p className="text-sm font-medium">
                 {formData.fields.length} field{formData.fields.length !== 1 ? "s" : ""} added
               </p>
@@ -180,7 +191,7 @@ export function BlueprintForm({
                 {formData.fields.map((field) => (
                   <div
                     key={field.id}
-                    className="flex items-center justify-between rounded-lg border border-border/50 bg-background/50 p-3 hover:bg-muted/30 transition-colors"
+                    className="flex items-center justify-between rounded-lg border border-gray-300 dark:border-gray-700 p-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors shadow-sm"
                   >
                     <div className="flex-1">
                       <p className="font-medium">{field.label}</p>
@@ -190,6 +201,7 @@ export function BlueprintForm({
                       variant="ghost"
                       size="sm"
                       onClick={() => handleRemoveField(field.id)}
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
                     >
                       Remove
                     </Button>
@@ -201,16 +213,17 @@ export function BlueprintForm({
         </div>
 
         {/* Form Actions */}
-        <div className="flex justify-end gap-2 border-t pt-4">
+        <div className="flex justify-end gap-3 border-t border-gray-300 dark:border-gray-700 pt-6">
           {onCancel && (
-            <Button variant="outline" onClick={onCancel}>
+            <Button variant="outline" size="lg" onClick={onCancel} className="h-11 sm:h-12 px-6 shadow-md">
               Cancel
             </Button>
           )}
           <Button
             onClick={handleSubmit}
             disabled={!formData.name.trim() || formData.fields.length === 0}
-            className="flex-1"
+            size="lg"
+            className="h-11 sm:h-12 px-8 shadow-md"
           >
             {submitLabel}
           </Button>

@@ -1,117 +1,81 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Search, X, Filter, ChevronDown } from "lucide-react";
+import { Search, X } from "lucide-react";
 
 interface SearchAndFilterProps<T extends string> {
   searchQuery: string;
   onSearchChange: (query: string) => void;
   selectedFilters: T[];
-  onFilterToggle: (filter: T) => void;
   onClearFilters: () => void;
-  filterOptions: Array<{ value: T; label: string }>;
   searchPlaceholder?: string;
+  showToggle?: boolean;
+  toggleValue?: "contract" | "blueprint";
+  onToggleChange?: (value: "contract" | "blueprint") => void;
+  // Legacy props - kept for backward compatibility but not used
+  onFilterToggle?: (filter: T) => void;
+  filterOptions?: Array<{ value: T; label: string }>;
   filterLabel?: string;
 }
 
-export function SearchAndFilter<T extends string>({
-  searchQuery,
-  onSearchChange,
-  selectedFilters,
-  onFilterToggle,
-  onClearFilters,
-  filterOptions,
-  searchPlaceholder = "Search...",
-  filterLabel = "Filters",
-}: SearchAndFilterProps<T>) {
-  const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
-        setIsFilterDropdownOpen(false);
-      }
-    };
-
-    if (isFilterDropdownOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [isFilterDropdownOpen]);
+export function SearchAndFilter<T extends string>(props: SearchAndFilterProps<T>) {
+  const {
+    searchQuery,
+    onSearchChange,
+    selectedFilters,
+    onClearFilters,
+    searchPlaceholder = "Search...",
+    showToggle = false,
+    toggleValue = "contract",
+    onToggleChange,
+  } = props;
 
   const hasActiveFilters = searchQuery.trim() !== "" || selectedFilters.length > 0;
 
   return (
-    <div className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center">
+    <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-stretch sm:items-center">
       <div className="flex-1 relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 sm:h-5 sm:w-5 " />
         <Input
           type="text"
           placeholder={searchPlaceholder}
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
-          className="pl-10"
+          className="pl-10 sm:pl-12 h-11 sm:h-12 rounded-xl sm:rounded-2xl   transition-colors focus:border-gray-400 dark:focus:border-gray-600"
         />
       </div>
-      <div className="relative z-50" ref={dropdownRef}>
-        <Button
-          variant="outline"
-          onClick={() => setIsFilterDropdownOpen(!isFilterDropdownOpen)}
-          className="w-full sm:w-auto justify-between relative z-10"
-        >
-          <span className="flex items-center gap-2">
-            <Filter className="h-4 w-4" />
-            {filterLabel}
-            {selectedFilters.length > 0 && (
-              <Badge className="ml-2 bg-blue-600 text-white">
-                {selectedFilters.length}
-              </Badge>
-            )}
-          </span>
-          <ChevronDown
-            className={`h-4 w-4 transition-transform ${
-              isFilterDropdownOpen ? "rotate-180" : ""
+      {showToggle && onToggleChange && (
+        <div className="flex items-center gap-2 border border-gray-300 dark:border-gray-700 rounded-xl sm:rounded-2xl p-1 h-11 sm:h-12">
+          <button
+            onClick={() => onToggleChange("contract")}
+            className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-sm sm:text-base font-medium transition-all border border-gray-300 dark:border-gray-700 ${
+              toggleValue === "contract"
+                ? "bg-white dark:bg-gray-700 text-black dark:text-white shadow-sm"
+                : "text-gray-600 dark:text-gray-400 "
             }`}
-          />
-        </Button>
-        {isFilterDropdownOpen && (
-          <div className="absolute z-[100] top-full left-0 right-0 sm:right-auto mt-2 w-full sm:w-64 bg-background border border-border rounded-lg shadow-xl">
-            <div className="p-2 space-y-1 max-h-64 overflow-y-auto">
-              {filterOptions.map((option) => (
-                <label
-                  key={option.value}
-                  className="flex items-center space-x-2 p-2 hover:bg-muted rounded cursor-pointer transition-colors"
-                >
-                  <input
-                    type="checkbox"
-                    checked={selectedFilters.includes(option.value)}
-                    onChange={() => onFilterToggle(option.value)}
-                    className="rounded border-gray-300 text-primary focus:ring-primary"
-                  />
-                  <span className="text-sm">{option.label}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
+          >
+            Contract
+          </button>
+          <button
+            onClick={() => onToggleChange("blueprint")}
+            className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-sm sm:text-base font-medium transition-all border border-gray-300 dark:border-gray-700 ${
+              toggleValue === "blueprint"
+                ? "bg-white dark:bg-gray-700 text-black dark:text-white shadow-sm"
+                : "text-gray-600 dark:text-gray-400"
+            }`}
+          >
+            Blueprint
+          </button>
+        </div>
+      )}
       {hasActiveFilters && (
         <Button
           variant="outline"
           onClick={onClearFilters}
-          className="flex items-center gap-2"
+          className="flex items-center gap-2 h-9 sm:h-9 rounded-xl sm:rounded-2xl border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 hover:bg-white dark:hover:bg-gray-700 text-black dark:text-white transition-colors focus:border-gray-400 dark:focus:border-gray-600"
         >
-          <X className="h-4 w-4" />
+          <X className="h-2 w-2 sm:h-3 sm:w-3" />
           Clear Filters
         </Button>
       )}

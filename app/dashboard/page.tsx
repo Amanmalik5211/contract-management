@@ -2,35 +2,26 @@
 
 import { useState, useMemo } from "react";
 import { useStore } from "@/lib/store";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { getStatusLabel } from "@/lib/contract-utils";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { ContractStatus } from "@/types/contract";
+import type { FieldType } from "@/types/field";
 import { useToast } from "@/components/ui/toaster";
-import { ContractCard } from "@/components/contracts/contract-card";
-import { StatusOverviewCards } from "@/components/dashboard/status-overview-cards";
-import { SearchAndFilter } from "@/components/shared/search-and-filter";
+import { getStatusLabel } from "@/lib/contract-utils";
+import { KPICards } from "@/components/dashboard/kpi-cards";
+import { DashboardGraphsSection } from "@/components/dashboard/dashboard-graphs-section";
+import { ContractsListSection } from "@/components/dashboard/contracts-list-section";
 import { DeleteConfirmationDialog } from "@/components/shared/delete-confirmation-dialog";
 
 export default function Dashboard() {
-  const { contracts, blueprints, deleteContract } = useStore();
+  const { contracts, blueprints, deleteContract, deleteBlueprint } = useStore();
   const router = useRouter();
   const { addToast } = useToast();
+  const [viewType, setViewType] = useState<"contract" | "blueprint">("contract");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStatuses, setSelectedStatuses] = useState<ContractStatus[]>([]);
+  const [selectedFieldTypes, setSelectedFieldTypes] = useState<FieldType[]>([]);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [contractToDelete, setContractToDelete] = useState<{ id: string; name: string } | null>(null);
-
-  // Calculate status counts
-  const statusCounts = {
-    created: contracts.filter((c) => c.status === "created").length,
-    approved: contracts.filter((c) => c.status === "approved").length,
-    sent: contracts.filter((c) => c.status === "sent").length,
-    signed: contracts.filter((c) => c.status === "signed").length,
-    locked: contracts.filter((c) => c.status === "locked").length,
-    revoked: contracts.filter((c) => c.status === "revoked").length,
-  };
+  const [itemToDelete, setItemToDelete] = useState<{ id: string; name: string; type: "contract" | "blueprint" } | null>(null);
 
   // Filter and sort contracts
   const filteredContracts = useMemo(() => {
@@ -57,6 +48,33 @@ export default function Dashboard() {
     );
   }, [contracts, selectedStatuses, searchQuery]);
 
+  // Filter and sort blueprints
+  const filteredBlueprints = useMemo(() => {
+    let filtered = [...blueprints];
+
+    // Filter by field types
+    if (selectedFieldTypes.length > 0) {
+      filtered = filtered.filter((bp) =>
+        bp.fields.some((field) => selectedFieldTypes.includes(field.type))
+      );
+    }
+
+    // Filter by search query (blueprint name or description)
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim();
+      filtered = filtered.filter(
+        (bp) =>
+          bp.name.toLowerCase().includes(query) ||
+          (bp.description && bp.description.toLowerCase().includes(query))
+      );
+    }
+
+    // Sort by updated date, most recent first
+    return filtered.sort(
+      (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+    );
+  }, [blueprints, selectedFieldTypes, searchQuery]);
+
   const statusOrder: ContractStatus[] = [
     "created",
     "approved",
@@ -71,34 +89,60 @@ export default function Dashboard() {
     label: getStatusLabel(status),
   }));
 
-  const handleEdit = (contractId: string, e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    router.push(`/contracts/${contractId}?edit=true`);
-    addToast({
-      title: "Opening Editor",
-      description: "Contract editor opened. Make your changes and click Update to save.",
-      variant: "default",
-    });
+  const fieldTypeLabels: Record<FieldType, string> = {
+    text: "Text Input",
+    date: "Date Picker",
+    signature: "Signature",
+    checkbox: "Checkbox",
   };
 
-  const handleDelete = (contractId: string, contractName: string, e: React.MouseEvent) => {
+  const fieldTypes: FieldType[] = ["text", "date", "signature", "checkbox"];
+  const fieldTypeFilterOptions = fieldTypes.map((type) => ({
+    value: type,
+    label: fieldTypeLabels[type],
+  }));
+
+  const handleEdit = (id: string, e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setContractToDelete({ id: contractId, name: contractName });
+    if (viewType === "contract") {
+      router.push(`/contracts/${id}?edit=true`);
+      addToast({
+        title: "Opening Editor",
+        description: "Contract editor opened. Make your changes and click Update to save.",
+        variant: "default",
+      });
+    } else {
+      router.push(`/blueprints/${id}?edit=true`);
+    }
+  };
+
+  const handleDelete = (id: string, name: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setItemToDelete({ id, name, type: viewType });
     setDeleteDialogOpen(true);
   };
 
   const confirmDelete = () => {
-    if (contractToDelete) {
-      deleteContract(contractToDelete.id);
-      addToast({
-        title: "Contract Deleted",
-        description: `"${contractToDelete.name}" has been deleted successfully.`,
-        variant: "success",
-      });
+    if (itemToDelete) {
+      if (itemToDelete.type === "contract") {
+        deleteContract(itemToDelete.id);
+        addToast({
+          title: "Contract Deleted",
+          description: `"${itemToDelete.name}" has been deleted successfully.`,
+          variant: "success",
+        });
+      } else {
+        deleteBlueprint(itemToDelete.id);
+        addToast({
+          title: "Blueprint Deleted",
+          description: `"${itemToDelete.name}" has been deleted successfully.`,
+          variant: "success",
+        });
+      }
       setDeleteDialogOpen(false);
-      setContractToDelete(null);
+      setItemToDelete(null);
     }
   };
 
@@ -106,127 +150,55 @@ export default function Dashboard() {
     <div className="min-h-screen">
       <div className="relative overflow-hidden from-primary/5 via-background to-secondary/30">
         <div className="mx-auto max-w-[90rem] px-4 sm:px-6 lg:px-4 py-4 sm:py-6 lg:py-8">
-          {/* Header Section */}
-          <section className="mb-8 sm:mb-12 space-y-3 sm:space-y-4">
-            <h1 className="text-3xl font-bold tracking-tight xs:text-4xl sm:text-5xl lg:text-6xl leading-tight">
-              <span className="text-primary">Dashboard</span>
-            </h1>
-            <p className="text-base text-muted-foreground sm:text-lg lg:text-xl leading-relaxed">
-              Overview of your contracts and templates
-            </p>
-          </section>
+      
 
-        <StatusOverviewCards
-          totalBlueprints={blueprints.length}
-          totalContracts={contracts.length}
-          statusCounts={statusCounts}
-        />
+          <KPICards contracts={contracts} blueprints={blueprints} />
 
-          {/* Search and Filters */}
-          <section className="py-6 sm:py-8 mb-8">
-            <Card className="group relative overflow-visible">
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-primary/2 to-transparent opacity-100 rounded-2xl sm:rounded-3xl" />
-              <CardHeader className="relative z-10">
-                <CardTitle className="text-xl sm:text-2xl">Search & Filter Contracts</CardTitle>
-                <p className="text-sm sm:text-base text-muted-foreground mt-2">
-                  Find contracts by name or filter by status
-                </p>
-              </CardHeader>
-              <CardContent className="relative z-20">
-                <SearchAndFilter
-              searchQuery={searchQuery}
-              onSearchChange={setSearchQuery}
-              selectedFilters={selectedStatuses}
-              onFilterToggle={(status) => {
+          <DashboardGraphsSection 
+            contracts={viewType === "contract" ? contracts : []} 
+            blueprints={viewType === "blueprint" ? blueprints : []}
+            viewType={viewType}
+          />
+
+          <ContractsListSection
+            viewType={viewType}
+            filteredContracts={filteredContracts}
+            filteredBlueprints={filteredBlueprints}
+            selectedStatuses={selectedStatuses}
+            selectedFieldTypes={selectedFieldTypes}
+            searchQuery={searchQuery}
+            searchPlaceholder={viewType === "contract" ? "Search contracts..." : "Search blueprints..."}
+            filterOptions={viewType === "contract" ? statusFilterOptions : fieldTypeFilterOptions}
+            fieldTypeLabels={fieldTypeLabels}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+            onSearchChange={setSearchQuery}
+            onFilterToggle={(value) => {
+              if (viewType === "contract") {
+                const status = value as ContractStatus;
                 setSelectedStatuses((prev) =>
                   prev.includes(status)
                     ? prev.filter((s) => s !== status)
                     : [...prev, status]
                 );
-              }}
-              onClearFilters={() => {
-                setSelectedStatuses([]);
-                setSearchQuery("");
-              }}
-              filterOptions={statusFilterOptions}
-              searchPlaceholder="Search contracts..."
-              filterLabel="Filters"
-                />
-              </CardContent>
-            </Card>
-          </section>
-
-          {/* Contracts List Section */}
-          <section className="py-6 sm:py-8">
-            <div className="text-center mb-8 sm:mb-12">
-              <h2 className="text-2xl font-bold tracking-tight sm:text-3xl lg:text-4xl px-2">
-                {selectedStatuses.length === 0
-                  ? "All Contracts"
-                  : selectedStatuses.length === 1
-                  ? `${getStatusLabel(selectedStatuses[0])} Contracts`
-                  : "Filtered Contracts"}
-              </h2>
-              <p className="mt-3 sm:mt-4 text-base sm:text-lg text-muted-foreground px-2">
-                {filteredContracts.length === 0
-                  ? "No contracts found"
-                  : `Showing ${filteredContracts.length} contract${filteredContracts.length !== 1 ? "s" : ""}`}
-              </p>
-            </div>
-
-            {filteredContracts.length === 0 ? (
-              <Card className="rounded-2xl sm:rounded-3xl border-border/50 bg-gradient-to-br from-background to-muted/30 shadow-lg">
-                <CardContent className="py-12 text-center">
-                  <p className="text-base sm:text-lg text-muted-foreground">
-                    {searchQuery || selectedStatuses.length > 0
-                      ? "No contracts match your search or filter criteria."
-                      : "No contracts found."}
-                  </p>
-                  {!searchQuery && selectedStatuses.length === 0 && (
-                    <Link
-                      href="/contracts/new"
-                      className="mt-4 inline-block"
-                    >
-                      <Button size="lg">
-                        Create your first contract
-                      </Button>
-                    </Link>
-                  )}
-                  {(searchQuery || selectedStatuses.length > 0) && (
-                    <div className="mt-4">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          setSelectedStatuses([]);
-                          setSearchQuery("");
-                        }}
-                      >
-                        Clear Filters
-                      </Button>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="space-y-4 sm:space-y-6">
-                {filteredContracts.map((contract) => {
-                  const canEdit = contract.status === "created";
-                  const canDelete = contract.status === "created" || contract.status === "revoked";
-                  
-                  return (
-                    <ContractCard
-                      key={contract.id}
-                      contract={contract}
-                      canEdit={canEdit}
-                      canDelete={canDelete}
-                      onEdit={handleEdit}
-                      onDelete={handleDelete}
-                    />
-                  );
-                })}
-              </div>
-            )}
-          </section>
+              } else {
+                const fieldType = value as FieldType;
+                setSelectedFieldTypes((prev) =>
+                  prev.includes(fieldType)
+                    ? prev.filter((t) => t !== fieldType)
+                    : [...prev, fieldType]
+                );
+              }
+            }}
+            onClearFilters={() => {
+              setSelectedStatuses([]);
+              setSelectedFieldTypes([]);
+              setSearchQuery("");
+            }}
+            showToggle={true}
+            toggleValue={viewType}
+            onToggleChange={setViewType}
+          />
         </div>
       </div>
 
@@ -234,10 +206,10 @@ export default function Dashboard() {
         open={deleteDialogOpen}
         onOpenChange={(open) => {
           setDeleteDialogOpen(open);
-          if (!open) setContractToDelete(null);
+          if (!open) setItemToDelete(null);
         }}
-        itemName={contractToDelete?.name || ""}
-        itemType="contract"
+        itemName={itemToDelete?.name || ""}
+        itemType={itemToDelete?.type || "contract"}
         onConfirm={confirmDelete}
       />
     </div>

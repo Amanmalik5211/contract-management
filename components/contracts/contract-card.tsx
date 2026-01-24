@@ -5,6 +5,7 @@ import { format } from "date-fns";
 import { Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 import { getStatusLabel } from "@/lib/contract-utils";
 import type { Contract } from "@/types/contract";
 
@@ -46,34 +47,26 @@ export function ContractCard({
   return (
     <Card className="group relative overflow-hidden rounded-2xl sm:rounded-3xl border-border/50 bg-gradient-to-br from-background to-muted/30 shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 hover:scale-[1.01] hover:border-primary/20">
       <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent opacity-100 group-hover:opacity-100 group-hover:from-primary/15 group-hover:via-primary/8 transition-opacity duration-500" />
-      <div className="relative z-10 p-4 sm:p-6">
-        <Link href={`/contracts/${contract.id}`} className="block">
-          <div className="flex items-start justify-between gap-4 pb-12">
-            <div className="flex-1 min-w-0">
-              <div className="font-semibold text-lg sm:text-xl break-words group-hover:text-primary transition-colors duration-300">{contract.name}</div>
-              {contract.blueprintDescription && (
-                <div className="text-sm sm:text-base mt-1 break-words whitespace-pre-wrap text-muted-foreground leading-relaxed">
-                  {contract.blueprintDescription}
-                </div>
-              )}
-              <div className="mt-3 sm:mt-4 space-y-1.5">
-                <div className="text-xs sm:text-sm text-muted-foreground">
-                  Blueprint: {contract.blueprintName}
-                </div>
-                <div className="text-xs sm:text-sm text-muted-foreground">
-                  {filledFieldsCount} of {contract.fields.length} fields filled
-                </div>
-                <div className="text-xs sm:text-sm text-muted-foreground">
-                  Updated: {format(new Date(contract.updatedAt), "MMM d, yyyy")}
-                </div>
+      <div className="relative z-0 p-4 sm:p-6 pb-12">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex-1 min-w-0">
+            <Link href={`/contracts/${contract.id}`} className="block">
+              <div className="font-semibold text-lg sm:text-xl break-words group-hover:text-primary transition-colors duration-300 mb-2">
+                {contract.name}
               </div>
+            </Link>
+            <div className="text-sm sm:text-base text-muted-foreground mb-2">
+              Blueprint: {contract.blueprintName}
             </div>
-            <Badge variant={getStatusVariant(contract.status)} className="flex-shrink-0">
-              {getStatusLabel(contract.status)}
-            </Badge>
+            <div className="text-xs sm:text-sm text-muted-foreground">
+              Last updated: {format(new Date(contract.updatedAt), "MMM d, yyyy")}
+            </div>
           </div>
-        </Link>
-        <div className="absolute bottom-4 right-4 flex items-center gap-2 z-20">
+          <Badge variant={getStatusVariant(contract.status)} className="flex-shrink-0 z-0">
+            {getStatusLabel(contract.status)}
+          </Badge>
+        </div>
+        <div className="absolute bottom-4 right-4 flex items-center gap-2 z-0">
           {canEdit && (
             <Button
               variant="ghost"

@@ -5,14 +5,12 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useStore } from "@/lib/store";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { format } from "date-fns";
 import { Pencil } from "lucide-react";
 import Link from "next/link";
 import type { Field, FieldType } from "@/types/field";
-import type { DocumentSection } from "@/types/blueprint";
 import { generateUUID } from "@/lib/utils";
 import { DocumentRenderer } from "@/components/document-renderer";
 import { capitalizeWords } from "@/lib/utils";
@@ -125,7 +123,7 @@ function BlueprintViewPageContent() {
       variant: "success",
     });
 
-    router.push("/blueprints");
+    router.push("/dashboard");
   };
 
   if (!blueprint) {
@@ -147,9 +145,6 @@ function BlueprintViewPageContent() {
       <div className="relative overflow-hidden from-primary/5 via-background to-secondary/30">
         <div className="mx-auto max-w-[90rem] px-4 sm:px-6 lg:px-4 py-4 sm:py-6 lg:py-8">
           <div className="mb-8 sm:mb-12">
-            <Button variant="ghost" onClick={() => router.back()} className="mb-4 sm:mb-6">
-              ← Back
-            </Button>
             {!isEditMode ? (
               <>
                 <section className="space-y-4 sm:space-y-6">
@@ -166,7 +161,7 @@ function BlueprintViewPageContent() {
                       variant="outline"
                       size="lg"
                       onClick={() => router.push(`/blueprints/${blueprint.id}?edit=true`)}
-                      className="flex items-center gap-2 w-full sm:w-auto"
+                      className="flex items-center gap-2 w-full sm:w-auto flex-shrink-0"
                     >
                       <Pencil className="h-4 w-4" />
                       Edit
@@ -176,12 +171,16 @@ function BlueprintViewPageContent() {
               </>
             ) : (
               <section className="space-y-3 sm:space-y-4">
-                <h1 className="text-3xl font-bold tracking-tight xs:text-4xl sm:text-5xl lg:text-6xl leading-tight break-words">
-                  Edit <span className="text-primary">Blueprint</span>
-                </h1>
-                <p className="text-base text-muted-foreground sm:text-lg leading-relaxed">
-                  Make your changes and click Update to save.
-                </p>
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                  <div className="flex-1 min-w-0">
+                    <h1 className="text-3xl font-bold tracking-tight xs:text-4xl sm:text-5xl lg:text-6xl leading-tight break-words">
+                      Edit <span className="text-primary">Blueprint</span>
+                    </h1>
+                    <p className="text-base text-muted-foreground sm:text-lg leading-relaxed mt-2">
+                      Make your changes and click Update to save.
+                    </p>
+                  </div>
+                </div>
               </section>
             )}
           </div>
@@ -190,17 +189,15 @@ function BlueprintViewPageContent() {
             <>
               {/* Document Preview Section */}
               <section className="py-6 sm:py-8 mb-8">
-                <div className="rounded-2xl sm:rounded-3xl border border-border/50 bg-gradient-to-br from-background to-muted/30 shadow-lg overflow-hidden">
-                  <DocumentRenderer
-                    title={blueprint.name}
-                    description={blueprint.description}
-                    headerImageUrl={blueprint.headerImageUrl}
-                    sections={blueprint.sections || []}
-                    fields={blueprint.fields}
-                    fieldValues={{}}
-                    isEditable={false}
-                  />
-                </div>
+                <DocumentRenderer
+                  title={blueprint.name}
+                  description={blueprint.description}
+                  headerImageUrl={blueprint.headerImageUrl}
+                  sections={blueprint.sections || []}
+                  fields={blueprint.fields}
+                  fieldValues={{}}
+                  isEditable={false}
+                />
               </section>
 
               <section className="py-6 sm:py-8">
@@ -215,8 +212,8 @@ function BlueprintViewPageContent() {
             </>
           ) : (
             <section className="py-6 sm:py-8">
-              <Card className="group relative overflow-hidden rounded-2xl sm:rounded-3xl border-border/50 bg-gradient-to-br from-background to-muted/30 shadow-lg">
-                <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent opacity-100" />
+              <Card className="group relative overflow-hidden rounded-2xl sm:rounded-3xl border border-gray-300 dark:border-gray-700 shadow-lg">
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent opacity-100 dark:from-primary/20 dark:via-primary/10" />
                 <CardHeader className="relative z-10">
                   <CardTitle className="text-xl sm:text-2xl">Edit Blueprint</CardTitle>
                 </CardHeader>
@@ -230,7 +227,7 @@ function BlueprintViewPageContent() {
                     placeholder="e.g., Service Agreement"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="mt-2"
+                    className="mt-2 border-gray-300 dark:border-gray-700"
                   />
                 </div>
                 <div>
@@ -240,7 +237,7 @@ function BlueprintViewPageContent() {
                     placeholder="Brief description of this template"
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    className="mt-2 flex min-h-[80px] w-full rounded-md border px-3 py-2 text-sm ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 break-words overflow-auto resize-none"
+                    className="mt-2 flex min-h-[80px] w-full rounded-md border border-gray-300 dark:border-gray-700 px-3 py-2 text-sm ring-offset-white dark:ring-offset-gray-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 break-words overflow-auto resize-none"
                     rows={3}
                   />
                 </div>
@@ -252,13 +249,13 @@ function BlueprintViewPageContent() {
                     placeholder="https://example.com/logo.png"
                     value={formData.headerImageUrl}
                     onChange={(e) => setFormData({ ...formData, headerImageUrl: e.target.value })}
-                    className="mt-2"
+                    className="mt-2 border-gray-300 dark:border-gray-700"
                   />
                 </div>
               </div>
 
                   {/* Add Fields */}
-                  <div className="space-y-4 rounded-xl sm:rounded-2xl border border-border/50 bg-muted/20 p-4 sm:p-6">
+                  <div className="space-y-4 rounded-xl sm:rounded-2xl border border-gray-300 dark:border-gray-700 p-4 sm:p-6">
                     <h3 className="font-semibold text-base sm:text-lg">Add Fields</h3>
                 <div className="grid gap-4 md:grid-cols-3">
                   <div>
@@ -268,7 +265,7 @@ function BlueprintViewPageContent() {
                       placeholder="e.g., Signature"
                       value={newField.label}
                       onChange={(e) => setNewField({ ...newField, label: e.target.value })}
-                      className="mt-2"
+                      className="mt-2 border-gray-300 dark:border-gray-700"
                     />
                   </div>
                   <div>
@@ -277,7 +274,7 @@ function BlueprintViewPageContent() {
                       id="fieldType"
                       value={newField.type}
                       onChange={(e) => setNewField({ ...newField, type: e.target.value as FieldType })}
-                      className="mt-2 flex h-10 w-full rounded-md border px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      className="mt-2 flex h-10 w-full rounded-md border border-gray-300 dark:border-gray-700 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       <option value="text">Text Input</option>
                       <option value="date">Date Picker</option>
@@ -298,7 +295,7 @@ function BlueprintViewPageContent() {
 
                 {/* Fields List */}
                 {formData.fields.length > 0 && (
-                  <div className="space-y-2 border-t pt-4">
+                  <div className="space-y-2 border-t border-gray-300 dark:border-gray-700 pt-4">
                     <p className="text-sm font-medium">
                       {formData.fields.length} field{formData.fields.length !== 1 ? "s" : ""} added
                     </p>
@@ -306,7 +303,7 @@ function BlueprintViewPageContent() {
                       {formData.fields.map((field) => (
                     <div
                       key={field.id}
-                      className="flex items-center justify-between rounded-lg border border-border/50 bg-background/50 p-3 hover:bg-muted/30 transition-colors"
+                      className="flex items-center justify-between rounded-lg border border-gray-300 dark:border-gray-700 p-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                     >
                           <div className="flex-1">
                             <p className="font-medium">{field.label}</p>
@@ -327,7 +324,7 @@ function BlueprintViewPageContent() {
               </div>
 
                   {/* Form Actions */}
-                  <div className="flex justify-end gap-2 border-t border-border/50 pt-4">
+                  <div className="flex justify-end gap-2 border-t border-gray-300 dark:border-gray-700 pt-4">
                     <Button
                       variant="outline"
                       onClick={() => router.push(`/blueprints/${blueprint.id}`)}

@@ -91,9 +91,7 @@ export default function ContractStatusPage() {
       <div className="relative overflow-hidden from-primary/5 via-background to-secondary/30">
         <div className="mx-auto max-w-[90rem] px-4 sm:px-6 lg:px-4 py-4 sm:py-6 lg:py-8">
           <div className="mb-8 sm:mb-12">
-            <Button variant="ghost" onClick={() => router.back()} className="mb-4 sm:mb-6">
-              ← Back
-            </Button>
+            
             <section className="space-y-3 sm:space-y-4">
               <h1 className="text-3xl font-bold tracking-tight xs:text-4xl sm:text-5xl lg:text-6xl leading-tight">
                 Manage Contract <span className="text-primary">Status</span>
@@ -137,7 +135,6 @@ export default function ContractStatusPage() {
                         {STATUS_FLOW.map((status, index) => {
                           const isCurrent = contract.status === status;
                           const isPast = STATUS_FLOW.indexOf(contract.status) > index;
-                          const isNext = nextStatus === status;
 
                           return (
                             <div key={status} className="flex items-center">
