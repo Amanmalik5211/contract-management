@@ -16,8 +16,12 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Contract Management Platform",
-  description: "Manage contracts and blueprints",
+  title: "Contractify - Contract Management Platform",
+  description: "Manage contracts and blueprints with ease",
+  icons: {
+    icon: "/logo.webp",
+    apple: "/logo.webp",
+  },
 };
 
 export default function RootLayout({
@@ -32,8 +36,12 @@ export default function RootLayout({
       >
         <ThemeProvider>
           <ToasterProvider>
-            <Navigation />
-            {children}
+            <div className="min-h-screen bg-background">
+              <Navigation />
+              <main className="page-transition">
+                {children}
+              </main>
+            </div>
           </ToasterProvider>
         </ThemeProvider>
       </body>
