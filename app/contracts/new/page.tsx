@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import Link from "next/link";
+import { generateUUID } from "@/lib/utils";
 
 function NewContractForm() {
   const router = useRouter();
@@ -40,7 +41,7 @@ function NewContractForm() {
     }
 
     const contract = {
-      id: `contract-${crypto.randomUUID()}`,
+      id: `contract-${generateUUID()}`,
       name: contractName,
       blueprintId: selectedBlueprint.id,
       blueprintName: selectedBlueprint.name,
@@ -53,7 +54,7 @@ function NewContractForm() {
     };
 
     addContract(contract);
-    router.push(`/contracts/${contract.id}`);
+    router.push(`/contracts/${contract.id}?edit=true`);
   };
 
   return (

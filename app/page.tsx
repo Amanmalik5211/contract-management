@@ -377,9 +377,13 @@ export default function Dashboard() {
             ) : (
               <div className="space-y-4">
                 {filteredContracts.map((contract) => {
-                  const filledFieldsCount = Object.keys(contract.fieldValues).filter(
-                    (key) => contract.fieldValues[key] !== null && contract.fieldValues[key] !== ""
-                  ).length;
+                  const filledFieldsCount = contract.fields.filter((field) => {
+                    const value = contract.fieldValues[field.id];
+                    if (value === null || value === undefined) return false;
+                    if (typeof value === "string" && value.trim() === "") return false;
+                    if (typeof value === "boolean" && value === false) return false;
+                    return true;
+                  }).length;
                   const totalFields = contract.fields.length;
                   const canEdit = contract.status === "created";
                   const canDelete = contract.status === "created" || contract.status === "revoked";

@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useStore } from "@/lib/store";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { getStatusLabel } from "@/lib/contract-utils";
 import { format } from "date-fns";
-import { Pencil } from "lucide-react";
+import { Pencil, GripVertical } from "lucide-react";
 import type { Field } from "@/types/field";
 
 function ContractViewPageContent() {
@@ -41,19 +41,77 @@ function ContractViewPageContent() {
   // Only allow editing if explicitly in edit mode AND status is "created"
   const canEdit = isEditMode && isCreated;
 
+  const [draggedFieldIndex, setDraggedFieldIndex] = useState<number | null>(null);
+  const [localFieldValues, setLocalFieldValues] = useState(contract.fieldValues);
+  const [localFields, setLocalFields] = useState(contract.fields);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+
+  // Update local state when contract changes (only if not in edit mode or no unsaved changes)
+  useEffect(() => {
+    if (!canEdit || !hasUnsavedChanges) {
+      setLocalFieldValues(contract.fieldValues);
+      setLocalFields(contract.fields);
+      setHasUnsavedChanges(false);
+    }
+  }, [contract.id, contract.fieldValues, contract.fields, canEdit]);
+
   const handleFieldChange = (fieldId: string, value: string | boolean) => {
     if (!canEdit) return;
 
-    updateContract(contract.id, {
-      fieldValues: {
-        ...contract.fieldValues,
-        [fieldId]: value,
-      },
-    });
+    setLocalFieldValues((prev) => ({
+      ...prev,
+      [fieldId]: value,
+    }));
+    setHasUnsavedChanges(true);
   };
 
-  const renderField = (field: Field) => {
-    const value = contract.fieldValues[field.id] ?? "";
+  const handleSave = () => {
+    if (!canEdit) return;
+
+    updateContract(contract.id, {
+      fieldValues: localFieldValues,
+      fields: localFields,
+    });
+    setHasUnsavedChanges(false);
+    router.push("/");
+  };
+
+  const handleDragStart = (index: number) => {
+    if (!canEdit) return;
+    setDraggedFieldIndex(index);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    if (!canEdit) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+  };
+
+  const handleDrop = (e: React.DragEvent, dropIndex: number) => {
+    if (!canEdit || draggedFieldIndex === null) return;
+    e.preventDefault();
+
+    if (draggedFieldIndex === dropIndex) {
+      setDraggedFieldIndex(null);
+      return;
+    }
+
+    const newFields = [...localFields];
+    const [draggedField] = newFields.splice(draggedFieldIndex, 1);
+    newFields.splice(dropIndex, 0, draggedField);
+
+    setLocalFields(newFields);
+    setHasUnsavedChanges(true);
+    setDraggedFieldIndex(null);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedFieldIndex(null);
+  };
+
+  const renderField = (field: Field, index: number) => {
+    const value = canEdit ? (localFieldValues[field.id] ?? "") : (contract.fieldValues[field.id] ?? "");
+    const isDragging = draggedFieldIndex === index;
 
     // Render read-only view when not in edit mode
     if (!canEdit) {
@@ -62,7 +120,7 @@ function ContractViewPageContent() {
           return (
             <div key={field.id} className="space-y-2">
               <Label className="break-words font-medium">{field.label}</Label>
-              <div className="px-3 py-2 border rounded-md bg-gray-50 text-sm break-words">
+              <div className="px-3 py-2 border rounded-md bg-gray-50 text-sm break-words min-h-[40px] whitespace-pre-wrap">
                 {value ? (value as string) : <span className="text-gray-400">Not filled</span>}
               </div>
             </div>
@@ -115,10 +173,13 @@ function ContractViewPageContent() {
         return (
           <div key={field.id} className="space-y-2">
             <Label htmlFor={field.id} className="break-words">{field.label}</Label>
-            <Input
+            <textarea
               id={field.id}
-              value={value as string}
+              value={value as string || ""}
               onChange={(e) => handleFieldChange(field.id, e.target.value)}
+              className="flex min-h-[80px] w-full rounded-md border px-3 py-2 text-sm ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-y"
+              rows={3}
+              placeholder="Enter text..."
             />
           </div>
         );
@@ -228,7 +289,10 @@ function ContractViewPageContent() {
             </div>
             {canEdit && (
               <p className="text-sm text-blue-600 break-words mt-2">
-                You are in edit mode. Changes will be saved automatically.
+                You are in edit mode. Click "Update" to save your changes.
+                {hasUnsavedChanges && (
+                  <span className="ml-2 text-orange-600 font-medium">• Unsaved changes</span>
+                )}
               </p>
             )}
             {!canEdit && !isCreated && (
@@ -247,8 +311,33 @@ function ContractViewPageContent() {
               </p>
             )}
           </CardHeader>
-          <CardContent className="space-y-6">
-            {contract.fields.map((field) => renderField(field))}
+          <CardContent className={`space-y-6 ${canEdit ? "pl-8" : ""}`}>
+            {(canEdit ? localFields : contract.fields).map((field, index) => (
+              <div
+                key={field.id}
+                draggable={canEdit}
+                onDragStart={() => handleDragStart(index)}
+                onDragOver={handleDragOver}
+                onDrop={(e) => handleDrop(e, index)}
+                onDragEnd={handleDragEnd}
+                className={`relative ${canEdit ? "cursor-move" : ""} ${
+                  draggedFieldIndex === index ? "opacity-50" : ""
+                } transition-opacity`}
+              >
+                {canEdit && (
+                  <div className="absolute -left-8 top-2 text-gray-400 hover:text-gray-600 cursor-grab active:cursor-grabbing">
+                    <GripVertical className="h-5 w-5" />
+                  </div>
+                )}
+                <div
+                  className={`border rounded-lg p-4 ${
+                    canEdit ? "hover:border-blue-300 hover:bg-blue-50/50" : ""
+                  } transition-colors`}
+                >
+                  {renderField(field, index)}
+                </div>
+              </div>
+            ))}
           </CardContent>
         </Card>
 
@@ -257,21 +346,36 @@ function ContractViewPageContent() {
             Created: {format(new Date(contract.createdAt), "MMM d, yyyy")}
           </div>
           <div className="flex gap-2">
-            {canEdit && (
+            {canEdit ? (
+              <>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setLocalFieldValues(contract.fieldValues);
+                    setLocalFields(contract.fields);
+                    setHasUnsavedChanges(false);
+                    router.push(`/contracts/${contract.id}`);
+                  }}
+                  className="flex-shrink-0"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleSave}
+                  className="flex-shrink-0"
+                  disabled={!hasUnsavedChanges}
+                >
+                  Update
+                </Button>
+              </>
+            ) : (
               <Button
-                variant="outline"
-                onClick={() => router.push(`/contracts/${contract.id}`)}
+                onClick={() => router.push(`/contracts/${contract.id}/status`)}
                 className="flex-shrink-0"
               >
-                Cancel Edit
+                Manage Status
               </Button>
             )}
-            <Button
-              onClick={() => router.push(`/contracts/${contract.id}/status`)}
-              className="flex-shrink-0"
-            >
-              Manage Status
-            </Button>
           </div>
         </div>
       </div>

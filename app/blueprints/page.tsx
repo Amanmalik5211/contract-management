@@ -9,10 +9,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Search, X, Filter, ChevronDown } from "lucide-react";
+import { Search, X, Filter, ChevronDown, Pencil, Trash2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { generateUUID } from "@/lib/utils";
 
 export default function BlueprintManager() {
   const { blueprints, addBlueprint, deleteBlueprint } = useStore();
+  const router = useRouter();
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFieldTypes, setSelectedFieldTypes] = useState<FieldType[]>([]);
@@ -37,7 +41,7 @@ export default function BlueprintManager() {
   const handleAddField = () => {
     if (newField.label.trim()) {
       const field: Field = {
-        id: `field-${crypto.randomUUID()}`,
+        id: `field-${generateUUID()}`,
         type: newField.type,
         label: newField.label,
         position: {
@@ -66,7 +70,7 @@ export default function BlueprintManager() {
   const handleCreateBlueprint = () => {
     if (formData.name.trim() && formData.fields.length > 0) {
       const blueprint: Blueprint = {
-        id: `bp-${crypto.randomUUID()}`,
+        id: `bp-${generateUUID()}`,
         name: formData.name,
         description: formData.description,
         fields: formData.fields,
@@ -391,7 +395,7 @@ export default function BlueprintManager() {
                                     <span className="flex-1 text-sm">
                                       {fieldTypeLabels[fieldType]}
                                     </span>
-                                    <Badge variant="outline">
+                                    <Badge variant="secondary">
                                       {count}
                                     </Badge>
                                   </label>
@@ -471,40 +475,74 @@ export default function BlueprintManager() {
                   )}
                 </div>
               ) : (
-                <div className="grid gap-4">
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                   {filteredBlueprints.map((blueprint) => (
-                    <Card key={blueprint.id} className="hover:shadow-md transition-shadow overflow-hidden">
-                      <CardHeader className="pb-3">
-                        <div className="flex items-start justify-between gap-4">
-                          <div className="flex-1 min-w-0">
-                            <CardTitle className="text-lg break-words">{blueprint.name}</CardTitle>
-                            {blueprint.description && (
-                              <CardDescription className="mt-1 break-words overflow-hidden">{blueprint.description}</CardDescription>
-                            )}
-                          </div>
+                    <div
+                      key={blueprint.id}
+                      className="group relative"
+                    >
+                      <Card className="hover:shadow-md transition-shadow overflow-hidden h-full flex flex-col">
+                        <Link
+                          href={`/blueprints/${blueprint.id}`}
+                          className="flex-1 flex flex-col"
+                        >
+                          <CardHeader className="pb-3">
+                            <div className="flex items-start justify-between gap-4">
+                              <div className="flex-1 min-w-0">
+                                <CardTitle className="text-lg break-words">{blueprint.name}</CardTitle>
+                                {blueprint.description && (
+                                  <CardDescription className="mt-1 text-sm text-gray-600 line-clamp-2 break-words overflow-hidden">
+                                    {blueprint.description}
+                                  </CardDescription>
+                                )}
+                              </div>
+                            </div>
+                          </CardHeader>
+                          <CardContent className="space-y-3 pb-12">
+                            <div className="text-sm">
+                              <p className="font-medium">{blueprint.fields.length} fields</p>
+                              <ul className="mt-2 space-y-1">
+                                {blueprint.fields.map((field) => (
+                                  <li key={field.id} className="text-xs break-words">
+                                    • {field.label} ({fieldTypeLabels[field.type]})
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          </CardContent>
+                        </Link>
+                        <div className="absolute bottom-4 right-4 flex items-center gap-2">
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => deleteBlueprint(blueprint.id)}
-                            className="flex-shrink-0"
+                            className="h-8 w-8 p-0"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              router.push(`/blueprints/${blueprint.id}?edit=true`);
+                            }}
+                            title="Edit blueprint"
                           >
-                            Delete
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              if (confirm(`Are you sure you want to delete "${blueprint.name}"? This action cannot be undone.`)) {
+                                deleteBlueprint(blueprint.id);
+                              }
+                            }}
+                            title="Delete blueprint"
+                          >
+                            <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
-                      </CardHeader>
-                      <CardContent className="space-y-3">
-                        <div className="text-sm">
-                          <p className="font-medium">{blueprint.fields.length} fields</p>
-                          <ul className="mt-2 space-y-1">
-                            {blueprint.fields.map((field) => (
-                              <li key={field.id} className="text-xs break-words">
-                                • {field.label} ({fieldTypeLabels[field.type]})
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      </CardContent>
-                    </Card>
+                      </Card>
+                    </div>
                   ))}
                 </div>
               )}
