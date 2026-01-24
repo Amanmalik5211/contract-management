@@ -35,9 +35,9 @@ export default function BlueprintViewPage() {
           <Button variant="ghost" onClick={() => router.back()} className="mb-4">
             ← Back
           </Button>
-          <h1 className="text-3xl font-bold break-words">{blueprint.name}</h1>
+          <h1 className="text-3xl font-bold wrap-break-words">{blueprint.name}</h1>
           {blueprint.description && (
-            <p className="mt-2 text-sm break-words overflow-hidden">
+            <p className="mt-2 text-sm wrap-break-words overflow-hidden">
               {blueprint.description}
             </p>
           )}

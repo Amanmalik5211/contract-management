@@ -1,6 +1,7 @@
 "use client";
 
-import { useParams, useRouter } from "next/navigation";
+import { Suspense } from "react";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useStore } from "@/lib/store";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,11 +10,13 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { getStatusLabel } from "@/lib/contract-utils";
 import { format } from "date-fns";
+import { Pencil } from "lucide-react";
 import type { Field } from "@/types/field";
 
-export default function ContractViewPage() {
+function ContractViewPageContent() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { getContract, updateContract } = useStore();
   const contract = getContract(params.id as string);
 
@@ -31,9 +34,12 @@ export default function ContractViewPage() {
     );
   }
 
+  const isEditMode = searchParams.get("edit") === "true";
+  const isCreated = contract.status === "created";
   const isLocked = contract.status === "locked";
   const isRevoked = contract.status === "revoked";
-  const canEdit = !isLocked && !isRevoked;
+  // Only allow editing if explicitly in edit mode AND status is "created"
+  const canEdit = isEditMode && isCreated;
 
   const handleFieldChange = (fieldId: string, value: string | boolean) => {
     if (!canEdit) return;
@@ -49,6 +55,61 @@ export default function ContractViewPage() {
   const renderField = (field: Field) => {
     const value = contract.fieldValues[field.id] ?? "";
 
+    // Render read-only view when not in edit mode
+    if (!canEdit) {
+      switch (field.type) {
+        case "text":
+          return (
+            <div key={field.id} className="space-y-2">
+              <Label className="break-words font-medium">{field.label}</Label>
+              <div className="px-3 py-2 border rounded-md bg-gray-50 text-sm break-words">
+                {value ? (value as string) : <span className="text-gray-400">Not filled</span>}
+              </div>
+            </div>
+          );
+        case "date":
+          return (
+            <div key={field.id} className="space-y-2">
+              <Label className="break-words font-medium">{field.label}</Label>
+              <div className="px-3 py-2 border rounded-md bg-gray-50 text-sm break-words">
+                {value ? (
+                  value instanceof Date
+                    ? format(value, "MMM d, yyyy")
+                    : format(new Date(value as string), "MMM d, yyyy")
+                ) : <span className="text-gray-400">Not filled</span>}
+              </div>
+            </div>
+          );
+        case "checkbox":
+          return (
+            <div key={field.id} className="flex items-center space-x-2">
+              <div className="h-4 w-4 rounded border flex-shrink-0 flex items-center justify-center bg-gray-50">
+                {(value as boolean) ? (
+                  <span className="text-green-600">✓</span>
+                ) : null}
+              </div>
+              <Label className="break-words font-medium">{field.label}</Label>
+            </div>
+          );
+        case "signature":
+          return (
+            <div key={field.id} className="space-y-2">
+              <Label className="break-words font-medium">{field.label}</Label>
+              <div className="flex h-32 items-center justify-center rounded-md border-2 border-dashed bg-gray-50">
+                {value ? (
+                  <div className="text-sm break-words">Signature captured</div>
+                ) : (
+                  <div className="text-sm text-gray-400">No signature</div>
+                )}
+              </div>
+            </div>
+          );
+        default:
+          return null;
+      }
+    }
+
+    // Render editable view when in edit mode
     switch (field.type) {
       case "text":
         return (
@@ -58,7 +119,6 @@ export default function ContractViewPage() {
               id={field.id}
               value={value as string}
               onChange={(e) => handleFieldChange(field.id, e.target.value)}
-              disabled={!canEdit}
             />
           </div>
         );
@@ -77,7 +137,6 @@ export default function ContractViewPage() {
               onChange={(e) =>
                 handleFieldChange(field.id, e.target.value)
               }
-              disabled={!canEdit}
             />
           </div>
         );
@@ -89,7 +148,6 @@ export default function ContractViewPage() {
               id={field.id}
               checked={value as boolean || false}
               onChange={(e) => handleFieldChange(field.id, e.target.checked)}
-              disabled={!canEdit}
               className="h-4 w-4 rounded border flex-shrink-0"
             />
             <Label htmlFor={field.id} className="break-words">{field.label}</Label>
@@ -106,9 +164,8 @@ export default function ContractViewPage() {
                 <Button
                   variant="outline"
                   onClick={() => handleFieldChange(field.id, "signed")}
-                  disabled={!canEdit}
                 >
-                  {canEdit ? "Click to Sign" : "Signature Required"}
+                  Click to Sign
                 </Button>
               )}
             </div>
@@ -155,14 +212,37 @@ export default function ContractViewPage() {
 
         <Card className="overflow-hidden">
           <CardHeader>
-            <CardTitle>Contract Fields</CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle>{canEdit ? "Edit Contract Fields" : "Contract Fields"}</CardTitle>
+              {!canEdit && isCreated && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => router.push(`/contracts/${contract.id}?edit=true`)}
+                  className="flex items-center gap-2"
+                >
+                  <Pencil className="h-4 w-4" />
+                  Edit
+                </Button>
+              )}
+            </div>
+            {canEdit && (
+              <p className="text-sm text-blue-600 break-words mt-2">
+                You are in edit mode. Changes will be saved automatically.
+              </p>
+            )}
+            {!canEdit && !isCreated && (
+              <p className="text-sm text-gray-600 break-words mt-2">
+                This contract is in read-only mode. Editing is only available for contracts in "Created" status.
+              </p>
+            )}
             {isLocked && (
-              <p className="text-sm break-words">
+              <p className="text-sm break-words mt-2">
                 This contract is locked and cannot be edited.
               </p>
             )}
             {isRevoked && (
-              <p className="text-sm text-red-600 break-words">
+              <p className="text-sm text-red-600 break-words mt-2">
                 This contract has been revoked.
               </p>
             )}
@@ -176,15 +256,40 @@ export default function ContractViewPage() {
           <div className="text-sm break-words">
             Created: {format(new Date(contract.createdAt), "MMM d, yyyy")}
           </div>
-          <Button
-            onClick={() => router.push(`/contracts/${contract.id}/status`)}
-            className="flex-shrink-0"
-          >
-            Manage Status
-          </Button>
+          <div className="flex gap-2">
+            {canEdit && (
+              <Button
+                variant="outline"
+                onClick={() => router.push(`/contracts/${contract.id}`)}
+                className="flex-shrink-0"
+              >
+                Cancel Edit
+              </Button>
+            )}
+            <Button
+              onClick={() => router.push(`/contracts/${contract.id}/status`)}
+              className="flex-shrink-0"
+            >
+              Manage Status
+            </Button>
+          </div>
         </div>
       </div>
     </div>
+  );
+}
+
+export default function ContractViewPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          <div>Loading...</div>
+        </div>
+      }
+    >
+      <ContractViewPageContent />
+    </Suspense>
   );
 }
 

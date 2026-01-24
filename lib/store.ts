@@ -19,6 +19,7 @@ interface AppState {
   addContract: (contract: Contract) => void;
   updateContract: (id: string, updates: Partial<Contract>) => void;
   updateContractStatus: (id: string, status: ContractStatus) => void;
+  deleteContract: (id: string) => void;
   getContract: (id: string) => Contract | undefined;
   getContractsByStatus: (status: ContractStatus) => Contract[];
 }
@@ -69,6 +70,11 @@ export const useStore = create<AppState>()(
               ? { ...contract, status, updatedAt: new Date() }
               : contract
           ),
+        })),
+      
+      deleteContract: (id) =>
+        set((state) => ({
+          contracts: state.contracts.filter((contract) => contract.id !== id),
         })),
       
       getContract: (id) => get().contracts.find((c) => c.id === id),
