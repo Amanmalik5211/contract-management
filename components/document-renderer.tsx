@@ -12,8 +12,6 @@ import { capitalizeWords } from "@/lib/utils";
 
 interface DocumentRendererProps {
   title: string;
-  description?: string;
-  headerImageUrl?: string;
   sections: DocumentSection[];
   fields: Field[];
   fieldValues?: Record<string, string | boolean | Date | null>;
@@ -25,8 +23,6 @@ interface DocumentRendererProps {
 
 export function DocumentRenderer({
   title,
-  description,
-  headerImageUrl,
   sections,
   fields,
   fieldValues = {},
@@ -292,7 +288,7 @@ export function DocumentRenderer({
             onDragStart={(e) => handleDragStart(e, index)}
             onDragEnd={handleDragEnd}
           >
-            <GripVertical className="h-5 w-5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" />
+            <GripVertical className="h-5 w-5  hover:text-gray-600 dark:hover:text-gray-300" />
           </div>
         )}
         <div
@@ -335,24 +331,6 @@ export function DocumentRenderer({
               <p className="leading-relaxed whitespace-pre-wrap break-words overflow-wrap-anywhere text-base">
                 {section.content}
               </p>
-            )}
-          </div>
-        );
-      case "image":
-        return (
-          <div key={section.id} className="my-6 flex justify-center">
-            {section.imageUrl ? (
-              <div className="relative w-full max-w-2xl h-64">
-                <img
-                  src={section.imageUrl}
-                  alt={section.imageAlt || section.title || "Image"}
-                  className="w-full h-full object-contain rounded-lg border border-gray-200 dark:border-gray-700"
-                />
-              </div>
-            ) : (
-              <div className="w-full max-w-2xl h-64 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg flex items-center justify-center">
-                <span className="text-sm">No image</span>
-              </div>
             )}
           </div>
         );
@@ -401,28 +379,6 @@ export function DocumentRenderer({
               {capitalizeWords(title)}
             </h1>
           </div>
-
-          {/* Header with Logo/Image */}
-          {headerImageUrl && (
-            <div className="mb-8 flex justify-center">
-              <div className="relative w-full max-w-2xl h-56">
-                <img
-                  src={headerImageUrl}
-                  alt="Document Header"
-                  className="w-full h-full object-contain"
-                />
-              </div>
-            </div>
-          )}
-
-          {/* Description */}
-          {description && (
-            <div className="mb-12 text-center">
-              <p className="text-lg max-w-3xl mx-auto leading-relaxed break-words whitespace-pre-wrap overflow-wrap-anywhere">
-                {description}
-              </p>
-            </div>
-          )}
 
         {/* Document Content */}
         <div className="space-y-6">

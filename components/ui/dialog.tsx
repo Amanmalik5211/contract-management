@@ -1,8 +1,6 @@
 "use client";
 
 import * as React from "react";
-import { X } from "lucide-react";
-import { Button } from "./button";
 import { cn } from "@/lib/utils";
 
 interface DialogProps {
@@ -39,12 +37,12 @@ const Dialog: React.FC<DialogProps> = ({ open, onOpenChange, children }) => {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center"
+      className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4"
       onClick={() => onOpenChange(false)}
     >
       <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" />
       <div
-        className="relative z-50 w-full max-w-lg mx-4"
+        className="relative z-50 w-full max-w-xs sm:max-w-md md:max-w-lg lg:max-w-2xl mx-auto"
         onClick={(e) => e.stopPropagation()}
       >
         {children}
@@ -60,11 +58,11 @@ const DialogContent: React.FC<DialogContentProps> = ({
   return (
     <div
       className={cn(
-        "bg-background rounded-2xl sm:rounded-3xl border border-border/50 shadow-2xl p-6 sm:p-8 w-full relative overflow-hidden",
+        "bg-background rounded-xl sm:rounded-2xl md:rounded-3xl border border-border/50 shadow-2xl p-4 sm:p-6 md:p-8 w-full relative overflow-hidden max-h-[90vh] sm:max-h-[95vh] overflow-y-auto",
         className
       )}
     >
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-primary/2 to-transparent opacity-100 rounded-2xl sm:rounded-3xl" />
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-primary/2 to-transparent opacity-100 rounded-xl sm:rounded-2xl md:rounded-3xl" />
       <div className="relative z-10">
         {children}
       </div>
@@ -94,7 +92,7 @@ const DialogDescription: React.FC<DialogDescriptionProps> = ({
 };
 
 const DialogFooter: React.FC<DialogFooterProps> = ({ children }) => {
-  return <div className="flex justify-end gap-2 sm:gap-3 mt-6">{children}</div>;
+  return <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-3 mt-4 sm:mt-6">{children}</div>;
 };
 
 export {

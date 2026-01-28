@@ -36,6 +36,13 @@ const defaultFieldTypeLabels: Record<FieldType, string> = {
   checkbox: "Checkbox",
 };
 
+const MAX_NAME_CHARS = 22;
+
+function truncateName(name: string, maxChars: number = MAX_NAME_CHARS): string {
+  if (!name || name.length <= maxChars) return name;
+  return name.slice(0, maxChars).trim() + "…";
+}
+
 interface ContractsListSectionProps {
   viewType: "contract" | "blueprint";
   filteredContracts: Contract[];
@@ -187,27 +194,27 @@ export function ContractsListSection({
           </CardContent>
         </Card>
       ) : (
-        <Card className="rounded-2xl sm:rounded-3xl border-border/50 bg-gradient-to-br from-background to-muted/30 shadow-lg">
-          <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <Table className="min-w-[1060px] md:min-w-full">
+        <Card className="rounded-xl sm:rounded-2xl md:rounded-3xl border-border/50 bg-gradient-to-br from-background to-muted/30 shadow-lg overflow-hidden">
+          <CardContent className="p-0 sm:p-2 md:p-4">
+            <div className="overflow-x-auto -mx-2 sm:mx-0 max-w-full">
+              <Table className="table-fixed min-w-[840px] caption-bottom text-sm">
                 <TableHeader>
                   <TableRow>
                     {viewType === "contract" ? (
                       <>
-                        <TableHead className="text-center w-[220px]">Contract Name</TableHead>
-                        <TableHead className="text-center w-[200px]">Blueprint Name</TableHead>
-                        <TableHead className="text-center w-[130px]">Status</TableHead>
-                        <TableHead className="text-center w-[150px]">Created Date</TableHead>
-                        <TableHead className="text-center w-[160px]">Settings</TableHead>
-                        <TableHead className="text-center w-[200px]">Actions</TableHead>
+                        <TableHead className="text-center text-xs sm:text-sm w-[180px] min-w-[180px]">Contract Name</TableHead>
+                        <TableHead className="text-center text-xs sm:text-sm w-[160px] min-w-[160px]">Blueprint Name</TableHead>
+                        <TableHead className="text-center text-xs sm:text-sm w-[100px] min-w-[100px]">Status</TableHead>
+                        <TableHead className="text-center text-xs sm:text-sm w-[120px] min-w-[120px]">Created Date</TableHead>
+                        <TableHead className="text-center text-xs sm:text-sm w-[100px] min-w-[100px]">Settings</TableHead>
+                        <TableHead className="text-center text-xs sm:text-sm w-[180px] min-w-[180px]">Actions</TableHead>
                       </>
                     ) : (
                       <>
-                        <TableHead className="text-center w-[220px]">Blueprint Name</TableHead>
-                        <TableHead className="text-center w-[300px]">Fields</TableHead>
-                        <TableHead className="text-center w-[150px]">Created Date</TableHead>
-                        <TableHead className="text-center w-[200px]">Actions</TableHead>
+                        <TableHead className="text-center text-xs sm:text-sm w-[200px] min-w-[200px]">Blueprint Name</TableHead>
+                        <TableHead className="text-center text-xs sm:text-sm w-[280px] min-w-[280px]">Fields</TableHead>
+                        <TableHead className="text-center text-xs sm:text-sm w-[140px] min-w-[140px]">Created Date</TableHead>
+                        <TableHead className="text-center text-xs sm:text-sm w-[180px] min-w-[180px]">Actions</TableHead>
                       </>
                     )}
                   </TableRow>
@@ -220,36 +227,40 @@ export function ContractsListSection({
 
                 return (
                           <TableRow key={contract.id}>
-                            <TableCell className="font-medium text-center w-[220px] whitespace-nowrap">
+                            <TableCell className="font-medium text-center text-xs sm:text-sm max-w-0 px-2 sm:px-4" title={contract.name}>
                               <Link
                                 href={`/contracts/${contract.id}`}
-                                className="hover:text-primary transition-colors"
+                                className="hover:text-primary transition-colors block truncate"
                               >
-                                {contract.name}
+                                {truncateName(contract.name)}
                               </Link>
                             </TableCell>
-                            <TableCell className="text-center w-[200px] whitespace-nowrap">{contract.blueprintName}</TableCell>
-                            <TableCell className="text-center w-[130px] whitespace-nowrap">
-                              <Badge variant={getStatusVariant(contract.status)}>
+                            <TableCell className="text-center text-xs sm:text-sm max-w-0 px-2 sm:px-4 truncate" title={contract.blueprintName}>
+                              {truncateName(contract.blueprintName)}
+                            </TableCell>
+                            <TableCell className="text-center text-xs sm:text-sm px-2 sm:px-4">
+                              <Badge variant={getStatusVariant(contract.status)} className="text-xs whitespace-nowrap">
                                 {getStatusLabel(contract.status)}
                               </Badge>
                             </TableCell>
-                            <TableCell className="text-center w-[150px] whitespace-nowrap">
+                            <TableCell className="text-center text-xs sm:text-sm whitespace-nowrap px-2 sm:px-4">
                               {format(new Date(contract.createdAt), "MMM d, yyyy")}
                             </TableCell>
-                            <TableCell className="text-center w-[160px] whitespace-nowrap">
+                            <TableCell className="text-center text-xs sm:text-sm px-2 sm:px-4">
                               {onStatusChange && (
                                 <Button
                                   variant="outline"
                                   size="sm"
                                   onClick={(e) => handleChangeStatusClick(contract, e)}
+                                  className="text-xs px-2 sm:px-3"
                                 >
-                                  Change Status
+                                  <span className="hidden sm:inline">Change Status</span>
+                                  <span className="sm:hidden">Status</span>
                                 </Button>
                               )}
                             </TableCell>
-                            <TableCell className="text-center w-[200px] whitespace-nowrap">
-                              <div className="flex items-center justify-center gap-2">
+                            <TableCell className="text-center text-xs sm:text-sm px-2 sm:px-4">
+                              <div className="flex items-center justify-center gap-1 sm:gap-2 flex-wrap">
                                 {onView && (
                                   <Button
                                     variant="ghost"
@@ -300,32 +311,32 @@ export function ContractsListSection({
               })
             : filteredBlueprints.map((blueprint) => (
                         <TableRow key={blueprint.id}>
-                          <TableCell className="font-medium text-center w-[220px] whitespace-nowrap">
+                          <TableCell className="font-medium text-center text-xs sm:text-sm max-w-0 px-2 sm:px-4" title={blueprint.name}>
                             <Link
                               href={`/blueprints/${blueprint.id}`}
-                              className="hover:text-primary transition-colors"
+                              className="hover:text-primary transition-colors block truncate"
                             >
-                              {blueprint.name}
+                              {truncateName(blueprint.name)}
                             </Link>
                           </TableCell>
-                          <TableCell className="text-center w-[300px]">
+                          <TableCell className="text-center text-xs sm:text-sm px-2 sm:px-4 min-w-0">
                             <div className="flex flex-wrap gap-1 justify-center">
                               {blueprint.fields.length > 0 ? (
                                 blueprint.fields.map((field) => (
-                                  <Badge key={field.id} variant="secondary" className="text-xs whitespace-nowrap">
+                                  <Badge key={field.id} variant="secondary" className="text-[10px] sm:text-xs whitespace-nowrap">
                                     {fieldTypeLabelsMap[field.type]}
                                   </Badge>
                                 ))
                               ) : (
-                                <span className="text-sm text-muted-foreground whitespace-nowrap">No fields</span>
+                                <span className="text-xs sm:text-sm text-muted-foreground whitespace-nowrap">No fields</span>
                               )}
                             </div>
                           </TableCell>
-                          <TableCell className="text-center w-[150px] whitespace-nowrap">
+                          <TableCell className="text-center text-xs sm:text-sm whitespace-nowrap px-2 sm:px-4">
                             {format(new Date(blueprint.createdAt), "MMM d, yyyy")}
                           </TableCell>
-                          <TableCell className="text-center w-[200px] whitespace-nowrap">
-                            <div className="flex items-center justify-center gap-2">
+                          <TableCell className="text-center text-xs sm:text-sm px-2 sm:px-4">
+                            <div className="flex items-center justify-center gap-1 sm:gap-2 flex-wrap">
                               {onView && (
                                 <Button
                                   variant="ghost"
@@ -385,30 +396,30 @@ export function ContractsListSection({
         
         return (
           <Dialog open={statusModalOpen} onOpenChange={setStatusModalOpen}>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="max-w-xs sm:max-w-md md:max-w-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle className="text-2xl">Manage Contract Status</DialogTitle>
-                <DialogDescription className="text-base">
+                <DialogTitle className="text-lg sm:text-xl md:text-2xl">Manage Contract Status</DialogTitle>
+                <DialogDescription className="text-sm sm:text-base break-words">
                   {selectedContract.name}
                 </DialogDescription>
               </DialogHeader>
               
-              <div className="space-y-6 py-4">
+              <div className="space-y-4 sm:space-y-6 py-2 sm:py-4">
                 <div>
-                  <h3 className="mb-3 text-lg font-semibold">Current Status</h3>
-                  <Badge variant={getStatusVariant(selectedContract.status)} className="text-base px-4 py-2">
+                  <h3 className="mb-2 sm:mb-3 text-base sm:text-lg font-semibold">Current Status</h3>
+                  <Badge variant={getStatusVariant(selectedContract.status)} className="text-sm sm:text-base px-3 sm:px-4 py-1.5 sm:py-2">
                     {getStatusLabel(selectedContract.status)}
                   </Badge>
                 </div>
 
                 {modalIsRevoked && (
-                  <div className="rounded-xl bg-red-50 border border-red-200 p-4 text-base text-red-800 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800">
+                  <div className="rounded-lg sm:rounded-xl bg-red-50 border border-red-200 p-3 sm:p-4 text-sm sm:text-base text-red-800 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800">
                     This contract has been revoked and cannot proceed further.
                   </div>
                 )}
 
                 {modalIsLocked && (
-                  <div className="rounded-xl bg-green-50 border border-green-200 p-4 text-base text-green-800 dark:bg-green-900/20 dark:text-green-300 dark:border-green-800">
+                  <div className="rounded-lg sm:rounded-xl bg-green-50 border border-green-200 p-3 sm:p-4 text-sm sm:text-base text-green-800 dark:bg-green-900/20 dark:text-green-300 dark:border-green-800">
                     This contract is locked and cannot be modified.
                   </div>
                 )}
@@ -416,8 +427,8 @@ export function ContractsListSection({
                 {!modalIsRevoked && !modalIsLocked && (
                   <>
                     <div>
-                      <h3 className="mb-4 text-lg font-semibold">Status Flow</h3>
-                      <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                      <h3 className="mb-3 sm:mb-4 text-base sm:text-lg font-semibold">Status Flow</h3>
+                      <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 md:gap-3">
                         {STATUS_ORDER.map((status, index) => {
                           const isCurrent = selectedContract.status === status;
                           const isPast = STATUS_ORDER.indexOf(selectedContract.status) > index;
@@ -425,7 +436,7 @@ export function ContractsListSection({
                           return (
                             <div key={status} className="flex items-center">
                               <div
-                                className={`rounded-xl px-4 py-2.5 text-base font-medium transition-all ${
+                                className={`rounded-lg sm:rounded-xl px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 md:py-2.5 text-xs sm:text-sm md:text-base font-medium transition-all ${
                                   isCurrent
                                     ? "bg-primary/20 text-primary border border-primary/30 shadow-md"
                                     : isPast
@@ -436,7 +447,7 @@ export function ContractsListSection({
                                 {getStatusLabel(status)}
                               </div>
                               {index < STATUS_ORDER.length - 1 && (
-                                <ArrowRight className="mx-2 h-5 w-5 text-muted-foreground" />
+                                <ArrowRight className="mx-1 sm:mx-2 h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
                               )}
                             </div>
                           );
@@ -444,12 +455,12 @@ export function ContractsListSection({
                       </div>
                     </div>
 
-                    <div className="space-y-3">
+                    <div className="space-y-2 sm:space-y-3">
                       {modalNextStatus && (
                         <Button
                           size="lg"
                           onClick={() => handleStatusSelect(modalNextStatus)}
-                          className="w-full"
+                          className="w-full text-sm sm:text-base"
                         >
                           Advance to {getStatusLabel(modalNextStatus)}
                           <ArrowRight className="ml-2 h-4 w-4" />
@@ -461,7 +472,7 @@ export function ContractsListSection({
                           variant="destructive"
                           size="lg"
                           onClick={handleRevoke}
-                          className="w-full"
+                          className="w-full text-sm sm:text-base"
                         >
                           <X className="mr-2 h-4 w-4" />
                           Revoke Contract
@@ -469,7 +480,7 @@ export function ContractsListSection({
                       )}
 
                       {!modalNextStatus && !modalCanRevoke && (
-                        <p className="text-base text-muted-foreground">
+                        <p className="text-sm sm:text-base text-muted-foreground">
                           No further actions available for this contract.
                         </p>
                       )}

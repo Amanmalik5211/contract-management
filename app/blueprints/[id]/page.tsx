@@ -13,8 +13,11 @@ import Link from "next/link";
 import type { Field, FieldType } from "@/types/field";
 import { generateUUID } from "@/lib/utils";
 import { DocumentRenderer } from "@/components/document-renderer";
+import { PdfViewer } from "@/components/pdf-viewer";
+import { PdfBlueprintEditor } from "@/components/pdf-blueprint-editor";
 import { capitalizeWords } from "@/lib/utils";
 import { useToast } from "@/components/ui/toaster";
+import { PageLayout } from "@/components/shared/page-layout";
 
 function BlueprintViewPageContent() {
   const params = useParams();
@@ -23,14 +26,21 @@ function BlueprintViewPageContent() {
   const { getBlueprint, updateBlueprint } = useStore();
   const { addToast } = useToast();
   const blueprint = getBlueprint(params.id as string);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
 
   const isEditMode = searchParams.get("edit") === "true";
+
+  // Wait for store hydration
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsInitialLoad(false);
+    }, 100);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Initialize form data with blueprint data if available
   const [formData, setFormData] = useState(() => ({
     name: blueprint?.name || "",
-    description: blueprint?.description || "",
-    headerImageUrl: blueprint?.headerImageUrl || "",
     fields: blueprint?.fields || [] as Field[],
   }));
   const [newField, setNewField] = useState<{
@@ -57,8 +67,6 @@ function BlueprintViewPageContent() {
       const timeoutId = setTimeout(() => {
         setFormData({
           name: blueprint.name,
-          description: blueprint.description || "",
-          headerImageUrl: blueprint.headerImageUrl || "",
           fields: blueprint.fields || [],
         });
       }, 0);
@@ -108,10 +116,7 @@ function BlueprintViewPageContent() {
 
     updateBlueprint(blueprint.id, {
       name: formData.name,
-      description: formData.description,
-      headerImageUrl: formData.headerImageUrl.trim() || undefined,
       fields: formData.fields,
-      sections: blueprint.sections || [],
     });
 
     addToast({
@@ -123,24 +128,34 @@ function BlueprintViewPageContent() {
     router.push("/dashboard");
   };
 
+  // Show loading during initial load
+  if (isInitialLoad) {
+    return (
+      <PageLayout isLoading={true} loadingText="Loading blueprint...">
+        <div></div>
+      </PageLayout>
+    );
+  }
+
+  // Only show "not found" after initial load is complete
   if (!blueprint) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Card>
-          <CardContent className="p-8 text-center">
-            <h2 className="text-2xl font-bold mb-2">Blueprint Not Found</h2>
-            <p className="mb-4">The blueprint you are looking for does not exist.</p>
-            <Button onClick={() => router.push("/blueprints")}>Go to Blueprints</Button>
-          </CardContent>
-        </Card>
-      </div>
+      <PageLayout>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <Card>
+            <CardContent className="p-8 text-center">
+              <h2 className="text-2xl font-bold mb-2">Blueprint Not Found</h2>
+              <p className="mb-4">The blueprint you are looking for does not exist.</p>
+              <Button onClick={() => router.push("/blueprints")}>Go to Blueprints</Button>
+            </CardContent>
+          </Card>
+        </div>
+      </PageLayout>
     );
   }
 
   return (
-    <div className="min-h-screen">
-      <div className="relative overflow-hidden from-primary/5 via-background to-secondary/30">
-        <div className="mx-auto max-w-[90rem] px-4 sm:px-6 lg:px-4 py-4 sm:py-6 lg:py-8">
+    <PageLayout>
           <div className="mb-8 sm:mb-12">
             {!isEditMode ? (
               <>
@@ -184,23 +199,37 @@ function BlueprintViewPageContent() {
 
           {!isEditMode ? (
             <>
-              {/* Document Preview Section */}
-              <section className="py-6 sm:py-8 mb-8">
-                <DocumentRenderer
-                  title={blueprint.name}
-                  description={blueprint.description}
-                  headerImageUrl={blueprint.headerImageUrl}
-                  sections={blueprint.sections || []}
-                  fields={blueprint.fields}
-                  fieldValues={{}}
-                  isEditable={false}
-                />
-              </section>
+              {/* PDF Preview Section */}
+              {blueprint.pdfUrl ? (
+                <section className="py-6 sm:py-8 mb-8">
+                  <div className="mb-4">
+                    <h2 className="text-xl font-semibold mb-2">PDF Template</h2>
+                    {blueprint.pdfFileName && (
+                      <p className="text-sm text-muted-foreground">
+                        File: {blueprint.pdfFileName}
+                        {blueprint.pageCount && ` • ${blueprint.pageCount} page${blueprint.pageCount !== 1 ? "s" : ""}`}
+                      </p>
+                    )}
+                  </div>
+                  <PdfViewer pdfUrl={blueprint.pdfUrl} />
+                </section>
+              ) : (
+                /* Document Preview Section (fallback for non-PDF blueprints) */
+                <section className="py-6 sm:py-8 mb-8">
+                  <DocumentRenderer
+                    title={blueprint.name}
+                    sections={[]}
+                    fields={blueprint.fields}
+                    fieldValues={{}}
+                    isEditable={false}
+                  />
+                </section>
+              )}
 
               <section className="py-6 sm:py-8">
                 <div className="flex justify-end">
-                  <Link href={`/contracts/new?blueprintId=${blueprint.id}`}>
-                    <Button size="lg" className="w-full sm:w-auto">
+                  <Link href={`/contracts/new?blueprintId=${blueprint.id}`} className="w-full sm:w-auto">
+                    <Button size="lg" className="w-full sm:w-auto text-sm sm:text-base">
                       Create Contract from This Blueprint
                     </Button>
                   </Link>
@@ -227,105 +256,107 @@ function BlueprintViewPageContent() {
                     className="mt-2 border-gray-300 dark:border-gray-700"
                   />
                 </div>
-                <div>
-                  <Label htmlFor="description">Description</Label>
-                  <textarea
-                    id="description"
-                    placeholder="Brief description of this template"
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    className="mt-2 flex min-h-[80px] w-full rounded-md border border-gray-300 dark:border-gray-700 px-3 py-2 text-sm ring-offset-white dark:ring-offset-gray-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 break-words overflow-auto resize-none"
-                    rows={3}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="headerImageUrl">Header Image URL (optional)</Label>
-                  <Input
-                    id="headerImageUrl"
-                    type="url"
-                    placeholder="https://example.com/logo.png"
-                    value={formData.headerImageUrl}
-                    onChange={(e) => setFormData({ ...formData, headerImageUrl: e.target.value })}
-                    className="mt-2 border-gray-300 dark:border-gray-700"
-                  />
-                </div>
               </div>
 
-                  {/* Add Fields */}
-                  <div className="space-y-4 rounded-xl sm:rounded-2xl border border-gray-300 dark:border-gray-700 p-4 sm:p-6">
-                    <h3 className="font-semibold text-base sm:text-lg">Add Fields</h3>
-                <div className="grid gap-4 md:grid-cols-3">
-                  <div>
-                    <Label htmlFor="fieldLabel">Field Label</Label>
-                    <Input
-                      id="fieldLabel"
-                      placeholder="e.g., Signature"
-                      value={newField.label}
-                      onChange={(e) => setNewField({ ...newField, label: e.target.value })}
-                      className="mt-2 border-gray-300 dark:border-gray-700"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="fieldType">Field Type</Label>
-                    <select
-                      id="fieldType"
-                      value={newField.type}
-                      onChange={(e) => setNewField({ ...newField, type: e.target.value as FieldType })}
-                      className="mt-2 flex h-10 w-full rounded-md border border-gray-300 dark:border-gray-700 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      <option value="text">Text Input</option>
-                      <option value="date">Date Picker</option>
-                      <option value="signature">Signature</option>
-                      <option value="checkbox">Checkbox</option>
-                    </select>
-                  </div>
-                  <div className="flex items-end">
-                    <Button
-                      onClick={handleAddField}
-                      variant="outline"
-                      className="w-full"
-                    >
-                      Add Field
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Fields List */}
-                {formData.fields.length > 0 && (
-                  <div className="space-y-2 border-t border-gray-300 dark:border-gray-700 pt-4">
-                    <p className="text-sm font-medium">
-                      {formData.fields.length} field{formData.fields.length !== 1 ? "s" : ""} added
-                    </p>
-                    <div className="space-y-2">
-                      {formData.fields.map((field) => (
-                    <div
-                      key={field.id}
-                      className="flex items-center justify-between rounded-lg border border-gray-300 dark:border-gray-700 p-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                    >
-                          <div className="flex-1">
-                            <p className="font-medium">{field.label}</p>
-                            <p className="text-xs">{fieldTypeLabels[field.type]}</p>
-                          </div>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleRemoveField(field.id)}
+                  {/* Add Fields + list: only when blueprint has no PDF (non-PDF edit flow) */}
+                  {!blueprint.pdfUrl && (
+                    <div className="space-y-4 rounded-xl sm:rounded-2xl border border-gray-300 dark:border-gray-700 p-4 sm:p-6">
+                      <h3 className="font-semibold text-base sm:text-lg">Add Fields</h3>
+                      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
+                        <div>
+                          <Label htmlFor="fieldLabel" className="text-xs sm:text-sm">Field Label</Label>
+                          <Input
+                            id="fieldLabel"
+                            placeholder="e.g., Signature"
+                            value={newField.label}
+                            onChange={(e) => setNewField({ ...newField, label: e.target.value })}
+                            className="mt-2 border-gray-300 dark:border-gray-700 text-xs sm:text-sm"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="fieldType" className="text-xs sm:text-sm">Field Type</Label>
+                          <select
+                            id="fieldType"
+                            value={newField.type}
+                            onChange={(e) => setNewField({ ...newField, type: e.target.value as FieldType })}
+                            className="mt-2 flex h-9 sm:h-10 w-full rounded-lg sm:rounded-xl border border-gray-300 dark:border-gray-700 px-3 py-2 text-xs sm:text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                           >
-                            Remove
+                            <option value="text">Text Input</option>
+                            <option value="date">Date Picker</option>
+                            <option value="signature">Signature</option>
+                            <option value="checkbox">Checkbox</option>
+                          </select>
+                        </div>
+                        <div className="flex items-end sm:col-span-2 md:col-span-1">
+                          <Button
+                            onClick={handleAddField}
+                            variant="outline"
+                            className="w-full text-xs sm:text-sm"
+                          >
+                            Add Field
                           </Button>
+                        </div>
                       </div>
-                      ))}
+                      {formData.fields.length > 0 && (
+                        <div className="space-y-2 border-t border-gray-300 dark:border-gray-700 pt-4">
+                          <p className="text-sm font-medium">
+                            {formData.fields.length} field{formData.fields.length !== 1 ? "s" : ""} added
+                          </p>
+                          <div className="space-y-2">
+                            {formData.fields.map((field) => (
+                              <div
+                                key={field.id}
+                                className="flex items-center justify-between rounded-lg border border-gray-300 dark:border-gray-700 p-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                              >
+                                <div className="flex-1">
+                                  <p className="font-medium">{field.label}</p>
+                                  <p className="text-xs">{fieldTypeLabels[field.type]}</p>
+                                </div>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleRemoveField(field.id)}
+                                >
+                                  Remove
+                                </Button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  </div>
-                )}
-              </div>
+                  )}
+
+                  {/* PDF Template: editable when blueprint has PDF — place, move, add, remove fields */}
+                  {blueprint.pdfUrl && (
+                    <div className="space-y-4 rounded-xl sm:rounded-2xl border border-gray-300 dark:border-gray-700 p-4 sm:p-6">
+                      <div>
+                        <h3 className="font-semibold text-base sm:text-lg mb-2">Edit PDF Template</h3>
+                        <p className="text-sm text-muted-foreground mb-2">
+                          Move and resize existing fields, add new fields by clicking on the PDF, or remove fields from the list or when selected.
+                        </p>
+                        {blueprint.pdfFileName && (
+                          <p className="text-sm text-muted-foreground mb-4">
+                            File: {blueprint.pdfFileName}
+                            {blueprint.pageCount && ` • ${blueprint.pageCount} page${blueprint.pageCount !== 1 ? "s" : ""}`}
+                          </p>
+                        )}
+                      </div>
+                      <PdfBlueprintEditor
+                        pdfUrl={blueprint.pdfUrl}
+                        fields={formData.fields}
+                        onFieldsChange={(newFields) => setFormData((prev) => ({ ...prev, fields: newFields }))}
+                      />
+                    </div>
+                  )}
 
                   {/* Form Actions */}
-                  <div className="flex justify-end gap-2 border-t border-gray-300 dark:border-gray-700 pt-4">
+                  <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-3 border-t border-gray-300 dark:border-gray-700 pt-4">
                     <Button
                       variant="outline"
                       onClick={() => router.push(`/blueprints/${blueprint.id}`)}
                       size="lg"
+                      className="w-full sm:w-auto"
                     >
                       Cancel
                     </Button>
@@ -333,6 +364,7 @@ function BlueprintViewPageContent() {
                       onClick={handleUpdate}
                       disabled={!formData.name.trim()}
                       size="lg"
+                      className="w-full sm:w-auto"
                     >
                       Update
                     </Button>
@@ -341,9 +373,7 @@ function BlueprintViewPageContent() {
               </Card>
             </section>
           )}
-        </div>
-      </div>
-    </div>
+    </PageLayout>
   );
 }
 

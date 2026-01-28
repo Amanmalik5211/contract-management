@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useStore } from "@/lib/store";
 import { useRouter } from "next/navigation";
 import type { ContractStatus } from "@/types/contract";
@@ -11,6 +11,7 @@ import { KPICards } from "@/components/dashboard/kpi-cards";
 import { DashboardGraphsSection } from "@/components/dashboard/dashboard-graphs-section";
 import { ContractsListSection } from "@/components/dashboard/contracts-list-section";
 import { DeleteConfirmationDialog } from "@/components/shared/delete-confirmation-dialog";
+import { PageLayout } from "@/components/shared/page-layout";
 
 export default function Dashboard() {
   const { contracts, blueprints, deleteContract, deleteBlueprint, updateContractStatus } = useStore();
@@ -18,6 +19,15 @@ export default function Dashboard() {
   const { addToast } = useToast();
   const [viewType, setViewType] = useState<"contract" | "blueprint">("contract");
   const [searchQuery, setSearchQuery] = useState("");
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
+
+  // Wait for store hydration
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsInitialLoad(false);
+    }, 100);
+    return () => clearTimeout(timer);
+  }, []);
   const [selectedStatuses, setSelectedStatuses] = useState<ContractStatus[]>([]);
   const [selectedFieldTypes, setSelectedFieldTypes] = useState<FieldType[]>([]);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -59,13 +69,12 @@ export default function Dashboard() {
       );
     }
 
-    // Filter by search query (blueprint name or description)
+    // Filter by search query (blueprint name)
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase().trim();
       filtered = filtered.filter(
         (bp) =>
-          bp.name.toLowerCase().includes(query) ||
-          (bp.description && bp.description.toLowerCase().includes(query))
+          bp.name.toLowerCase().includes(query)
       );
     }
 
@@ -166,62 +175,56 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen">
-      <div className="relative overflow-hidden from-primary/5 via-background to-secondary/30">
-        <div className="mx-auto max-w-[90rem] px-4 sm:px-6 lg:px-4 py-4 sm:py-6 lg:py-8">
-      
+    <PageLayout isLoading={isInitialLoad} loadingText="Loading dashboard...">
+      <KPICards contracts={contracts} blueprints={blueprints} />
 
-          <KPICards contracts={contracts} blueprints={blueprints} />
+      <DashboardGraphsSection 
+        contracts={viewType === "contract" ? contracts : []} 
+        blueprints={viewType === "blueprint" ? blueprints : []}
+        viewType={viewType}
+      />
 
-          <DashboardGraphsSection 
-            contracts={viewType === "contract" ? contracts : []} 
-            blueprints={viewType === "blueprint" ? blueprints : []}
-            viewType={viewType}
-          />
-
-          <ContractsListSection
-            viewType={viewType}
-            filteredContracts={filteredContracts}
-            filteredBlueprints={filteredBlueprints}
-            selectedStatuses={selectedStatuses}
-            selectedFieldTypes={selectedFieldTypes}
-            searchQuery={searchQuery}
-            searchPlaceholder="Search"
-            filterOptions={viewType === "contract" ? statusFilterOptions : fieldTypeFilterOptions}
-            fieldTypeLabels={fieldTypeLabels}
-            onView={handleView}
-            onStatusChange={viewType === "contract" ? handleStatusChange : undefined}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-            onSearchChange={setSearchQuery}
-            onFilterToggle={(value) => {
-              if (viewType === "contract") {
-                const status = value as ContractStatus;
-                setSelectedStatuses((prev) =>
-                  prev.includes(status)
-                    ? prev.filter((s) => s !== status)
-                    : [...prev, status]
-                );
-              } else {
-                const fieldType = value as FieldType;
-                setSelectedFieldTypes((prev) =>
-                  prev.includes(fieldType)
-                    ? prev.filter((t) => t !== fieldType)
-                    : [...prev, fieldType]
-                );
-              }
-            }}
-            onClearFilters={() => {
-              setSelectedStatuses([]);
-              setSelectedFieldTypes([]);
-              setSearchQuery("");
-            }}
-            showToggle={true}
-            toggleValue={viewType}
-            onToggleChange={setViewType}
-          />
-        </div>
-      </div>
+      <ContractsListSection
+        viewType={viewType}
+        filteredContracts={filteredContracts}
+        filteredBlueprints={filteredBlueprints}
+        selectedStatuses={selectedStatuses}
+        selectedFieldTypes={selectedFieldTypes}
+        searchQuery={searchQuery}
+        searchPlaceholder="Search"
+        filterOptions={viewType === "contract" ? statusFilterOptions : fieldTypeFilterOptions}
+        fieldTypeLabels={fieldTypeLabels}
+        onView={handleView}
+        onStatusChange={viewType === "contract" ? handleStatusChange : undefined}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
+        onSearchChange={setSearchQuery}
+        onFilterToggle={(value) => {
+          if (viewType === "contract") {
+            const status = value as ContractStatus;
+            setSelectedStatuses((prev) =>
+              prev.includes(status)
+                ? prev.filter((s) => s !== status)
+                : [...prev, status]
+            );
+          } else {
+            const fieldType = value as FieldType;
+            setSelectedFieldTypes((prev) =>
+              prev.includes(fieldType)
+                ? prev.filter((t) => t !== fieldType)
+                : [...prev, fieldType]
+            );
+          }
+        }}
+        onClearFilters={() => {
+          setSelectedStatuses([]);
+          setSelectedFieldTypes([]);
+          setSearchQuery("");
+        }}
+        showToggle={true}
+        toggleValue={viewType}
+        onToggleChange={setViewType}
+      />
 
       <DeleteConfirmationDialog
         open={deleteDialogOpen}
@@ -233,7 +236,7 @@ export default function Dashboard() {
         itemType={itemToDelete?.type || "contract"}
         onConfirm={confirmDelete}
       />
-    </div>
+    </PageLayout>
   );
 }
 

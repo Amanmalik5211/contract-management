@@ -15,10 +15,12 @@ export interface Contract {
   name: string;
   blueprintId: string;
   blueprintName: string;
-  blueprintDescription?: string;
   status: ContractStatus;
   fields: Field[];
   fieldValues: Record<string, string | boolean | Date | null>;
+  // PDF metadata (for PDF-based contracts)
+  pdfUrl?: string;
+  pageCount?: number;
   createdAt: Date;
   updatedAt: Date;
 }

@@ -9,6 +9,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { InlineLoader } from "@/components/ui/loader";
 
 interface DeleteConfirmationDialogProps {
   open: boolean;
@@ -16,6 +17,7 @@ interface DeleteConfirmationDialogProps {
   itemName: string;
   itemType: "contract" | "blueprint";
   onConfirm: () => void;
+  isDeleting?: boolean;
 }
 
 export function DeleteConfirmationDialog({
@@ -24,13 +26,14 @@ export function DeleteConfirmationDialog({
   itemName,
   itemType,
   onConfirm,
+  isDeleting = false,
 }: DeleteConfirmationDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-w-xs sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Delete {itemType === "contract" ? "Contract" : "Blueprint"}</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="text-lg sm:text-xl">Delete {itemType === "contract" ? "Contract" : "Blueprint"}</DialogTitle>
+          <DialogDescription className="text-sm sm:text-base break-words">
             Are you sure you want to delete &quot;{itemName}&quot;? This action cannot be undone.
           </DialogDescription>
         </DialogHeader>
@@ -38,14 +41,25 @@ export function DeleteConfirmationDialog({
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}
+            disabled={isDeleting}
+            className="w-full sm:w-auto"
           >
             Cancel
           </Button>
           <Button
             variant="destructive"
             onClick={onConfirm}
+            disabled={isDeleting}
+            className="w-full sm:w-auto"
           >
-            Delete
+            {isDeleting ? (
+              <>
+                <InlineLoader size="sm" className="mr-2" />
+                Deleting...
+              </>
+            ) : (
+              "Delete"
+            )}
           </Button>
         </DialogFooter>
       </DialogContent>

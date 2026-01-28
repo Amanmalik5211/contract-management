@@ -25,15 +25,6 @@ interface DashboardGraphsSectionProps {
   viewType: "contract" | "blueprint";
 }
 
-const COLORS = {
-  created: "#3b82f6", // Blue
-  approved: "#f59e0b", // Yellow/Orange
-  sent: "#8b5cf6", // Purple
-  signed: "#10b981", // Green
-  locked: "#6366f1", // Indigo
-  revoked: "#ef4444", // Red
-};
-
 const STATUS_COLORS = {
   Draft: "#3b82f6",
   Pending: "#f59e0b",

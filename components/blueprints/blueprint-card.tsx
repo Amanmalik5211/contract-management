@@ -50,32 +50,17 @@ export function BlueprintCard({
                 {blueprint.fields.length} field{blueprint.fields.length !== 1 ? "s" : ""}
               </p>
               <ul className="space-y-2">
-                {blueprint.fields.map((field) => {
-                  const fieldImageUrl = (field as any).imageUrl || (field as any).image;
-                  return (
-                    <li key={field.id} className="text-xs sm:text-sm break-words text-muted-foreground">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="w-1.5 h-1.5 rounded-full bg-primary/60 flex-shrink-0"></span>
-                        <span className="flex-1">{field.label}</span>
-                        <Badge variant="secondary" className="text-xs px-1.5 py-0 flex-shrink-0">
-                          {fieldTypeLabels[field.type]}
-                        </Badge>
-                      </div>
-                      {fieldImageUrl && (
-                        <div className="ml-5 mt-1.5 rounded-lg overflow-hidden bg-gray-100">
-                          <img
-                            src={fieldImageUrl}
-                            alt={field.label}
-                            className="w-full h-32 object-cover"
-                            onError={(e) => {
-                              e.currentTarget.style.display = 'none';
-                            }}
-                          />
-                        </div>
-                      )}
-                    </li>
-                  );
-                })}
+                {blueprint.fields.map((field) => (
+                  <li key={field.id} className="text-xs sm:text-sm break-words text-muted-foreground">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-primary/60 flex-shrink-0"></span>
+                      <span className="flex-1">{field.label}</span>
+                      <Badge variant="secondary" className="text-xs px-1.5 py-0 flex-shrink-0">
+                        {fieldTypeLabels[field.type]}
+                      </Badge>
+                    </div>
+                  </li>
+                ))}
               </ul>
             </div>
           </CardContent>

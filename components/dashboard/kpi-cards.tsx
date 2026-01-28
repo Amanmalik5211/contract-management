@@ -70,7 +70,6 @@ export function KPICards({ contracts, blueprints }: KPICardsProps) {
   const activeLastMonth = contracts.filter(
     (c) => {
       const created = new Date(c.createdAt);
-      const updated = new Date(c.updatedAt);
       return created >= thirtyDaysAgo && (c.status === "signed" || c.status === "locked" || c.status === "sent");
     }
   ).length;
