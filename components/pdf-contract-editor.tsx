@@ -4,11 +4,6 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import type { PDFDocumentProxy } from "pdfjs-dist";
 import type { Field } from "@/types/field";
 import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { format } from "date-fns";
-import { AlertTriangle } from "lucide-react";
 import { Loader } from "@/components/ui/loader";
 
 import type { PdfContractEditorProps, PDFTypographyConfig } from "./pdf-contract-editor/types";
@@ -19,6 +14,11 @@ import { ContractPageRow } from "./pdf-contract-editor/contract-page-row";
 import { FieldsListPanel } from "@/components/pdf-contract-editor/fields-list-panel";
 import { OverflowWarningBanner } from "./pdf-contract-editor/overflow-warning-banner";
 import { contractMarginLeft, contractMarginRight, contractMarginTop, contractMarginBottom } from "@/lib/contract-pdf-layout";
+import { EditableTextField } from "./pdf-contract-editor/editable-text-field";
+import { EditableDateField } from "./pdf-contract-editor/editable-date-field";
+import { EditableCheckboxField } from "./pdf-contract-editor/editable-checkbox-field";
+import { EditableSignatureField } from "./pdf-contract-editor/editable-signature-field";
+import { ReadOnlyFieldRenderer } from "./pdf-contract-editor/read-only-field-renderer";
 
 export function PdfContractEditor({
   pdfUrl,
@@ -268,328 +268,102 @@ export function PdfContractEditor({
     const hasValue = value !== "" && value !== null && value !== false;
 
     if (isEditable && onFieldChange) {
+      const hasOverflow = fieldOverflows.get(field.id) || false;
+      
       switch (field.type) {
         case "text":
-          const hasOverflow = fieldOverflows.get(field.id) || false;
-          
-          // Use default PDF typography (Field type has no typography properties)
-          const typography: PDFTypographyConfig = {
-            ...DEFAULT_PDF_TYPOGRAPHY,
-          };
-          typography.lineHeightPx = calculateLineHeightPx(typography.fontSize, typography.lineHeight);
-          
           return (
-            <div
+            <EditableTextField
               key={field.id}
-              style={{
-                position: "absolute",
-                left: `${left}px`,
-                top: `${top}px`,
-                width: `${width}px`,
-                height: `${height}px`,
-                zIndex: 10 + (field.position ?? 0),
-                boxSizing: "border-box",
+              field={field}
+              value={(value as string) || ""}
+              pageWidth={pageWidth}
+              pageHeight={pageHeight}
+              left={left}
+              top={top}
+              width={width}
+              height={height}
+              hasOverflow={hasOverflow}
+              onValueChange={(nextValue) => onFieldChange(field.id, nextValue)}
+              onOverflowChange={(hasOverflow) => {
+                setFieldOverflows((prev) => {
+                  const m = new Map(prev);
+                  if (hasOverflow) {
+                    m.set(field.id, true);
+                  } else {
+                    m.delete(field.id);
+                  }
+                  return m;
+                });
               }}
-              className="z-10"
-            >
-              <textarea
-                ref={(el) => {
-                  if (el) textareaRefs.current.set(field.id, el);
-                  else textareaRefs.current.delete(field.id);
-                }}
-                value={(value as string) || ""}
-                onChange={(e) => {
-                  const nextValue = e.target.value;
-                  // Pre-validate: measure nextValue BEFORE any setState. Pure measurement only.
-                  const { isValid, wouldExceed } = measureTextFitsInField(nextValue, width, height);
-                  if (wouldExceed) {
-                    setFieldOverflows((prev) => {
-                      const m = new Map(prev);
-                      m.set(field.id, true);
-                      return m;
-                    });
-                    const ta = e.target;
-                    setTimeout(() => { ta.value = (value as string) || ""; }, 0);
-                    return;
-                  }
-                  onFieldChange(field.id, nextValue);
-                  setFieldOverflows((prev) => {
-                    const m = new Map(prev);
-                    m.delete(field.id);
-                    return m;
-                  });
-                }}
-                onKeyDown={(e) => {
-                  if (e.key.length !== 1 || e.ctrlKey || e.metaKey || e.altKey) return;
-                  const currentValue = (value as string) || "";
-                  const textarea = e.currentTarget;
-                  const cursorPos = textarea.selectionStart ?? 0;
-                  const nextValue = currentValue.slice(0, cursorPos) + e.key + currentValue.slice(textarea.selectionEnd ?? cursorPos);
-                  const { isValid } = measureTextFitsInField(nextValue, width, height);
-                  if (!isValid) {
-                    e.preventDefault();
-                    setFieldOverflows((prev) => {
-                      const m = new Map(prev);
-                      m.set(field.id, true);
-                      return m;
-                    });
-                  }
-                }}
-                onPaste={(e) => {
-                  e.preventDefault();
-                  const pasteText = e.clipboardData.getData("text");
-                  const currentValue = (value as string) || "";
-                  const textarea = e.currentTarget;
-                  const cursorPos = textarea.selectionStart ?? 0;
-                  const nextValue = currentValue.slice(0, cursorPos) + pasteText + currentValue.slice(textarea.selectionEnd ?? cursorPos);
-                  const { wouldExceed } = measureTextFitsInField(nextValue, width, height);
-                  if (wouldExceed) {
-                    setFieldOverflows((prev) => {
-                      const m = new Map(prev);
-                      m.set(field.id, true);
-                      return m;
-                    });
-                    return;
-                  }
-                  onFieldChange(field.id, nextValue);
-                  setFieldOverflows((prev) => {
-                    const m = new Map(prev);
-                    m.delete(field.id);
-                    return m;
-                  });
-                  setTimeout(() => {
-                    textarea.setSelectionRange(cursorPos + pasteText.length, cursorPos + pasteText.length);
-                  }, 0);
-                }}
-                placeholder={field.label}
-                className={`w-full h-full rounded-md border-2 ${
-                  hasOverflow 
-                    ? "border-red-500 focus:border-red-600 focus:ring-red-500" 
-                    : "border-blue-500 focus:ring-blue-500"
-                } bg-gray-600 dark:bg-gray-700 text-white placeholder-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 resize-none`}
-                style={{ 
-                  width: "100%",
-                  height: "100%",
-                  wordWrap: "break-word",
-                  overflowWrap: "break-word",
-                  overflow: "hidden", // STRICT: No scrollbars
-                  boxSizing: "border-box",
-                  fontFamily: typography.fontFamily,
-                  fontSize: `${typography.fontSize}px`,
-                  lineHeight: typography.lineHeight,
-                  fontWeight: typography.fontWeight,
-                }}
-              />
-              {/* Warning message when input is blocked - kept within PDF bounds */}
-              {hasOverflow && (() => {
-                const warningMaxWidth = Math.min(280, Math.max(180, pageWidth - left - 12));
-                const showAbove = top >= 48;
-                return (
-                  <div
-                    className="absolute left-0 bg-red-600 text-white text-xs px-2.5 py-2 rounded-md shadow-lg z-30 flex items-start gap-2 pointer-events-auto"
-                    style={{
-                      maxWidth: `${warningMaxWidth}px`,
-                      ...(showAbove
-                        ? { bottom: "100%", marginBottom: 6 }
-                        : { top: "100%", marginTop: 6 }),
-                    }}
-                  >
-                    <AlertTriangle className="h-4 w-4 flex-shrink-0 mt-0.5" aria-hidden />
-                    <span className="whitespace-normal break-words leading-snug">
-                      Text exceeds the available space for this field.
-                    </span>
-                  </div>
-                );
-              })()}
-            </div>
+              textareaRef={(el) => {
+                if (el) textareaRefs.current.set(field.id, el);
+                else textareaRefs.current.delete(field.id);
+              }}
+            />
           );
         case "date":
           return (
-            <div
+            <EditableDateField
               key={field.id}
-              style={{
-                position: "absolute",
-                left: `${left}px`,
-                top: `${top}px`,
-                width: `${width}px`,
-                height: `${Math.max(height, 40)}px`,
-                zIndex: 10 + (field.position ?? 0),
-              }}
-              className="z-10"
-            >
-              <Input
-                type="date"
-                value={
-                  value instanceof Date
-                    ? format(value, "yyyy-MM-dd")
-                    : (value as string) || ""
-                }
-                onChange={(e) => onFieldChange(field.id, e.target.value)}
-                className="h-full border-2 border-blue-500 bg-gray-600 dark:bg-gray-700 text-white text-sm px-3 [color-scheme:dark]"
-                style={{ width: `${width}px`, height: `${Math.max(height, 40)}px` }}
-              />
-            </div>
+              field={field}
+              value={
+                value instanceof Date
+                  ? value
+                  : typeof value === "string"
+                    ? value
+                    : null
+              }
+              left={left}
+              top={top}
+              width={width}
+              height={height}
+              onValueChange={(nextValue) => onFieldChange(field.id, nextValue)}
+            />
           );
         case "checkbox":
           return (
-            <div
+            <EditableCheckboxField
               key={field.id}
-              style={{
-                position: "absolute",
-                left: `${left}px`,
-                top: `${top}px`,
-                width: `${Math.min(width, rightEdge - left)}px`,
-                height: `${Math.max(height, 32)}px`,
-              }}
-              className="z-10 flex items-center gap-2 px-2 py-1 rounded-md bg-gray-600 dark:bg-gray-700 text-white"
-            >
-              <input
-                type="checkbox"
-                checked={(value as boolean) || false}
-                onChange={(e) => onFieldChange(field.id, e.target.checked)}
-                className="h-5 w-5 rounded border-2 border-gray-400 focus:ring-2 focus:ring-blue-500 cursor-pointer flex-shrink-0"
-              />
-              <Label className="text-sm font-medium break-words flex-1 text-white">{field.label}</Label>
-            </div>
+              field={field}
+              value={typeof value === "boolean" ? value : null}
+              left={left}
+              top={top}
+              width={width}
+              height={height}
+              rightEdge={rightEdge}
+              onValueChange={(nextValue) => onFieldChange(field.id, nextValue)}
+            />
           );
         case "signature":
           return (
-            <div
+            <EditableSignatureField
               key={field.id}
-              style={{
-                position: "absolute",
-                left: `${left}px`,
-                top: `${top}px`,
-                width: `${width}px`,
-                height: `${Math.max(height, 50)}px`,
-                zIndex: 10 + (field.position ?? 0),
-              }}
-              className="z-10"
-            >
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => onFieldChange(field.id, "signed")}
-                className="w-full h-full border-2 border-blue-500 bg-gray-600 dark:bg-gray-700 text-white text-sm font-medium hover:bg-gray-500 dark:hover:bg-gray-600 transition-colors"
-                style={{ width: `${width}px`, height: `${Math.max(height, 50)}px` }}
-              >
-                {value ? "✓ Signed" : "Click to Sign"}
-              </Button>
-            </div>
+              field={field}
+              value={typeof value === "string" || typeof value === "boolean" ? value : null}
+              left={left}
+              top={top}
+              width={width}
+              height={height}
+              onValueChange={(nextValue) => onFieldChange(field.id, nextValue)}
+            />
           );
         default:
           return null;
       }
     } else {
-      // Read-only mode - Professional contract document styling with FIXED dimensions
-      switch (field.type) {
-        case "text":
-          // STRICT: Fixed-size field with overflow hidden - no continuation
-          const textValue = hasValue ? (value as string) : "";
-          
-          // Use default PDF typography (Field type has no typography properties)
-          const fieldTypography: PDFTypographyConfig = {
-            ...DEFAULT_PDF_TYPOGRAPHY,
-          };
-          
-          return (
-            <div
-              key={field.id}
-              className="pdf-field read-only"
-              style={{
-                position: "absolute",
-                left: `${left}px`,
-                top: `${top}px`,
-                width: `${width}px`,
-                height: `${height}px`, // STRICT: Fixed height
-                zIndex: 10 + (field.position ?? 0),
-                boxSizing: "border-box",
-                overflow: "hidden", // STRICT: No overflow visible
-                fontFamily: fieldTypography.fontFamily,
-                fontSize: `${fieldTypography.fontSize}px`,
-                lineHeight: fieldTypography.lineHeight,
-                fontWeight: fieldTypography.fontWeight,
-                color: fieldTypography.textColor,
-                whiteSpace: "pre-wrap",
-                wordBreak: "break-word",
-              }}
-            >
-              {textValue || "—"}
-            </div>
-          );
-        case "date":
-          return (
-            <div
-              key={field.id}
-              className="pdf-field read-only"
-              style={{
-                position: "absolute",
-                left: `${left}px`,
-                top: `${top}px`,
-                width: `${width}px`,
-                height: `${height}px`, // FIXED height
-                zIndex: 10 + (field.position ?? 0),
-                boxSizing: "border-box",
-                display: "flex",
-                alignItems: "center",
-              }}
-            >
-              {hasValue
-                ? value instanceof Date
-                    ? format(value, "MMMM d, yyyy")
-                    : format(new Date(value as string), "MMMM d, yyyy")
-                : "—"}
-            </div>
-          );
-        case "checkbox":
-          return (
-            <div
-              key={field.id}
-              className="pdf-field read-only"
-              style={{
-                position: "absolute",
-                left: `${left}px`,
-                top: `${top}px`,
-                width: `${width}px`,
-                height: `${height}px`, // FIXED height
-                zIndex: 10 + (field.position ?? 0),
-                boxSizing: "border-box",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              {(value as boolean) ? "✓" : "—"}
-            </div>
-          );
-        case "signature":
-          return (
-            <div
-              key={field.id}
-              className="pdf-field read-only"
-              style={{
-                position: "absolute",
-                left: `${left}px`,
-                top: `${top}px`,
-                width: `${width}px`,
-                height: `${height}px`, // FIXED height
-                zIndex: 10 + (field.position ?? 0),
-                boxSizing: "border-box",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-                {value ? (
-                <span style={{ borderBottom: "1px solid #1a1a1a", paddingBottom: "2px" }}>
-                  [Signed]
-                  </span>
-              ) : "—"}
-            </div>
-          );
-        default:
-          return null;
-      }
+      return (
+        <ReadOnlyFieldRenderer
+          key={field.id}
+          field={field}
+          value={value}
+          hasValue={hasValue}
+          left={left}
+          top={top}
+          width={width}
+          height={height}
+        />
+      );
     }
   };
 
@@ -619,7 +393,7 @@ export function PdfContractEditor({
   return (
     <>
       <style>{PDF_FIELD_STYLES}</style>
-      <div className={`${className} w-full ${isEditable ? "overflow-x-auto" : ""}`}>
+      <div className={`${className} w-full ${isEditable ? "overflow-x-hidden overflow-y-visible" : "overflow-hidden"}`}>
         {isEditable && fieldOverflows.size > 0 && (
           <OverflowWarningBanner count={fieldOverflows.size} />
         )}
@@ -633,7 +407,7 @@ export function PdfContractEditor({
           />
         )}
 
-        <div className="flex flex-col items-center space-y-10 py-8 max-w-full">
+        <div className="flex flex-col items-center space-y-6 sm:space-y-8 md:space-y-10 py-4 sm:py-6 md:py-8 max-w-full px-2 sm:px-4">
           {pages.map(({ pageNum, imageData, width, height }) => {
             const pageFields = fieldsByPage.get(pageNum) || [];
             const renderedDims = renderedDimensions.get(pageNum) || { width, height };

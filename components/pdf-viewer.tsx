@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState, useRef, useCallback } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Loader } from "@/components/ui/loader";
+import { PdfPage } from "./pdf-viewer/pdf-page";
+import { PdfLoadingState } from "./pdf-viewer/pdf-loading-state";
+import { PdfErrorState } from "./pdf-viewer/pdf-error-state";
 
 // Dynamically import pdf.js only on client side to avoid DOMMatrix SSR error
 const getPdfjsLib = async () => {
@@ -273,59 +274,24 @@ export function PdfViewer({ pdfUrl, className = "", onPageRefsReady, onPageRende
   }, [onPageRender]);
 
   if (loading) {
-    return (
-      <Card className={className}>
-        <CardContent className="flex items-center justify-center py-12">
-          <Loader size="lg" text="Loading PDF..." />
-        </CardContent>
-      </Card>
-    );
+    return <PdfLoadingState className={className} />;
   }
 
   if (error) {
-    return (
-      <Card className={className}>
-        <CardContent className="py-12">
-          <div className="text-center">
-            <p className="text-lg font-semibold text-red-600 dark:text-red-400">Error Loading PDF</p>
-            <p className="mt-2 text-sm text-muted-foreground">{error}</p>
-          </div>
-        </CardContent>
-      </Card>
-    );
+    return <PdfErrorState error={error} className={className} />;
   }
 
   return (
     <div className={className}>
       <div className="space-y-3 sm:space-y-4">
         {pages.map(({ pageNum, imageData }) => (
-          <div
+          <PdfPage
             key={pageNum}
-            data-page-num={pageNum}
-            ref={(el) => setPageRef(pageNum, el)}
-            className="flex justify-center px-2 sm:px-4"
-          >
-            <div className="relative border border-gray-200 dark:border-gray-700 rounded-lg sm:rounded-xl shadow-sm overflow-hidden bg-white dark:bg-gray-900 min-h-[200px] sm:min-h-[300px] md:min-h-[400px] flex items-center justify-center w-full max-w-full">
-              {imageData ? (
-                <>
-                  <img
-                    src={imageData}
-                    alt={`Page ${pageNum} of ${numPages}`}
-                    className="block w-full h-auto max-w-full"
-                    style={{ maxWidth: "100%" }}
-                    loading="lazy"
-                  />
-                  <div className="absolute bottom-2 right-2 bg-black/50 text-white text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded">
-                    Page {pageNum} of {numPages}
-                  </div>
-                </>
-              ) : (
-                <div className="flex flex-col items-center justify-center py-8 sm:py-12 px-4">
-                  <Loader size="sm" text={`Loading page ${pageNum}...`} />
-                </div>
-              )}
-            </div>
-          </div>
+            pageNum={pageNum}
+            numPages={numPages}
+            imageData={imageData}
+            onPageRef={setPageRef}
+          />
         ))}
       </div>
     </div>

@@ -1,10 +1,10 @@
 "use client";
 
-import { Card, CardContent } from "@/components/ui/card";
-import { FileText, Activity, Clock, Layers, TrendingUp, TrendingDown } from "lucide-react";
+import { FileText, Activity, Clock, Layers } from "lucide-react";
 import type { Contract } from "@/types/contract";
 import type { Blueprint } from "@/types/blueprint";
 import type { LucideIcon } from "lucide-react";
+import { KPICard } from "./kpi-card";
 
 interface KPICardsProps {
   contracts: Contract[];
@@ -170,57 +170,20 @@ export function KPICards({ contracts, blueprints }: KPICardsProps) {
   return (
     <section className="mb-8 sm:mb-12">
       <div className="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-4">
-        {kpiData.map((kpi) => {
-          const Icon = kpi.icon;
-          const isPositive = kpi.change !== null && kpi.change > 0;
-          const isNegative = kpi.change !== null && kpi.change < 0;
-
-          return (
-            <Card
-              key={kpi.title}
-              className={`group relative overflow-hidden ${
-                kpi.isCritical ? "ring-2 ring-red-500/50" : ""
-              }`}
-            >
-              <div className={`absolute inset-0 bg-gradient-to-br ${kpi.bgGradient} opacity-100 group-hover:opacity-100 transition-opacity duration-500`} />
-              <CardContent className="p-4 sm:p-6 relative z-10">
-                <div className="flex items-start justify-between mb-4">
-                  <div className={`flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl sm:rounded-2xl bg-gradient-to-br ${kpi.iconBg} group-hover:scale-110 transition-all duration-300 shadow-md group-hover:shadow-lg`}>
-                    <Icon className={`h-5 w-5 sm:h-6 sm:w-6 ${kpi.iconColor}`} />
-                  </div>
-                  {kpi.change !== null && (
-                    <div className={`flex items-center gap-1 text-xs sm:text-sm font-medium ${
-                      isPositive ? "text-green-600" : isNegative ? "text-red-600" : "text-muted-foreground"
-                    }`}>
-                      {isPositive ? (
-                        <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4" />
-                      ) : isNegative ? (
-                        <TrendingDown className="h-3 w-3 sm:h-4 sm:w-4" />
-                      ) : null}
-                      <span>
-                        {isPositive ? "+" : ""}
-                        {kpi.change}%
-                      </span>
-                    </div>
-                  )}
-                </div>
-                <div>
-                  <p className="text-xs sm:text-sm font-medium text-muted-foreground mb-1">
-                    {kpi.title}
-                  </p>
-                  <p className={`text-2xl sm:text-3xl font-bold ${kpi.valueColor} group-hover:scale-105 transition-transform duration-300`}>
-                    {kpi.value}
-                  </p>
-                  {kpi.isCritical && (
-                    <p className="text-xs text-red-600 font-medium mt-1">
-                      ⚠️ Requires attention
-                    </p>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
+        {kpiData.map((kpi) => (
+          <KPICard
+            key={kpi.title}
+            title={kpi.title}
+            value={kpi.value}
+            change={kpi.change}
+            icon={kpi.icon}
+            bgGradient={kpi.bgGradient}
+            iconBg={kpi.iconBg}
+            iconColor={kpi.iconColor}
+            valueColor={kpi.valueColor}
+            isCritical={kpi.isCritical}
+          />
+        ))}
       </div>
     </section>
   );

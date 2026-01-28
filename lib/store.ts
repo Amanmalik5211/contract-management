@@ -22,6 +22,14 @@ type SerializedContract = Omit<Contract, "createdAt" | "updatedAt"> & {
 // Custom storage adapter with quota error handling
 const createSafeStorage = () => {
   const MAX_SIZE = 4 * 1024 * 1024; // 4MB safety limit (localStorage is typically 5-10MB)
+  const warnedKeys = new Set<string>();
+  const byMostRecent = (a: unknown, b: unknown) => {
+    const ar = a as Record<string, unknown>;
+    const br = b as Record<string, unknown>;
+    const aTime = new Date((ar.updatedAt as string) || (ar.createdAt as string) || 0).getTime();
+    const bTime = new Date((br.updatedAt as string) || (br.createdAt as string) || 0).getTime();
+    return bTime - aTime;
+  };
 
   // Helper to estimate size of a string in bytes
   const getSize = (str: string): number => {
@@ -29,17 +37,17 @@ const createSafeStorage = () => {
   };
 
   // Helper to remove large base64 data from state to reduce size
-  const removeLargeData = (state: any): any => {
+  const removeLargeData = (state: unknown): unknown => {
     if (!state) return state;
 
-    const cleaned = { ...state };
+    const cleaned = { ...(state as Record<string, unknown>) };
 
     // Remove base64 PDF URLs from blueprints (keep only metadata)
-    if (cleaned.blueprints) {
-      cleaned.blueprints = cleaned.blueprints.map((bp: any) => {
-        const cleanedBp = { ...bp };
+    if (Array.isArray(cleaned.blueprints)) {
+      cleaned.blueprints = (cleaned.blueprints as Array<Record<string, unknown>>).map((bp) => {
+        const cleanedBp = { ...bp } as Record<string, unknown>;
         // If pdfUrl is a base64 data URL, remove it (it's too large for localStorage)
-        if (cleanedBp.pdfUrl && cleanedBp.pdfUrl.startsWith("data:")) {
+        if (typeof cleanedBp.pdfUrl === "string" && cleanedBp.pdfUrl.startsWith("data:")) {
           cleanedBp.pdfUrl = undefined;
         }
         return cleanedBp;
@@ -47,10 +55,10 @@ const createSafeStorage = () => {
     }
 
     // Remove base64 PDF URLs from contracts
-    if (cleaned.contracts) {
-      cleaned.contracts = cleaned.contracts.map((c: any) => {
-        const cleanedC = { ...c };
-        if (cleanedC.pdfUrl && cleanedC.pdfUrl.startsWith("data:")) {
+    if (Array.isArray(cleaned.contracts)) {
+      cleaned.contracts = (cleaned.contracts as Array<Record<string, unknown>>).map((c) => {
+        const cleanedC = { ...c } as Record<string, unknown>;
+        if (typeof cleanedC.pdfUrl === "string" && cleanedC.pdfUrl.startsWith("data:")) {
           cleanedC.pdfUrl = undefined;
         }
         return cleanedC;
@@ -61,19 +69,22 @@ const createSafeStorage = () => {
   };
 
   // Helper function to save with cleanup
-  const setItemWithCleanup = (name: string, parsedData: any): void => {
+  const setItemWithCleanup = (name: string, parsedData: unknown): void => {
+    if (typeof window === "undefined") {
+      return;
+    }
     try {
       // Get current data to merge if needed
-      let dataToSave = parsedData;
+      let dataToSave: unknown = parsedData;
       
       if (!dataToSave) {
         try {
           const current = localStorage.getItem(name);
           if (current) {
-            dataToSave = JSON.parse(current);
+            dataToSave = JSON.parse(current) as unknown;
           }
         } catch {
-          dataToSave = { blueprints: [], contracts: [] };
+          dataToSave = { blueprints: [], contracts: [] } as unknown;
         }
       }
 
@@ -81,38 +92,49 @@ const createSafeStorage = () => {
       const cleaned = removeLargeData(dataToSave);
       
       // If still too large, keep only recent items
-      if (cleaned.contracts && cleaned.contracts.length > 50) {
-        cleaned.contracts = cleaned.contracts
-          .sort((a: any, b: any) => 
-            new Date(b.updatedAt || b.createdAt || 0).getTime() - 
-            new Date(a.updatedAt || a.createdAt || 0).getTime()
+      if (Array.isArray((cleaned as Record<string, unknown>).contracts) && ((cleaned as Record<string, unknown>).contracts as unknown[]).length > 50) {
+        (cleaned as Record<string, unknown>).contracts = ((cleaned as Record<string, unknown>).contracts as Array<Record<string, unknown>>)
+          .sort((a, b) => 
+            new Date((b.updatedAt as string) || (b.createdAt as string) || 0).getTime() - 
+            new Date((a.updatedAt as string) || (a.createdAt as string) || 0).getTime()
           )
           .slice(0, 50);
       }
       
-      if (cleaned.blueprints && cleaned.blueprints.length > 20) {
-        cleaned.blueprints = cleaned.blueprints
-          .sort((a: any, b: any) => 
-            new Date(b.updatedAt || b.createdAt || 0).getTime() - 
-            new Date(a.updatedAt || a.createdAt || 0).getTime()
+      if (Array.isArray((cleaned as Record<string, unknown>).blueprints) && ((cleaned as Record<string, unknown>).blueprints as unknown[]).length > 20) {
+        (cleaned as Record<string, unknown>).blueprints = ((cleaned as Record<string, unknown>).blueprints as Array<Record<string, unknown>>)
+          .sort((a, b) => 
+            new Date((b.updatedAt as string) || (b.createdAt as string) || 0).getTime() - 
+            new Date((a.updatedAt as string) || (a.createdAt as string) || 0).getTime()
           )
           .slice(0, 20);
       }
 
-      const finalValue = JSON.stringify(cleaned);
+      const cleanedRecord = cleaned as Record<string, unknown>;
+
+      const finalValue = JSON.stringify(cleanedRecord);
       const finalSize = getSize(finalValue);
       
       if (finalSize > MAX_SIZE) {
         // Still too large even after cleanup - store minimal version
+        const recentBlueprints = Array.isArray(cleanedRecord.blueprints)
+          ? [...cleanedRecord.blueprints].sort(byMostRecent).slice(0, 10)
+          : [];
+        const recentContracts = Array.isArray(cleanedRecord.contracts)
+          ? [...cleanedRecord.contracts].sort(byMostRecent).slice(0, 25)
+          : [];
         const minimal = {
-          blueprints: cleaned.blueprints?.slice(0, 10) || [],
-          contracts: cleaned.contracts?.slice(0, 25) || [],
+          blueprints: recentBlueprints,
+          contracts: recentContracts,
         };
         localStorage.setItem(name, JSON.stringify(minimal));
-        console.error(
-          "Storage quota critically exceeded. Only minimal data saved. " +
-          "Please delete old contracts or blueprints immediately."
-        );
+        if (!warnedKeys.has(name)) {
+          warnedKeys.add(name);
+          console.warn(
+            "Storage quota critically exceeded. Only minimal data saved. " +
+            "Please delete old contracts or blueprints immediately."
+          );
+        }
         // Dispatch custom event for UI to handle
         if (typeof window !== "undefined") {
           window.dispatchEvent(new CustomEvent("storage-quota-warning", {
@@ -121,8 +143,11 @@ const createSafeStorage = () => {
         }
       } else {
         localStorage.setItem(name, finalValue);
-        if (cleaned.contracts?.length !== dataToSave?.contracts?.length || 
-            cleaned.blueprints?.length !== dataToSave?.blueprints?.length) {
+        const cleanedContractsLen = Array.isArray((cleaned as Record<string, unknown>).contracts) ? ((cleaned as Record<string, unknown>).contracts as unknown[]).length : undefined;
+        const cleanedBlueprintsLen = Array.isArray((cleaned as Record<string, unknown>).blueprints) ? ((cleaned as Record<string, unknown>).blueprints as unknown[]).length : undefined;
+        const originalContractsLen = Array.isArray((dataToSave as Record<string, unknown> | null)?.contracts) ? (((dataToSave as Record<string, unknown>).contracts) as unknown[]).length : undefined;
+        const originalBlueprintsLen = Array.isArray((dataToSave as Record<string, unknown> | null)?.blueprints) ? (((dataToSave as Record<string, unknown>).blueprints) as unknown[]).length : undefined;
+        if (cleanedContractsLen !== originalContractsLen || cleanedBlueprintsLen !== originalBlueprintsLen) {
           console.warn(
             "Storage quota exceeded. Old data removed to free space."
           );
@@ -134,9 +159,15 @@ const createSafeStorage = () => {
           }
         }
       }
-    } catch (cleanupError: any) {
+    } catch (cleanupError: unknown) {
       // Last resort: if everything fails, just log and don't save
-      console.error("Critical storage error. Data not saved:", cleanupError);
+      const cleanupErrorMessage =
+        cleanupError instanceof Error
+          ? cleanupError.message
+          : typeof cleanupError === "string"
+            ? cleanupError
+            : "Unknown error";
+      console.error("Critical storage error. Data not saved:", cleanupErrorMessage, cleanupError);
       if (typeof window !== "undefined") {
         window.dispatchEvent(new CustomEvent("storage-quota-error", {
           detail: { 
@@ -149,6 +180,9 @@ const createSafeStorage = () => {
 
   return {
     getItem: (name: string): string | null => {
+      if (typeof window === "undefined") {
+        return null;
+      }
       try {
         return localStorage.getItem(name);
       } catch (error) {
@@ -157,6 +191,9 @@ const createSafeStorage = () => {
       }
     },
     setItem: (name: string, value: string): void => {
+      if (typeof window === "undefined") {
+        return;
+      }
       try {
         // Check size before storing
         const size = getSize(value);
@@ -188,9 +225,11 @@ const createSafeStorage = () => {
         } else {
           localStorage.setItem(name, value);
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         // Handle quota exceeded error
-        if (error.name === "QuotaExceededError" || error.message?.includes("quota")) {
+        const message = error instanceof Error ? error.message : "";
+        const name = error instanceof Error ? error.name : "";
+        if (name === "QuotaExceededError" || message.includes("quota")) {
           // Try with cleanup
           setItemWithCleanup(name, null);
         } else {
@@ -200,6 +239,9 @@ const createSafeStorage = () => {
       }
     },
     removeItem: (name: string): void => {
+      if (typeof window === "undefined") {
+        return;
+      }
       try {
         localStorage.removeItem(name);
       } catch (error) {

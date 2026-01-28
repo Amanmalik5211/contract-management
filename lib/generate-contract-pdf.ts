@@ -3,6 +3,7 @@
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import { format } from "date-fns";
 import type { Field } from "@/types/field";
+import { findFieldsOverlappingPdfText } from "@/lib/pdf-text-overlap";
 import {
   contractMarginLeft,
   contractMarginRight,
@@ -116,16 +117,22 @@ function isFilled(value: string | boolean | Date | null | undefined, _fieldType:
 export interface DownloadWarnings {
   overlappingFieldLabels: string[];
   unfilledFieldLabels: string[];
+  fieldsOverlappingPdfTextLabels: string[];
 }
 
 /**
  * Returns labels of fields that overlap (and may not display correctly on the downloaded PDF)
  * and of fields that are unfilled. Use before download to show warnings.
+ * 
+ * @param pdfUrl - URL of the PDF to check for text overlaps (optional, only needed for PDF text overlap detection)
+ * @param pdfjsLib - PDF.js library instance (optional, only needed for PDF text overlap detection)
  */
-export function getDownloadWarnings(
+export async function getDownloadWarnings(
   fields: Field[],
-  fieldValues: Record<string, string | boolean | Date | null>
-): DownloadWarnings {
+  fieldValues: Record<string, string | boolean | Date | null>,
+  pdfUrl?: string,
+  pdfjsLib?: any
+): Promise<DownloadWarnings> {
   const overlappingIds = new Set<string>();
   for (let i = 0; i < fields.length; i++) {
     for (let j = i + 1; j < fields.length; j++) {
@@ -139,7 +146,22 @@ export function getDownloadWarnings(
   const unfilledFieldLabels = fields.filter(
     (f) => !isFilled(fieldValues[f.id], f.type)
   ).map((f) => f.label);
-  return { overlappingFieldLabels, unfilledFieldLabels };
+  
+  // Check for fields overlapping PDF text if pdfUrl and pdfjsLib are provided
+  let fieldsOverlappingPdfTextLabels: string[] = [];
+  if (pdfUrl && pdfjsLib) {
+    try {
+      const overlappingPdfTextIds = await findFieldsOverlappingPdfText(pdfUrl, fields, pdfjsLib);
+      fieldsOverlappingPdfTextLabels = fields
+        .filter((f) => overlappingPdfTextIds.has(f.id))
+        .map((f) => f.label);
+    } catch (error) {
+      console.warn("Failed to check PDF text overlaps:", error);
+      // Continue without PDF text overlap detection
+    }
+  }
+  
+  return { overlappingFieldLabels, unfilledFieldLabels, fieldsOverlappingPdfTextLabels };
 }
 
 /**
@@ -151,7 +173,9 @@ export async function generateContractPdf({
   pdfUrl,
   fields,
   fieldValues,
-}: GenerateContractPdfParams): Promise<Uint8Array> {
+  skipOverlappingPdfText = true,
+  pdfjsLib,
+}: GenerateContractPdfParams & { skipOverlappingPdfText?: boolean; pdfjsLib?: any }): Promise<Uint8Array> {
   const pdfBytes = await getPdfBytes(pdfUrl);
   const pdfDoc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
   const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
@@ -159,6 +183,17 @@ export async function generateContractPdf({
 
   if (pages.length === 0) {
     throw new Error("PDF has no pages");
+  }
+
+  // Pre-compute which fields overlap with PDF text (if detection is enabled)
+  let fieldsOverlappingPdfText: Set<string> = new Set();
+  if (skipOverlappingPdfText && pdfjsLib) {
+    try {
+      fieldsOverlappingPdfText = await findFieldsOverlappingPdfText(pdfUrl, fields, pdfjsLib);
+    } catch (error) {
+      console.warn("Failed to check PDF text overlaps during generation:", error);
+      // Continue without skipping overlapping text
+    }
   }
 
   for (let i = 0; i < pages.length; i++) {
@@ -169,6 +204,11 @@ export async function generateContractPdf({
 
     for (const field of fieldsOnPage) {
       if (field.x === undefined || field.y === undefined) continue;
+
+      // Skip drawing field text if it overlaps with PDF text
+      if (skipOverlappingPdfText && fieldsOverlappingPdfText.has(field.id)) {
+        continue;
+      }
 
       const value = fieldValues[field.id];
       const displayText = formatFieldValue(value, field.type);

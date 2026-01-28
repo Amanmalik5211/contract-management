@@ -367,33 +367,33 @@ export function DocumentRenderer({
       
       {/* Document Container */}
       <div 
-        className="relative max-w-4xl mx-auto px-10 py-14 border border-gray-100 dark:border-gray-800 shadow-2xl overflow-hidden"
+        className="relative max-w-4xl mx-auto px-4 sm:px-6 md:px-8 lg:px-10 py-6 sm:py-8 md:py-10 lg:py-14 border border-gray-100 dark:border-gray-800 shadow-2xl overflow-hidden"
         style={{ 
           minHeight: "11in",
         }}
       >
         
           {/* Document Title */}
-          <div className="text-center mb-8 border-b-2 border-gray-300 dark:border-gray-700 pb-6">
-            <h1 className="text-4xl font-bold mb-3 tracking-tight break-words overflow-wrap-anywhere">
+          <div className="text-center mb-6 sm:mb-8 border-b-2 border-gray-300 dark:border-gray-700 pb-4 sm:pb-6">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2 sm:mb-3 tracking-tight break-words overflow-wrap-anywhere">
               {capitalizeWords(title)}
             </h1>
           </div>
 
         {/* Document Content */}
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           {sortedSections.length > 0 ? (
             sortedSections.map((section) => renderSection(section))
           ) : (
             // Fallback: render all fields if no sections defined
-            <div className={`space-y-6 ${isEditable && onFieldsReorder ? "pl-10" : ""}`}>
+            <div className={`space-y-4 sm:space-y-6 ${isEditable && onFieldsReorder ? "pl-4 sm:pl-6 md:pl-8 lg:pl-10" : ""}`}>
               {orderedFields.map((field, index) => renderDraggableField(field, index))}
             </div>
           )}
         </div>
 
         {/* Document Footer */}
-        <div className="mt-20 pt-8 border-t-2 border-gray-200 dark:border-gray-700 text-center text-xs font-medium">
+        <div className="mt-12 sm:mt-16 md:mt-20 pt-6 sm:pt-8 border-t-2 border-gray-200 dark:border-gray-700 text-center text-xs sm:text-sm font-medium">
           <p>This document was generated on {format(new Date(), "MMMM d, yyyy")}</p>
         </div>
       </div>

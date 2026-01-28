@@ -1,8 +1,4 @@
-/**
- * Shared layout constants for contract PDFs so margin and padding are the same
- * in the on-screen preview (pdf-contract-editor) and in the downloaded PDF (generate-contract-pdf).
- * Values are percentages of page dimensions so they scale consistently at any size.
- */
+
 
 /** Page margin as percentage of page width/height (same on all four sides). ~6% ≈ 36pt on US Letter. */
 export const CONTRACT_PAGE_MARGIN_PCT = 6;

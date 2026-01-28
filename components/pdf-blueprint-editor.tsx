@@ -1,15 +1,14 @@
 "use client";
 
 import { useEffect, useState, useRef, useCallback } from "react";
-import Image from "next/image";
 import type { Field, FieldType } from "@/types/field";
 import { Card, CardContent } from "@/components/ui/card";
 import { Loader } from "@/components/ui/loader";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { X, GripVertical, ChevronDown, AlertTriangle } from "lucide-react";
 import { generateUUID } from "@/lib/utils";
+import { FieldTypeSelector } from "./pdf-blueprint-editor/field-type-selector";
+import { FieldsList } from "./pdf-blueprint-editor/fields-list";
+import { PdfPageRenderer } from "./pdf-blueprint-editor/pdf-page-renderer";
+import { findFieldsOverlappingPdfText } from "@/lib/pdf-text-overlap";
 
 // Dynamically import pdf.js only on client side to avoid DOMMatrix SSR error
 const getPdfjsLib = async () => {
@@ -44,10 +43,10 @@ export function PdfBlueprintEditor({
   const [dragStart, setDragStart] = useState<{ x: number; y: number } | null>(null);
   const [resizeStart, setResizeStart] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
   const [overlappingFields, setOverlappingFields] = useState<Set<string>>(new Set());
+  const [fieldsOverlappingPdfText, setFieldsOverlappingPdfText] = useState<Set<string>>(new Set());
   const [allowOverlap, setAllowOverlap] = useState(false);
+  const [pdfjsLib, setPdfjsLib] = useState<Awaited<ReturnType<typeof getPdfjsLib>>>(null);
   const pageRefs = useRef<Map<number, HTMLDivElement | null>>(new Map());
-  const fieldTypeDropdownRef = useRef<HTMLDivElement | null>(null);
-  const [fieldTypeDropdownOpen, setFieldTypeDropdownOpen] = useState(false);
   const fieldRefs = useRef<Map<string, HTMLDivElement | null>>(new Map());
 
   // Group fields by page number
@@ -107,16 +106,35 @@ export function PdfBlueprintEditor({
     setOverlappingFields(overlapping);
   }, [fields, findOverlappingFields]);
 
-  // Close field type dropdown on outside click
+  // Check for fields overlapping PDF text whenever fields or PDF changes
   useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (fieldTypeDropdownRef.current && !fieldTypeDropdownRef.current.contains(e.target as Node)) {
-        setFieldTypeDropdownOpen(false);
+    if (!pdfjsLib || fields.length === 0) {
+      setFieldsOverlappingPdfText(new Set());
+      return;
+    }
+
+    let isMounted = true;
+
+    const checkPdfTextOverlaps = async () => {
+      try {
+        const overlappingIds = await findFieldsOverlappingPdfText(pdfUrl, fields, pdfjsLib);
+        if (isMounted) {
+          setFieldsOverlappingPdfText(overlappingIds);
+        }
+      } catch (error) {
+        console.warn("Failed to check PDF text overlaps:", error);
+        if (isMounted) {
+          setFieldsOverlappingPdfText(new Set());
+        }
       }
     };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+
+    checkPdfTextOverlaps();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [pdfUrl, fields, pdfjsLib]);
 
   // Load PDF
   useEffect(() => {
@@ -128,14 +146,15 @@ export function PdfBlueprintEditor({
         setError(null);
 
         // Dynamically import pdf.js on client side
-        const pdfjsLib = await getPdfjsLib();
-        if (!pdfjsLib) {
+        const pdfjsLibInstance = await getPdfjsLib();
+        if (!pdfjsLibInstance) {
           setError("PDF.js not available");
           setLoading(false);
           return;
         }
+        setPdfjsLib(pdfjsLibInstance);
 
-        const loadingTask = pdfjsLib.getDocument({ url: pdfUrl });
+        const loadingTask = pdfjsLibInstance.getDocument({ url: pdfUrl });
         const pdf = await loadingTask.promise;
 
         if (!isMounted) return;
@@ -194,8 +213,8 @@ export function PdfBlueprintEditor({
     };
   }, [pdfUrl]);
 
-  // Handle clicking on PDF to place field
-  const handlePageClick = useCallback((e: React.MouseEvent<HTMLDivElement>, pageNum: number, _pageWidth: number, _pageHeight: number) => {
+  // Handle pointer down on PDF to place field (works for mouse + touch + pen)
+  const handlePageClick = useCallback((e: React.PointerEvent<HTMLDivElement>, pageNum: number) => {
     if (!isPlacingField) return;
 
     const rect = e.currentTarget.getBoundingClientRect();
@@ -205,9 +224,9 @@ export function PdfBlueprintEditor({
     const x = ((e.clientX - rect.left) / actualWidth) * 100;
     const y = ((e.clientY - rect.top) / actualHeight) * 100;
 
-    // Default field dimensions (percentage-based)
-    const defaultWidth = 20; // 20% of page width
-    const defaultHeight = 5; // 5% of page height
+    // Default field dimensions (percentage-based) - Larger for better visibility and usability
+    const defaultWidth = 25; // 25% of page width (increased from 20%)
+    const defaultHeight = 8; // 8% of page height (increased from 5%)
 
     const newField: Field = {
       id: `field-${generateUUID()}`,
@@ -240,6 +259,22 @@ export function PdfBlueprintEditor({
     setSelectedField(newField.id);
     setAllowOverlap(false); // Reset after placement
   }, [isPlacingField, selectedFieldType, fields, onFieldsChange, allowOverlap, doFieldsOverlap]);
+
+  const handleTogglePlacingField = useCallback(() => {
+    setIsPlacingField(!isPlacingField);
+    setSelectedField(null);
+  }, [isPlacingField]);
+
+  const handleCancelPlacing = useCallback(() => {
+    setIsPlacingField(false);
+    setSelectedField(null);
+  }, []);
+
+  const handleFieldTypeChange = useCallback((type: FieldType) => {
+    setSelectedFieldType(type);
+    setIsPlacingField(false);
+    setSelectedField(null);
+  }, []);
 
   // Handle field deletion
   const handleDeleteField = useCallback((fieldId: string) => {
@@ -296,8 +331,8 @@ export function PdfBlueprintEditor({
     const field = fields.find((f) => f.id === draggingField);
     if (!field || field.width === undefined) return;
 
-    const newX = Math.max(0, Math.min(100 - (field.width || 20), currentX - dragStart.x));
-    const newY = Math.max(0, Math.min(100 - (field.height || 5), currentY - dragStart.y));
+    const newX = Math.max(0, Math.min(100 - (field.width || 25), currentX - dragStart.x));
+    const newY = Math.max(0, Math.min(100 - (field.height || 8), currentY - dragStart.y));
 
     // Update field position (overlap will be detected by effect and shown via yellow border + list indicator)
     onFieldsChange(
@@ -363,8 +398,9 @@ export function PdfBlueprintEditor({
     const deltaX = currentX - resizeStart.x;
     const deltaY = currentY - resizeStart.y;
 
-    const newWidth = Math.max(5, Math.min(100 - field.x, resizeStart.width + deltaX));
-    const newHeight = Math.max(2, Math.min(100 - field.y, resizeStart.height + deltaY));
+    // Minimum sizes increased for better usability
+    const newWidth = Math.max(8, Math.min(100 - field.x, resizeStart.width + deltaX));
+    const newHeight = Math.max(4, Math.min(100 - field.y, resizeStart.height + deltaY));
 
     // Update field size (overlap will be detected by effect and shown via yellow border + list indicator)
     onFieldsChange(
@@ -413,133 +449,6 @@ export function PdfBlueprintEditor({
     };
   }, [draggingField, resizingField, fields, handleFieldDrag, handleFieldResize, handleFieldDragEnd, handleFieldResizeEnd]);
 
-  // Render field overlay with drag and resize
-  const renderFieldOverlay = (field: Field, pageWidth: number, pageHeight: number, pageNum: number, _scaleX: number = 1, _scaleY: number = 1) => {
-    if (!field.pageNumber || field.x === undefined || field.y === undefined) {
-      return null;
-    }
-
-    // Use percentage-based positioning so it scales with the container
-    const leftPercent = field.x;
-    const topPercent = field.y;
-    const widthPercent = field.width || 20;
-    const heightPercent = field.height || 5;
-    const isSelected = selectedField === field.id;
-    const isDragging = draggingField === field.id;
-    const isResizing = resizingField === field.id;
-    const hasOverlap = overlappingFields.has(field.id);
-
-    return (
-      <div
-        key={field.id}
-        ref={(el) => {
-          if (el) fieldRefs.current.set(field.id, el);
-        }}
-        style={{
-          position: "absolute",
-          left: `${leftPercent}%`,
-          top: `${topPercent}%`,
-          width: `${widthPercent}%`,
-          height: `${heightPercent}%`,
-          ...(!isPlacingField && { touchAction: "none" }),
-        }}
-        className={`z-10 border-2 ${
-          hasOverlap
-            ? "border-yellow-500 bg-yellow-100/40 shadow-lg ring-2 ring-yellow-300 animate-pulse"
-            : isSelected
-            ? "border-blue-500 bg-blue-100/30 shadow-lg ring-2 ring-blue-200"
-            : "border-gray-400 bg-gray-100/20 hover:border-gray-500 hover:bg-gray-100/30"
-        } rounded transition-all ${isDragging || isResizing ? "opacity-80 scale-105" : ""} ${
-          isPlacingField ? "pointer-events-none" : "cursor-move"
-        } group`}
-        onPointerDown={(e) => {
-          if (!isPlacingField) {
-            handleFieldDragStart(e, field.id);
-          }
-        }}
-        onClick={(e) => {
-          if (!isPlacingField) {
-            e.stopPropagation();
-            setSelectedField(field.id);
-          }
-        }}
-      >
-        {/* Overlap warning — above field, same style as "Text exceeds" (red banner, one per field) */}
-        {hasOverlap && (
-          <div
-            className="absolute left-0 bottom-full mb-1.5 bg-red-600 text-white text-xs px-2.5 py-2 rounded-md shadow-lg z-30 flex items-start gap-2 pointer-events-auto max-w-[280px]"
-          >
-            <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" aria-hidden />
-            <span className="whitespace-normal break-words leading-snug">
-              This field overlaps another. It may not display correctly on the downloaded PDF.
-            </span>
-          </div>
-        )}
-
-        {/* Drag handle - visible on hover/select */}
-        {isSelected && !isPlacingField && (
-          <div className="absolute -left-2 -top-2 bg-blue-500 text-white rounded-full p-1 cursor-move hover:bg-blue-600 z-30">
-            <GripVertical className="h-3 w-3" />
-          </div>
-        )}
-
-        {/* Resize handle - bottom right corner, larger for touch */}
-        {isSelected && !isPlacingField && (
-          <div
-            className="absolute -bottom-1 -right-1 min-w-[44px] min-h-[44px] w-6 h-6 sm:w-4 sm:h-4 bg-blue-500 rounded-full border-2 border-white cursor-nwse-resize hover:bg-blue-600 touch-none z-30 flex items-center justify-center"
-            onPointerDown={(e) => {
-              e.stopPropagation();
-              handleFieldResizeStart(e, field.id);
-            }}
-          />
-        )}
-
-        {/* Field label input - shown when selected */}
-        {isSelected && (
-          <div className="absolute -top-10 left-0  border border-gray-300 dark:border-gray-700 rounded-lg px-2 py-1 shadow-lg z-20 flex items-center gap-2">
-            <Input
-              value={field.label}
-              onChange={(e) => handleFieldLabelChange(field.id, e.target.value)}
-              className="h-7 text-xs w-32"
-              onClick={(e) => e.stopPropagation()}
-              onMouseDown={(e) => e.stopPropagation()}
-              onPointerDown={(e) => e.stopPropagation()}
-            />
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleDeleteField(field.id);
-              }}
-              onPointerDown={(e) => e.stopPropagation()}
-              className="h-7 w-7 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
-            >
-              <X className="h-3 w-3" />
-            </Button>
-          </div>
-        )}
-        
-      
-
-        {/* Field type indicator */}
-        <div className={`absolute bottom-0 left-0 right-0 text-white text-xs px-1 py-0.5 text-center rounded-b ${
-          hasOverlap ? "bg-yellow-600/80" : "bg-black/60"
-        }`}>
-          {field.type}
-        </div>
-
-        {/* Field label preview (when not selected) */}
-        {!isSelected && (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <span className="text-xs text-gray-600 dark:text-gray-400 truncate px-1">
-              {field.label}
-            </span>
-          </div>
-        )}
-      </div>
-    );
-  };
 
   if (loading) {
     return (
@@ -566,105 +475,15 @@ export function PdfBlueprintEditor({
 
   return (
     <div className={className}>
-      {/* Field Type Selector */}
-      <div className="mb-4 p-3 sm:p-4  rounded-lg sm:rounded-xl border border-gray-300 dark:border-gray-700">
-        <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-3 sm:gap-4">
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto" ref={fieldTypeDropdownRef}>
-            <Label className="font-medium whitespace-nowrap text-xs sm:text-sm">Field Type:</Label>
-            <div className="relative w-full sm:w-40">
-              <button
-                type="button"
-                id="fieldType"
-                aria-haspopup="listbox"
-                aria-expanded={fieldTypeDropdownOpen}
-                aria-label="Field type"
-                disabled={isPlacingField}
-                onClick={() => setFieldTypeDropdownOpen((v) => !v)}
-                className="flex h-9 sm:h-10 w-full items-center justify-between rounded-lg sm:rounded-xl border-[1px] border-gray-200 dark:border-gray-600 bg-transparent px-3 sm:px-4 py-2 text-xs sm:text-sm text-left disabled:cursor-not-allowed disabled:opacity-50 hover:border-gray-300 dark:hover:border-gray-500 transition-colors"
-              >
-                <span className="capitalize">{selectedFieldType}</span>
-                <ChevronDown className={`h-4 w-4 shrink-0 transition-transform ${fieldTypeDropdownOpen ? "rotate-180" : ""}`} />
-              </button>
-              {fieldTypeDropdownOpen && (
-                <ul
-                  role="listbox"
-                  aria-labelledby="fieldType"
-                  className="absolute text-black z-50 mt-1 w-full min-w-[8rem] rounded-lg border-[1px] border-gray-200 dark:border-gray-600 bg-blue-100 py-1 shadow-lg outline-none"
-                
-                >
-                  {(["text", "date", "signature", "checkbox"] as const).map((type) => (
-                    <li
-                      key={type}
-                      role="option"
-                      aria-selected={selectedFieldType === type}
-                      className={`relative cursor-pointer select-none px-3 py-2 text-xs sm:text-sm capitalize outline-none hover:bg-gray-100/80 dark:hover:bg-gray-700/50 focus:bg-gray-100/80 dark:focus:bg-gray-700/50 ${
-                        selectedFieldType === type ? "bg-primary/10 dark:bg-primary/20 text-primary" : ""
-                      }`}
-                      onClick={() => {
-                        setSelectedFieldType(type);
-                        setFieldTypeDropdownOpen(false);
-                        setIsPlacingField(false);
-                        setSelectedField(null);
-                      }}
-                    >
-                      {type}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          </div>
-          <div className="flex gap-2 w-full sm:w-auto">
-            <Button
-              onClick={() => {
-                setIsPlacingField(!isPlacingField);
-                setSelectedField(null);
-              }}
-              variant={isPlacingField ? "default" : "outline"}
-              className={`w-full sm:w-auto text-xs sm:text-sm ${isPlacingField ? "bg-blue-600 hover:bg-blue-700" : ""}`}
-            >
-              {isPlacingField ? "✓ Placing Mode Active" : "Add Field"}
-            </Button>
-            {isPlacingField && (
-              <Button
-                variant="ghost"
-                onClick={() => {
-                  setIsPlacingField(false);
-                  setSelectedField(null);
-                }}
-                className="border border-gray-500 hover:bg-blue-500  w-full sm:w-auto text-xs sm:text-sm"
-              >
-                Cancel
-              </Button>
-            )}
-          </div>
-        </div>
-        {isPlacingField && (
-          <div className="mt-3 p-2 sm:p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded">
-            <p className="text-xs sm:text-sm font-medium">
-              💡 Click anywhere on the PDF to place a <strong>{selectedFieldType}</strong> field
-            </p>
-            <p className="text-[10px] sm:text-xs mt-1">
-              ⚠️ If the field overlaps with an existing field, you will be warned before placement.
-            </p>
-          </div>
-        )}
-        {overlappingFields.size > 0 && (
-          <div className="mt-3 p-2 sm:p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded flex items-center gap-2">
-            <AlertTriangle className="h-4 w-4 shrink-0 text-yellow-700 dark:text-yellow-400" />
-            <p className="text-[10px] sm:text-xs text-yellow-800 dark:text-yellow-200">
-              Overlapping fields are marked in the list below and may not display correctly on the downloaded PDF.
-            </p>
-          </div>
-        )}
-        {!isPlacingField && fields.length > 0 && (
-          <div className="mt-3 p-2 border border-gray-400 sm:p-3 rounded">
-            <p className="text-xs sm:text-sm text-muted-foreground">
-              💡 <strong>Tip:</strong> Click on a field to select it, then drag to move or use the resize handle (bottom-right corner) to resize
-            </p>
-          </div>
-        )}
-      </div>
+      <FieldTypeSelector
+        selectedFieldType={selectedFieldType}
+        onFieldTypeChange={handleFieldTypeChange}
+        isPlacingField={isPlacingField}
+        onTogglePlacingField={handleTogglePlacingField}
+        onCancelPlacing={handleCancelPlacing}
+        overlappingFieldsCount={overlappingFields.size}
+        fieldsCount={fields.length}
+      />
 
       {/* PDF Pages with Field Overlays */}
       <div className="space-y-3 sm:space-y-4">
@@ -672,116 +491,42 @@ export function PdfBlueprintEditor({
           const pageFields = fieldsByPage.get(pageNum) || [];
           
           return (
-            <div
+            <PdfPageRenderer
               key={pageNum}
-              ref={(el) => {
+              pageNum={pageNum}
+              numPages={numPages}
+              imageData={imageData}
+              width={width}
+              height={height}
+              pageFields={pageFields}
+              isPlacingField={isPlacingField}
+              selectedField={selectedField}
+              draggingField={draggingField}
+              resizingField={resizingField}
+              overlappingFields={overlappingFields}
+              fieldsOverlappingPdfText={fieldsOverlappingPdfText}
+              onPageClick={handlePageClick}
+              onFieldDragStart={handleFieldDragStart}
+              onFieldResizeStart={handleFieldResizeStart}
+              onFieldSelect={setSelectedField}
+              onFieldLabelChange={handleFieldLabelChange}
+              onFieldDelete={handleDeleteField}
+              pageRef={(el) => {
                 if (el) pageRefs.current.set(pageNum, el);
               }}
-              className="flex justify-center relative px-2 sm:px-4"
-            >
-              <div className="relative rounded-lg sm:rounded-xl shadow-sm overflow-visible bg-background w-full max-w-full border-0">
-                <div
-                  className={`relative ${isPlacingField ? "cursor-crosshair" : "cursor-default"} mx-auto`}
-                  style={{ 
-                    width: '100%',
-                    maxWidth: `${width}px`,
-                    aspectRatio: `${width} / ${height}`
-                  }}
-                  onClick={(e) => {
-                    if (isPlacingField) {
-                      const container = e.currentTarget;
-                      const rect = container.getBoundingClientRect();
-                      const actualWidth = rect.width;
-                      const actualHeight = rect.height;
-                      handlePageClick(e, pageNum, actualWidth, actualHeight);
-                    }
-                  }}
-                >
-                  <Image
-                    src={imageData}
-                    alt={`Page ${pageNum} of ${numPages}`}
-                    width={width}
-                    height={height}
-                    unoptimized
-                    className="block w-full h-auto"
-                    draggable={false}
-                    onLoad={(e) => {
-                      const img = e.target as HTMLImageElement;
-                      const container = img.parentElement?.parentElement;
-                      if (container) {
-                        pageRefs.current.set(pageNum, container as HTMLDivElement);
-                      }
-                    }}
-                  />
-                  <div className="absolute bottom-2 right-2 bg-black/50 text-white text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded z-0">
-                    Page {pageNum} of {numPages}
-                  </div>
-                  
-                  {/* Field Overlays - use percentage-based positioning for responsive scaling */}
-                  <div className="absolute inset-0" style={{ width: '100%', height: '100%' }}>
-                    {pageFields.map((field) => {
-                      // Get actual rendered dimensions for click/drag calculations
-                      const container = pageRefs.current.get(pageNum);
-                      const actualWidth = container?.offsetWidth || width;
-                      const actualHeight = container?.offsetHeight || height;
-                      return renderFieldOverlay(field, actualWidth, actualHeight, pageNum, 1, 1);
-                    })}
-                  </div>
-                </div>
-              </div>
-            </div>
+              fieldRefs={fieldRefs.current}
+            />
           );
         })}
       </div>
 
-      {/* Fields List */}
-      {fields.length > 0 && (
-        <div className="mt-4 sm:mt-6 p-3 sm:p-4  rounded-lg sm:rounded-xl border border-gray-300 dark:border-gray-700">
-          <h3 className="font-semibold mb-2 sm:mb-3 text-sm sm:text-base">Placed Fields ({fields.length})</h3>
-          <div className="space-y-2">
-            {fields.map((field) => {
-              const hasOverlap = overlappingFields.has(field.id);
-              return (
-                <div
-                  key={field.id}
-                  className={`flex items-center justify-between gap-2 p-2 sm:p-3 rounded border ${
-                    hasOverlap
-                      ? "border-yellow-500 bg-yellow-50 dark:bg-yellow-900/20"
-                      : selectedField === field.id
-                      ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
-                      : "border-gray-300 dark:border-gray-700"
-                  } cursor-pointer`}
-                  onClick={() => setSelectedField(field.id)}
-                >
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-xs sm:text-sm break-words">{field.label}</p>
-                    <p className="text-[10px] sm:text-xs text-muted-foreground break-words">
-                      {field.type} • Page {field.pageNumber} • ({field.x?.toFixed(1)}%, {field.y?.toFixed(1)}%)
-                    </p>
-                  </div>
-                  {hasOverlap && (
-                    <span className="shrink-0 flex items-center gap-1 text-[10px] sm:text-xs text-yellow-700 dark:text-yellow-400" title="Overlapping fields may not display correctly on the downloaded PDF">
-                      <AlertTriangle className="h-3.5 w-3.5" />
-                      Overlap
-                    </span>
-                  )}
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDeleteField(field.id);
-                    }}
-                    className="text-red-600 hover:text-red-700 flex-shrink-0 ml-2"
-                  >
-                    <X className="h-3 w-3 sm:h-4 sm:w-4" />
-                  </Button>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
+      <FieldsList
+        fields={fields}
+        selectedField={selectedField}
+        overlappingFields={overlappingFields}
+        onSelectField={setSelectedField}
+        onDeleteField={handleDeleteField}
+      />
     </div>
   );
 }
