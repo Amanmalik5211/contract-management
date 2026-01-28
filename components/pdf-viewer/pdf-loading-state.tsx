@@ -2,10 +2,7 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Loader } from "@/components/ui/loader";
-
-interface PdfLoadingStateProps {
-  className?: string;
-}
+import type { PdfLoadingStateProps } from "@/types/components";
 
 export function PdfLoadingState({ className = "" }: PdfLoadingStateProps) {
   return (

@@ -3,15 +3,7 @@
 import * as React from "react";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-export interface ToastProps {
-  id: string;
-  title?: string;
-  description?: string;
-  variant?: "default" | "success" | "error" | "warning";
-  duration?: number;
-  onClose?: () => void;
-}
+import type { ToastProps } from "@/types/ui";
 
 const Toast: React.FC<ToastProps> = ({
   title,

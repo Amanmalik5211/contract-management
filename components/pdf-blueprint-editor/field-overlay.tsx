@@ -13,6 +13,7 @@ interface FieldOverlayProps {
   isResizing: boolean;
   hasOverlap: boolean;
   hasPdfTextOverlap: boolean;
+  hasTextOverflow: boolean;
   isPlacingField: boolean;
   onDragStart: (e: React.PointerEvent, fieldId: string) => void;
   onResizeStart: (e: React.PointerEvent, fieldId: string) => void;
@@ -29,6 +30,7 @@ export function FieldOverlay({
   isResizing,
   hasOverlap,
   hasPdfTextOverlap,
+  hasTextOverflow,
   isPlacingField,
   onDragStart,
   onResizeStart,
@@ -66,6 +68,8 @@ export function FieldOverlay({
       className={`z-10 border-2 ${
         hasPdfTextOverlap
           ? "border-red-500 bg-red-100/50 shadow-xl ring-2 ring-red-300 animate-pulse"
+          : hasTextOverflow
+          ? "border-orange-500 bg-orange-100/50 shadow-xl ring-2 ring-orange-300"
           : hasOverlap
           ? "border-yellow-500 bg-yellow-100/50 shadow-xl ring-2 ring-yellow-300 animate-pulse"
           : isSelected
@@ -98,9 +102,19 @@ export function FieldOverlay({
         </div>
       )}
 
+      {hasTextOverflow && !hasPdfTextOverlap && (
+        <div
+          className="hidden xs:flex absolute -top-6 sm:-top-7 right-0 bg-orange-600 text-white rounded-md px-2 py-1.5 text-xs sm:text-sm z-40 items-center gap-1.5 shadow-lg"
+          title="Field text exceeds the field width."
+        >
+          <AlertTriangle className="h-3.5 w-3.5 sm:h-4 sm:w-4" aria-hidden />
+          <span className="hidden sm:inline">Overflow</span>
+        </div>
+      )}
+
       {/* Field-to-field overlap indicator
           Hidden on very small screens; on those, we rely on border / footer colors only. */}
-      {hasOverlap && !hasPdfTextOverlap && (
+      {hasOverlap && !hasPdfTextOverlap && !hasTextOverflow && (
         <div
           className="hidden xs:flex absolute -top-6 sm:-top-7 right-0 bg-yellow-600 text-white rounded-md px-2 py-1.5 text-xs sm:text-sm z-40 items-center gap-1.5 shadow-lg"
           title="This field overlaps another and may not display correctly on the downloaded PDF."
@@ -166,17 +180,21 @@ export function FieldOverlay({
 
       {/* Visible warning text near the field (helps users understand issues immediately)
           On very small screens this is hidden; only border / footer colors are used. */}
-      {(hasPdfTextOverlap || hasOverlap) && (
+      {(hasPdfTextOverlap || hasOverlap || hasTextOverflow) && (
         <div className="hidden xs:block absolute top-2 left-2 right-2 z-30 pointer-events-none">
           <div
             className={`rounded-md px-2 py-1 text-[10px] sm:text-xs font-medium text-center shadow ${
               hasPdfTextOverlap
                 ? "bg-red-600/90 text-white"
+                : hasTextOverflow
+                ? "bg-orange-600/90 text-white"
                 : "bg-yellow-600/90 text-white"
             }`}
           >
             {hasPdfTextOverlap
               ? "Overlaps PDF text — field text won’t be added to downloaded PDF"
+              : hasTextOverflow 
+              ? "Text exceeds field width"
               : "Overlaps another field — may not render correctly in download"}
           </div>
         </div>
@@ -184,7 +202,7 @@ export function FieldOverlay({
 
       {/* Field type indicator - Larger and more visible */}
       <div className={`absolute bottom-0 left-0 right-0 text-white text-xs sm:text-sm font-medium px-2 py-1 sm:py-1.5 text-center rounded-b ${
-        hasPdfTextOverlap ? "bg-red-600/90" : hasOverlap ? "bg-yellow-600/90" : "bg-black/70"
+        hasPdfTextOverlap ? "bg-red-600/90" : hasTextOverflow ? "bg-orange-600/90" : hasOverlap ? "bg-yellow-600/90" : "bg-black/70"
       }`}>
         <span className="capitalize">{field.type}</span>
       </div>

@@ -1,25 +1,13 @@
 "use client";
 
 import React, { useState } from "react";
-import type { Field } from "@/types/field";
-import type { DocumentSection } from "@/types/blueprint";
 import { format } from "date-fns";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { GripVertical } from "lucide-react";
 import { capitalizeWords } from "@/lib/utils";
-
-interface DocumentRendererProps {
-  title: string;
-  sections: DocumentSection[];
-  fields: Field[];
-  fieldValues?: Record<string, string | boolean | Date | null>;
-  isEditable?: boolean;
-  onFieldChange?: (fieldId: string, value: string | boolean) => void;
-  onFieldsReorder?: (reorderedFields: Field[]) => void;
-  className?: string;
-}
+import type { DocumentRendererProps } from "@/types/components";
 
 export function DocumentRenderer({
   title,

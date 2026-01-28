@@ -10,15 +10,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { InlineLoader } from "@/components/ui/loader";
-
-interface DeleteConfirmationDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  itemName: string;
-  itemType: "contract" | "blueprint";
-  onConfirm: () => void;
-  isDeleting?: boolean;
-}
+import type { DeleteConfirmationDialogProps } from "@/types/components";
 
 export function DeleteConfirmationDialog({
   open,

@@ -6,7 +6,7 @@ import type { Field } from "@/types/field";
 import { Card, CardContent } from "@/components/ui/card";
 import { Loader } from "@/components/ui/loader";
 
-import type { PdfContractEditorProps, PDFTypographyConfig } from "./pdf-contract-editor/types";
+import type { PdfContractEditorProps, PDFTypographyConfig } from "@/types/pdf";
 import { DEFAULT_PDF_TYPOGRAPHY, PDF_FIELD_STYLES } from "./pdf-contract-editor/constants";
 import { validateTextFits, calculateLineHeightPx } from "./pdf-contract-editor/validation";
 import { getPdfjsLib, yieldToEventLoop } from "./pdf-contract-editor/pdf-utils";

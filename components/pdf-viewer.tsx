@@ -4,6 +4,7 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { PdfPage } from "./pdf-viewer/pdf-page";
 import { PdfLoadingState } from "./pdf-viewer/pdf-loading-state";
 import { PdfErrorState } from "./pdf-viewer/pdf-error-state";
+import type { PdfViewerProps, PdfDocument } from "@/types/pdf";
 
 // Dynamically import pdf.js only on client side to avoid DOMMatrix SSR error
 const getPdfjsLib = async () => {
@@ -11,19 +12,6 @@ const getPdfjsLib = async () => {
   const lib = await import("pdfjs-dist");
   lib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
   return lib;
-};
-
-interface PdfViewerProps {
-  pdfUrl: string;
-  className?: string;
-  onPageRefsReady?: (refs: Map<number, HTMLDivElement | null>) => void;
-  onPageRender?: (pageNum: number, element: HTMLDivElement | null) => void;
-}
-
-// Type for PDF document from pdfjs-dist (using unknown to avoid type conflicts)
-type PdfDocument = {
-  numPages: number;
-  getPage: (pageNum: number) => Promise<unknown>;
 };
 
 // Yield to the event loop to prevent blocking

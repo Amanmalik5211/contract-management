@@ -1,11 +1,7 @@
 "use client";
 
 import { Card, CardContent } from "@/components/ui/card";
-
-interface PdfErrorStateProps {
-  error: string;
-  className?: string;
-}
+import type { PdfErrorStateProps } from "@/types/components";
 
 export function PdfErrorState({ error, className = "" }: PdfErrorStateProps) {
   return (

@@ -3,21 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
-
-interface SearchAndFilterProps<T extends string> {
-  searchQuery: string;
-  onSearchChange: (query: string) => void;
-  selectedFilters: T[];
-  onClearFilters: () => void;
-  searchPlaceholder?: string;
-  showToggle?: boolean;
-  toggleValue?: "contract" | "blueprint";
-  onToggleChange?: (value: "contract" | "blueprint") => void;
-  // Legacy props - kept for backward compatibility but not used
-  onFilterToggle?: (filter: T) => void;
-  filterOptions?: Array<{ value: T; label: string }>;
-  filterLabel?: string;
-}
+import type { SearchAndFilterProps } from "@/types/components";
 
 export function SearchAndFilter<T extends string>(props: SearchAndFilterProps<T>) {
   const {

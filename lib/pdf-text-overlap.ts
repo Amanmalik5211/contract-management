@@ -1,16 +1,7 @@
 "use client";
 
 import type { Field } from "@/types/field";
-
-/**
- * Text item from PDF.js with bounding box information
- */
-interface PdfTextItem {
-  str: string;
-  transform: number[];
-  width: number;
-  height: number;
-}
+import type { PdfTextItem } from "@/types/pdf";
 
 /**
  * Check which fields overlap with PDF text content.

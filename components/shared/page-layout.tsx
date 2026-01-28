@@ -1,14 +1,7 @@
 "use client";
 
-import { ReactNode } from "react";
 import { PageLoader } from "@/components/ui/loader";
-
-interface PageLayoutProps {
-  children: ReactNode;
-  isLoading?: boolean;
-  loadingText?: string;
-  className?: string;
-}
+import type { PageLayoutProps } from "@/types/components";
 
 export function PageLayout({ 
   children, 

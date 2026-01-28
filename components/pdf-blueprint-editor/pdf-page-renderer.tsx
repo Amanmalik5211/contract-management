@@ -17,6 +17,7 @@ interface PdfPageRendererProps {
   resizingField: string | null;
   overlappingFields: Set<string>;
   fieldsOverlappingPdfText: Set<string>;
+  fieldsWithTextOverflow: Set<string>;
   onPageClick: (e: React.PointerEvent<HTMLDivElement>, pageNum: number) => void;
   onFieldDragStart: (e: React.PointerEvent, fieldId: string) => void;
   onFieldResizeStart: (e: React.PointerEvent, fieldId: string) => void;
@@ -40,6 +41,7 @@ export function PdfPageRenderer({
   resizingField,
   overlappingFields,
   fieldsOverlappingPdfText,
+  fieldsWithTextOverflow,
   onPageClick,
   onFieldDragStart,
   onFieldResizeStart,
@@ -99,6 +101,7 @@ export function PdfPageRenderer({
                 isResizing={resizingField === field.id}
                 hasOverlap={overlappingFields.has(field.id)}
                 hasPdfTextOverlap={fieldsOverlappingPdfText.has(field.id)}
+                hasTextOverflow={fieldsWithTextOverflow.has(field.id)}
                 isPlacingField={isPlacingField}
                 onDragStart={onFieldDragStart}
                 onResizeStart={onFieldResizeStart}

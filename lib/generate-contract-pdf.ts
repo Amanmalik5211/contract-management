@@ -3,6 +3,7 @@
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import { format } from "date-fns";
 import type { Field } from "@/types/field";
+import type { GenerateContractPdfParams, DownloadWarnings } from "@/types/pdf";
 import { findFieldsOverlappingPdfText } from "@/lib/pdf-text-overlap";
 import {
   contractMarginLeft,
@@ -86,12 +87,6 @@ async function getPdfBytes(pdfUrl: string): Promise<Uint8Array> {
   return new Uint8Array(buf);
 }
 
-export interface GenerateContractPdfParams {
-  pdfUrl: string;
-  fields: Field[];
-  fieldValues: Record<string, string | boolean | Date | null>;
-}
-
 /** Returns true if two fields overlap on the same page (bounding boxes intersect). */
 function doFieldsOverlap(a: Field, b: Field): boolean {
   if (a.id === b.id) return false;
@@ -114,11 +109,6 @@ function isFilled(value: string | boolean | Date | null | undefined, _fieldType:
   return String(value).trim() !== "";
 }
 
-export interface DownloadWarnings {
-  overlappingFieldLabels: string[];
-  unfilledFieldLabels: string[];
-  fieldsOverlappingPdfTextLabels: string[];
-}
 
 /**
  * Returns labels of fields that overlap (and may not display correctly on the downloaded PDF)
@@ -146,7 +136,7 @@ export async function getDownloadWarnings(
   const unfilledFieldLabels = fields.filter(
     (f) => !isFilled(fieldValues[f.id], f.type)
   ).map((f) => f.label);
-  
+
   // Check for fields overlapping PDF text if pdfUrl and pdfjsLib are provided
   let fieldsOverlappingPdfTextLabels: string[] = [];
   if (pdfUrl && pdfjsLib) {
@@ -160,7 +150,7 @@ export async function getDownloadWarnings(
       // Continue without PDF text overlap detection
     }
   }
-  
+
   return { overlappingFieldLabels, unfilledFieldLabels, fieldsOverlappingPdfTextLabels };
 }
 
@@ -255,7 +245,10 @@ export async function generateContractPdf({
       const textColor = rgb(0, 0, 0);
       for (let L = 0; L < linesToDraw.length; L++) {
         const yPt = firstBaselineY - L * lineHeightPt;
-        if (yPt < bottomOfBoxPt + fontSize) break;
+        // For the first line, draw it even if it slightly overlaps the bottom.
+        // For subsequent lines, stop if we go below the box bottom.
+        if (L > 0 && yPt < bottomOfBoxPt) break;
+
         page.drawText(linesToDraw[L], {
           x: xPt,
           y: yPt,

@@ -6,17 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Pencil, PenSquare, Lock, Ban } from "lucide-react";
 import { capitalizeWords } from "@/lib/utils";
 import { getStatusLabel } from "@/lib/contract-utils";
-import type { Contract } from "@/types/contract";
-
-interface ContractHeaderProps {
-  contract: Contract;
-  canEdit: boolean;
-  isCreated: boolean;
-  isLocked: boolean;
-  isRevoked: boolean;
-  hasUnsavedChanges: boolean;
-  getStatusVariant: (status: string) => "default" | "secondary" | "destructive" | "success" | "warning";
-}
+import type { ContractHeaderProps } from "@/types/components";
 
 export function ContractHeader({
   contract,

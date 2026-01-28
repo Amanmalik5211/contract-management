@@ -13,6 +13,8 @@ interface FieldTypeSelectorProps {
   onTogglePlacingField: () => void;
   onCancelPlacing: () => void;
   overlappingFieldsCount: number;
+  pdfTextOverlappingFieldsCount: number;
+  textOverflowFieldsCount: number;
   fieldsCount: number;
 }
 
@@ -23,6 +25,8 @@ export function FieldTypeSelector({
   onTogglePlacingField,
   onCancelPlacing,
   overlappingFieldsCount,
+  pdfTextOverlappingFieldsCount,
+  textOverflowFieldsCount,
   fieldsCount,
 }: FieldTypeSelectorProps) {
   const fieldTypeDropdownRef = useRef<HTMLDivElement | null>(null);
@@ -115,8 +119,24 @@ export function FieldTypeSelector({
       {overlappingFieldsCount > 0 && (
         <div className="mt-3 p-2 sm:p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded flex items-center gap-2">
           <AlertTriangle className="h-4 w-4 shrink-0 text-yellow-700 dark:text-yellow-400" />
-          <p className="text-[10px] sm:text-xs text-yellow-800 dark:text-yellow-200">
-            Overlapping fields are marked in the list below and may not display correctly on the downloaded PDF.
+          <p className="text-[10px] sm:text-xs text-black">
+            {overlappingFieldsCount} field{overlappingFieldsCount !== 1 ? 's' : ''} overlap{overlappingFieldsCount === 1 ? 's' : ''} with other fields.
+          </p>
+        </div>
+      )}
+      {pdfTextOverlappingFieldsCount > 0 && (
+        <div className="mt-2 p-2 sm:p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded flex items-center gap-2">
+          <AlertTriangle className="h-4 w-4 shrink-0 text-red-700 dark:text-red-400" />
+          <p className="text-[10px] sm:text-xs text-black">
+            {pdfTextOverlappingFieldsCount} field{pdfTextOverlappingFieldsCount !== 1 ? 's' : ''} overlap{pdfTextOverlappingFieldsCount === 1 ? 's' : ''} with PDF text.
+          </p>
+        </div>
+      )}
+      {textOverflowFieldsCount > 0 && (
+        <div className="mt-2 p-2 sm:p-3 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded flex items-center gap-2">
+          <AlertTriangle className="h-4 w-4 shrink-0 text-orange-700 dark:text-orange-400" />
+          <p className="text-[10px] sm:text-xs text-black">
+             Text exceeds field bounds in {textOverflowFieldsCount} field{textOverflowFieldsCount !== 1 ? 's' : ''}.
           </p>
         </div>
       )}

@@ -209,7 +209,7 @@ function ContractViewPageContent() {
         pdfUrl: contract.pdfUrl,
         fields: fieldsToUse,
         fieldValues: valuesToUse,
-        skipOverlappingPdfText: true,
+        skipOverlappingPdfText: false,
         pdfjsLib: pdfjsLib || undefined,
       });
       const blob = new Blob([bytes as BlobPart], { type: "application/pdf" });

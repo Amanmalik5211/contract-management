@@ -2,20 +2,7 @@
 
 import * as React from "react";
 import { Toast } from "./toast";
-
-export interface ToastData {
-  id: string;
-  title?: string;
-  description?: string;
-  variant?: "default" | "success" | "error" | "warning";
-  duration?: number;
-}
-
-interface ToasterContextType {
-  toasts: ToastData[];
-  addToast: (toast: Omit<ToastData, "id">) => void;
-  removeToast: (id: string) => void;
-}
+import type { ToastData, ToasterContextType } from "@/types/ui";
 
 const ToasterContext = React.createContext<ToasterContextType | undefined>(
   undefined

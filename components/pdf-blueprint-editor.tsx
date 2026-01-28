@@ -9,6 +9,7 @@ import { FieldTypeSelector } from "./pdf-blueprint-editor/field-type-selector";
 import { FieldsList } from "./pdf-blueprint-editor/fields-list";
 import { PdfPageRenderer } from "./pdf-blueprint-editor/pdf-page-renderer";
 import { findFieldsOverlappingPdfText } from "@/lib/pdf-text-overlap";
+import type { PdfBlueprintEditorProps } from "@/types/components";
 
 // Dynamically import pdf.js only on client side to avoid DOMMatrix SSR error
 const getPdfjsLib = async () => {
@@ -17,13 +18,6 @@ const getPdfjsLib = async () => {
   lib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
   return lib;
 };
-
-interface PdfBlueprintEditorProps {
-  pdfUrl: string;
-  fields: Field[];
-  onFieldsChange: (fields: Field[]) => void;
-  className?: string;
-}
 
 export function PdfBlueprintEditor({
   pdfUrl,
@@ -44,6 +38,7 @@ export function PdfBlueprintEditor({
   const [resizeStart, setResizeStart] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
   const [overlappingFields, setOverlappingFields] = useState<Set<string>>(new Set());
   const [fieldsOverlappingPdfText, setFieldsOverlappingPdfText] = useState<Set<string>>(new Set());
+  const [fieldsWithTextOverflow, setFieldsWithTextOverflow] = useState<Set<string>>(new Set());
   const [allowOverlap, setAllowOverlap] = useState(false);
   const [pdfjsLib, setPdfjsLib] = useState<Awaited<ReturnType<typeof getPdfjsLib>>>(null);
   const pageRefs = useRef<Map<number, HTMLDivElement | null>>(new Map());
@@ -104,7 +99,24 @@ export function PdfBlueprintEditor({
   useEffect(() => {
     const overlapping = findOverlappingFields(fields);
     setOverlappingFields(overlapping);
-  }, [fields, findOverlappingFields]);
+
+    // Check for text overflow
+    const overflowIs = new Set<string>();
+    fields.forEach(field => {
+      // Find page width to convert percentage to pixels
+      const page = pages.find(p => p.pageNum === field.pageNumber);
+      if (!page) return;
+      
+      const fieldWidthPx = ((field.width || 25) / 100) * page.width;
+      // Estimate text width: ~8px per character for standard font size
+      const textWidthPx = (field.label?.length || 0) * 8; 
+      
+      if (textWidthPx > fieldWidthPx) {
+        overflowIs.add(field.id);
+      }
+    });
+    setFieldsWithTextOverflow(overflowIs);
+  }, [fields, findOverlappingFields, pages]);
 
   // Check for fields overlapping PDF text whenever fields or PDF changes
   useEffect(() => {
@@ -482,6 +494,8 @@ export function PdfBlueprintEditor({
         onTogglePlacingField={handleTogglePlacingField}
         onCancelPlacing={handleCancelPlacing}
         overlappingFieldsCount={overlappingFields.size}
+        pdfTextOverlappingFieldsCount={fieldsOverlappingPdfText.size}
+        textOverflowFieldsCount={fieldsWithTextOverflow.size}
         fieldsCount={fields.length}
       />
 
@@ -505,6 +519,7 @@ export function PdfBlueprintEditor({
               resizingField={resizingField}
               overlappingFields={overlappingFields}
               fieldsOverlappingPdfText={fieldsOverlappingPdfText}
+              fieldsWithTextOverflow={fieldsWithTextOverflow}
               onPageClick={handlePageClick}
               onFieldDragStart={handleFieldDragStart}
               onFieldResizeStart={handleFieldResizeStart}

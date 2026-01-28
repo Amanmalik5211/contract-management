@@ -2,35 +2,14 @@
 
 import * as React from "react";
 import { cn } from "@/lib/utils";
-
-interface DialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  children: React.ReactNode;
-}
-
-interface DialogContentProps {
-  children: React.ReactNode;
-  className?: string;
-}
-
-interface DialogHeaderProps {
-  children: React.ReactNode;
-}
-
-interface DialogTitleProps {
-  children: React.ReactNode;
-  className?: string;
-}
-
-interface DialogDescriptionProps {
-  children: React.ReactNode;
-  className?: string;
-}
-
-interface DialogFooterProps {
-  children: React.ReactNode;
-}
+import type {
+  DialogProps,
+  DialogContentProps,
+  DialogHeaderProps,
+  DialogTitleProps,
+  DialogDescriptionProps,
+  DialogFooterProps,
+} from "@/types/ui";
 
 const Dialog: React.FC<DialogProps> = ({ open, onOpenChange, children }) => {
   if (!open) return null;

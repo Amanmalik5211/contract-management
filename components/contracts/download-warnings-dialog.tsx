@@ -47,8 +47,8 @@ export function DownloadWarningsDialog({
                 Fields overlapping PDF text (may obscure existing text on the downloaded PDF):
               </p>
               <ul className="text-sm list-disc list-inside space-y-1">
-                {warnings.fieldsOverlappingPdfTextLabels.map((label) => (
-                  <li key={label}>{label}</li>
+                {warnings.fieldsOverlappingPdfTextLabels.map((label, index) => (
+                  <li key={`${label}-${index}`}>{label}</li>
                 ))}
               </ul>
             </div>
@@ -59,8 +59,8 @@ export function DownloadWarningsDialog({
                 Overlapping fields (will not display correctly on the downloaded PDF):
               </p>
               <ul className="text-sm list-disc list-inside space-y-1">
-                {warnings.overlappingFieldLabels.map((label) => (
-                  <li key={label}>{label}</li>
+                {warnings.overlappingFieldLabels.map((label, index) => (
+                  <li key={`${label}-${index}`}>{label}</li>
                 ))}
               </ul>
             </div>
@@ -71,8 +71,8 @@ export function DownloadWarningsDialog({
                 Unfilled fields (will not show on the downloaded PDF):
               </p>
               <ul className="text-sm list-disc list-inside space-y-1">
-                {warnings.unfilledFieldLabels.map((label) => (
-                  <li key={label}>{label}</li>
+                {warnings.unfilledFieldLabels.map((label, index) => (
+                  <li key={`${label}-${index}`}>{label}</li>
                 ))}
               </ul>
             </div>
