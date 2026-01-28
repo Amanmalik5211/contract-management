@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { GripVertical } from "lucide-react";
 import { capitalizeWords } from "@/lib/utils";
 import type { DocumentRendererProps } from "@/types/components";
+import type { Field } from "@/types/field";
+import type { DocumentSection } from "@/types/blueprint";
 
 export function DocumentRenderer({
   title,
