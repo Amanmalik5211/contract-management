@@ -15,7 +15,7 @@ interface ContractHeaderProps {
   isLocked: boolean;
   isRevoked: boolean;
   hasUnsavedChanges: boolean;
-  getStatusVariant: (status: string) => "default" | "secondary" | "destructive" | "outline" | "success";
+  getStatusVariant: (status: string) => "default" | "secondary" | "destructive" | "success" | "warning";
 }
 
 export function ContractHeader({
