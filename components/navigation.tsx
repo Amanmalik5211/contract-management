@@ -21,18 +21,14 @@ export function Navigation() {
     { href: "/contracts", label: "Contracts", icon: FileText },
   ];
 
-  // Check if pathname matches the nav item (including sub-routes)
   const isActive = (href: string) => {
     if (pathname === "/") {
-      return false; // No button selected on home page
-    }
-    if (href === "/dashboard") {
+      return false; 
       return pathname === "/dashboard";
     }
     return pathname.startsWith(href);
   };
 
-  // Close mobile menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -52,13 +48,11 @@ export function Navigation() {
     };
   }, [isMobileMenuOpen]);
 
-  // Close mobile menu when route changes (handled via Link onClick handlers)
 
   return (
     <nav className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 relative">
       <div className="mx-auto max-w-[90rem] px-4 sm:px-6 lg:px-4">
         <div className="flex h-16 items-center justify-between">
-          {/* Logo and App Name - Always visible */}
           <Link href="/" className="flex items-center gap-2 sm:gap-3 hover:opacity-80 transition-opacity">
             <Image
               src="/logo.webp"
@@ -73,7 +67,6 @@ export function Navigation() {
             </span>
           </Link>
 
-          {/* Desktop Navigation Links - Hidden on small/mid screens */}
           <div className="hidden lg:flex items-center gap-1">
             {navItems.map((item) => {
               const Icon = item.icon;
@@ -109,7 +102,6 @@ export function Navigation() {
             </Button>
           </div>
 
-          {/* Mobile/Tablet Navigation - Visible on small/mid screens */}
           <div className="flex lg:hidden items-center gap-2">
             <Button
               variant="ghost"
@@ -140,7 +132,6 @@ export function Navigation() {
           </div>
         </div>
 
-        {/* Mobile Menu Dropdown */}
         {isMobileMenuOpen && (
           <div
             ref={mobileMenuRef}

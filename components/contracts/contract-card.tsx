@@ -5,6 +5,7 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Clock, Pencil, FileCheck, FileX, FileClock, ListChecks } from "lucide-react";
+import { getStatusColor } from "@/lib/contract-utils";
 import type { Contract } from "@/types/contract";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -35,18 +36,6 @@ export function ContractCard({
     router.push(`/contracts/${contract.id}?edit=true`);
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "signed": 
-      case "locked": return "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 border-emerald-200/50";
-      case "revoked": return "bg-red-50 text-red-700 dark:bg-red-950/30 dark:text-red-400 border-red-200/50";
-      case "created":
-      case "approved":
-      case "sent": return "bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400 border-amber-200/50";
-      default: return "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400 border-slate-200/50";
-    }
-  };
-
   const getStatusIcon = (status: string) => {
       switch (status) {
         case "signed": 
@@ -61,9 +50,7 @@ export function ContractCard({
       className="group overflow-hidden hover:shadow-md transition-all cursor-pointer border-border/60 hover:border-primary/50"
       onClick={handleCardClick}
     >
-      {/* Placeholder Image Area */}
       <div className="aspect-[1.6] bg-muted/30 p-6 flex flex-col gap-3 justify-center items-center border-b border-border/40 group-hover:bg-muted/50 transition-colors">
-         {/* Skeleton-like design matching the image provided */}
          <div className="w-1/3 h-2.5 bg-muted-foreground/10 rounded-full self-start mb-2" />
          <div className="w-full h-2 bg-muted-foreground/10 rounded-full" />
          <div className="w-full h-2 bg-muted-foreground/10 rounded-full" />

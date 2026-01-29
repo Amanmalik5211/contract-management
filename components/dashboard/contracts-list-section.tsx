@@ -8,7 +8,7 @@ import { canTransitionTo } from "@/lib/contract-utils";
 import { FilterSectionCard } from "./filter-section-card";
 import { EmptyStateCard } from "./empty-state-card";
 import { ContractsTable } from "./contracts-table";
-import { StatusChangeModalInline } from "./status-change-modal-inline";
+import { StatusManagementModal } from "@/components/contracts/status-management-modal";
 
 const defaultFieldTypeLabels: Record<FieldType, string> = {
   text: "Text Input",
@@ -129,7 +129,6 @@ export function ContractsListSection({
           contracts={filteredContracts}
           blueprints={filteredBlueprints}
           fieldTypeLabels={fieldTypeLabelsMap}
-          getStatusVariant={getStatusVariant}
           onView={onView}
           onEdit={onEdit}
           onDelete={onDelete}
@@ -138,9 +137,11 @@ export function ContractsListSection({
       )}
 
       {viewType === "contract" && selectedContract && (
-        <StatusChangeModalInline
+        <StatusManagementModal
           open={statusModalOpen}
-          contract={selectedContract}
+          contractName={selectedContract.name}
+          status={selectedContract.status}
+          isStatusChanging={false}
           getStatusVariant={getStatusVariant}
           onOpenChange={(open) => {
             setStatusModalOpen(open);

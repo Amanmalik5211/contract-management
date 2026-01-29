@@ -14,12 +14,12 @@ import {
 } from "@/components/ui/chart";
 
 const CHART_COLORS = [
-  "#3b82f6", // Blue
-  "#8b5cf6", // Violet
-  "#10b981", // Emerald
-  "#f59e0b", // Amber
-  "#ef4444", // Red
-  "#06b6d4", // Cyan
+  "#3b82f6", 
+  "#8b5cf6", 
+  "#10b981", 
+  "#f59e0b", 
+  "#ef4444", 
+  "#06b6d4", 
 ];
 
 interface ComparisonPieChartProps {
@@ -30,7 +30,6 @@ export function ComparisonPieChart({ data }: ComparisonPieChartProps) {
   
   const chartConfig = React.useMemo(() => {
     return data.reduce((acc, curr, index) => {
-        // Use provided color or fallback to chart loop
         const color = curr.color || CHART_COLORS[index % CHART_COLORS.length];
         acc[curr.name] = {
             label: curr.name,

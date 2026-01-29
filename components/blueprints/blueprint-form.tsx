@@ -12,7 +12,6 @@ import { X, Upload, Check, Loader2, ArrowLeft, ArrowRight } from "lucide-react";
 import { PdfBlueprintEditor } from "@/components/pdf-blueprint-editor";
 import { cn } from "@/lib/utils";
 
-// Dynamically import pdf.js only on client side
 const getPdfjsLib = async () => {
   if (typeof window === "undefined") return null;
   const lib = await import("pdfjs-dist");
@@ -23,7 +22,11 @@ const getPdfjsLib = async () => {
 interface BlueprintFormProps {
   initialData?: {
     name: string;
+    description?: string;
     fields: Field[];
+    pdfFileName?: string;
+    pdfUrl?: string;
+    pageCount?: number;
   };
   onSubmit: (data: {
     name: string;
@@ -35,6 +38,7 @@ interface BlueprintFormProps {
   }) => void;
   onCancel?: () => void;
   submitLabel?: string;
+  formTitle?: string;
 }
 
 export function BlueprintForm({
@@ -42,21 +46,26 @@ export function BlueprintForm({
   onSubmit,
   onCancel,
   submitLabel = "Create Blueprint",
+  formTitle = "Create Blueprint",
 }: BlueprintFormProps) {
   const { addToast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
     name: initialData?.name || "",
-    description: "", // UI-only field
+    description: initialData?.description || "",
     fields: initialData?.fields || [] as Field[],
   });
   const [pdfFile, setPdfFile] = useState<{
-    file: File;
+    file?: File;
     fileName: string;
     url: string;
     pageCount?: number;
-  } | null>(null);
+  } | null>(initialData?.pdfUrl ? {
+    fileName: initialData.pdfFileName || "Existing Document.pdf",
+    url: initialData.pdfUrl,
+    pageCount: initialData.pageCount
+  } : null);
   const [isUploading, setIsUploading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -133,10 +142,6 @@ export function BlueprintForm({
   const handleSubmit = async () => {
     if (formData.fields.length === 0) {
         addToast({ title: "Validation Warning", description: "Be sure to add fields before finishing.", variant: "default" });
-        // Allowing submit even with 0 fields if they want, or blocking? Original blocked.
-        // User request "Create Blueprint" button behavior preserved? Standard is block.
-        // I will block if fields are empty or warn? Original blocked. 
-        // I'll block.
         addToast({ title: "Required", description: "Please add at least one field in Step 2.", variant: "error" });
         return;
     }
@@ -149,13 +154,11 @@ export function BlueprintForm({
         pdfUrl: pdfFile?.url,
         pageCount: pdfFile?.pageCount,
       });
-      // Reset is handled by parent, or here if error
     } catch {
       setIsSubmitting(false);
     }
   };
 
-  // Steps UI Helper
   const steps = [
     { id: 1, label: "Basic Info & Upload" },
     { id: 2, label: "Signature Placement" },
@@ -164,16 +167,14 @@ export function BlueprintForm({
 
   return (
     <div className="space-y-6">
-      {/* Top Header - Custom Step Indicator */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b pb-4">
        
        <div className="flex items-center gap-2">
           <Button variant="ghost" size="icon" onClick={() => onCancel?.()}>
              <ArrowLeft className="h-5 w-5" />
           </Button>
-          <h2 className="text-2xl font-semibold">Create Blueprint</h2>
+          <h2 className="text-2xl font-semibold">{formTitle}</h2>
        </div>
-         {/* Centered Steps */}
          <div className="flex items-center gap-2 text-sm">
             {steps.map((s, idx) => (
                <div key={s.id} className="flex items-center">
@@ -205,10 +206,8 @@ export function BlueprintForm({
       </div>
 
       <div className="max-w-5xl mx-auto space-y-6">
-         {/* STEP 1: Basic Info & Upload */}
          {step === 1 && (
             <div className="space-y-6">
-               {/* Blueprint Information Card */}
                <Card className="shadow-sm border-border/60">
                   <CardHeader>
                      <CardTitle className="text-base font-semibold">Blueprint Information</CardTitle>
@@ -234,7 +233,6 @@ export function BlueprintForm({
                   </CardContent>
                </Card>
 
-               {/* Upload Document Card */}
                <Card className="shadow-sm border-border/60">
                   <CardHeader>
                      <CardTitle className="text-base font-semibold">Upload Document</CardTitle>
@@ -278,7 +276,7 @@ export function BlueprintForm({
                               <div>
                                  <p className="font-medium text-sm">{pdfFile.fileName}</p>
                                  <p className="text-xs text-muted-foreground">
-                                    {(pdfFile.file.size / (1024 * 1024)).toFixed(2)} MB • {pdfFile.pageCount || '-'} pages
+                                    {pdfFile.file ? `${(pdfFile.file.size / (1024 * 1024)).toFixed(2)} MB • ` : ""} {pdfFile.pageCount || '-'} pages
                                  </p>
                               </div>
                            </div>
@@ -292,7 +290,6 @@ export function BlueprintForm({
             </div>
          )}
 
-         {/* STEP 2: Signature Placement */}
          {step === 2 && pdfFile && (
             <Card className="shadow-sm border-border/60">
                <CardHeader>
@@ -308,7 +305,6 @@ export function BlueprintForm({
             </Card>
          )}
 
-         {/* STEP 3: Settings */}
          {step === 3 && (
             <Card className="shadow-sm border-border/60">
                <CardHeader>
@@ -331,9 +327,6 @@ export function BlueprintForm({
             </Card>
          )}
       </div>
-
-      {/* Navigation Footer (if needed) - Currently mostly handled by top header for simplicity */}
-      {/* Could add Prev/Next buttons here too for convenience */}
     </div>
   );
 }

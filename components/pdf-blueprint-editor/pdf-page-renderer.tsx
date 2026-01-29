@@ -90,7 +90,6 @@ export function PdfPageRenderer({
             Page {pageNum} of {numPages}
           </div>
           
-          {/* Field Overlays - Allow overflow for larger handles */}
           <div className="absolute inset-0 overflow-visible" style={{ width: '100%', height: '100%' }}>
             {pageFields.map((field) => (
               <FieldOverlay

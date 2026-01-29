@@ -1,27 +1,19 @@
 import * as React from "react";
-
-// Button component types
 export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: "default" | "outline" | "ghost" | "destructive";
   size?: "default" | "sm" | "lg";
 }
-
-// Badge component types
 export interface BadgeProps extends React.HTMLAttributes<HTMLDivElement> {
   variant?: "default" | "secondary" | "success" | "warning" | "destructive";
 }
 
-// Input component types
 export type InputProps = React.InputHTMLAttributes<HTMLInputElement>;
 
-// Label component types
 export type LabelProps = React.LabelHTMLAttributes<HTMLLabelElement>;
 
-// Select component types
 export type SelectProps = React.SelectHTMLAttributes<HTMLSelectElement>;
 
-// Toast component types
 export interface ToastData {
   id: string;
   title?: string;
@@ -45,7 +37,6 @@ export interface ToasterContextType {
   removeToast: (id: string) => void;
 }
 
-// Loader component types
 export interface LoaderProps {
   size?: "sm" | "md" | "lg";
   className?: string;
@@ -62,7 +53,6 @@ export interface ButtonLoaderProps {
   size?: "sm" | "md" | "lg";
 }
 
-// Dialog component types
 export interface DialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;

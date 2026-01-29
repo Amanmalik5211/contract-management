@@ -22,7 +22,6 @@ export default function Dashboard() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isInitialLoad, setIsInitialLoad] = useState(true);
 
-  // Wait for store hydration
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsInitialLoad(false);
@@ -34,16 +33,13 @@ export default function Dashboard() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<{ id: string; name: string; type: "contract" | "blueprint" } | null>(null);
 
-  // Filter and sort contracts
   const filteredContracts = useMemo(() => {
     let filtered = [...contracts];
 
-    // Filter by status (multiple selection)
     if (selectedStatuses.length > 0) {
       filtered = filtered.filter((c) => selectedStatuses.includes(c.status));
     }
 
-    // Filter by search query (contract name or blueprint name)
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase().trim();
       filtered = filtered.filter(
@@ -53,24 +49,20 @@ export default function Dashboard() {
       );
     }
 
-    // Sort by updated date, most recent first
     return filtered.sort(
       (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
     );
   }, [contracts, selectedStatuses, searchQuery]);
 
-  // Filter and sort blueprints
   const filteredBlueprints = useMemo(() => {
     let filtered = [...blueprints];
 
-    // Filter by field types
     if (selectedFieldTypes.length > 0) {
       filtered = filtered.filter((bp) =>
         bp.fields.some((field) => selectedFieldTypes.includes(field.type))
       );
     }
 
-    // Filter by search query (blueprint name)
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase().trim();
       filtered = filtered.filter(
@@ -79,7 +71,6 @@ export default function Dashboard() {
       );
     }
 
-    // Sort by updated date, most recent first
     return filtered.sort(
       (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
     );

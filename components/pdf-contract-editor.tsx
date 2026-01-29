@@ -34,17 +34,14 @@ export function PdfContractEditor({
   const [pages, setPages] = useState<Array<{ pageNum: number; imageData: string | null; width: number; height: number }>>([]);
   const [renderedDimensions, setRenderedDimensions] = useState<Map<number, { width: number; height: number }>>(new Map());
   const [showFieldsList, setShowFieldsList] = useState(false);
-  // STATE-LOCKED overflow warning: only updated in input handlers, never derived from render/effect.
   const [fieldOverflows, setFieldOverflows] = useState<Map<string, boolean>>(new Map());
   const textareaRefs = useRef<Map<string, HTMLTextAreaElement | null>>(new Map());
   const pageRefs = useRef<Map<number, HTMLImageElement | null>>(new Map());
   const pdfRef = useRef<PDFDocumentProxy | null>(null);
   const renderingRef = useRef<Set<number>>(new Set());
 
-  // Sort fields by position for consistent ordering (used for list and PDF overlay)
   const orderedFields = [...fields].sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
 
-  // Group fields by page number
   const fieldsByPage = new Map<number, Field[]>();
   orderedFields.forEach((field) => {
     if (field.pageNumber) {
@@ -56,9 +53,8 @@ export function PdfContractEditor({
     }
   });
 
-  // Update rendered dimensions when images load
   useEffect(() => {
-    if (pages.length === 0) return; // Don't run if no pages loaded yet
+    if (pages.length === 0) return; 
     
     const updateDimensions = () => {
       const newDimensions = new Map<number, { width: number; height: number }>();
@@ -73,7 +69,6 @@ export function PdfContractEditor({
       setRenderedDimensions(newDimensions);
     };
 
-    // Update on load and resize
     const images = Array.from(pageRefs.current.values()).filter(Boolean) as HTMLImageElement[];
     images.forEach((img) => {
       if (img.complete) {
@@ -94,7 +89,6 @@ export function PdfContractEditor({
     };
   }, [pages]);
 
-  // Render a single page progressively
   const renderPage = async (pdf: PDFDocumentProxy, pageNum: number, scale: number = 1.2) => {
     await yieldToEventLoop();
     
@@ -137,7 +131,6 @@ export function PdfContractEditor({
         setError(null);
         renderingRef.current.clear();
 
-        // Dynamically import pdf.js on client side
         const pdfjsLib = await getPdfjsLib();
         if (!pdfjsLib) {
           setError("PDF.js not available");
@@ -147,7 +140,6 @@ export function PdfContractEditor({
 
         const loadingTask = pdfjsLib.getDocument({ url: pdfUrl });
         
-        // Yield during loading
         await yieldToEventLoop();
         
         const pdf = await loadingTask.promise;
@@ -160,7 +152,6 @@ export function PdfContractEditor({
         setNumPages(totalPages);
         pdfRef.current = pdf;
 
-        // Initialize pages array with placeholders
         const initialPages = Array.from({ length: totalPages }, (_, i) => ({
           pageNum: i + 1,
           imageData: null as string | null,
@@ -169,12 +160,10 @@ export function PdfContractEditor({
         }));
         setPages(initialPages);
 
-        // Show UI immediately, then render progressively
         setLoading(false);
         
         await yieldToEventLoop();
 
-        // Render pages one at a time
         for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
           if (!isMounted) break;
           
@@ -195,7 +184,6 @@ export function PdfContractEditor({
           
           renderingRef.current.delete(pageNum);
           
-          // Yield after each page
           await yieldToEventLoop();
         }
       } catch (err) {
@@ -213,7 +201,6 @@ export function PdfContractEditor({
     };
   }, [pdfUrl]);
 
-  // Pure measurement: used ONLY inside input handlers. Never in render, effect, or JSX.
   const measureTextFitsInField = useCallback((text: string, fieldWidth: number, fieldHeight: number) => {
     const typography: PDFTypographyConfig = { ...DEFAULT_PDF_TYPOGRAPHY };
     typography.lineHeightPx = calculateLineHeightPx(typography.fontSize, typography.lineHeight);
@@ -239,14 +226,11 @@ export function PdfContractEditor({
     }
   }, []);
 
-  // Unified field rendering with fixed dimensions
   const renderField = (field: Field, pageWidth: number, pageHeight: number) => {
-    // Don't render if page dimensions are invalid or field position is invalid
     if (!field.pageNumber || field.x === undefined || field.y === undefined || pageWidth <= 0 || pageHeight <= 0) {
       return null;
     }
 
-    // Calculate position with bounds checking - use same margins as downloaded PDF
     const baseLeft = (field.x / 100) * pageWidth;
     const baseTop = (field.y / 100) * pageHeight;
     const baseWidth = field.width ? (field.width / 100) * pageWidth : 200;
@@ -426,8 +410,6 @@ export function PdfContractEditor({
               />
             );
           })}
-
-        {/* REMOVED: Virtual continuation pages - fields are strictly fixed-size */}
       </div>
     </div>
     </>

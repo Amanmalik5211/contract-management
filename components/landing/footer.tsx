@@ -9,7 +9,6 @@ export function Footer() {
     <footer className="border-t bg-background">
       <div className="mx-auto max-w-[90rem] px-4 sm:px-6 lg:px-4 py-4 sm:py-6 lg:py-8">
         <div className="grid grid-cols-1 gap-6 sm:gap-8 md:grid-cols-2 lg:grid-cols-4">
-          {/* Brand Section */}
           <div className="space-y-3 sm:space-y-4">
             <Link href="/" className="flex items-center gap-2 sm:gap-3 hover:opacity-80 transition-opacity">
               <div className="relative h-8 w-8 sm:h-10 sm:w-10">
@@ -31,7 +30,6 @@ export function Footer() {
             </p>
           </div>
 
-          {/* Quick Links */}
           <div>
             <h3 className="text-xs sm:text-sm font-semibold mb-3 sm:mb-4">Quick Links</h3>
             <ul className="space-y-2 sm:space-y-3">
@@ -62,7 +60,6 @@ export function Footer() {
             </ul>
           </div>
 
-          {/* Resources */}
           <div>
             <h3 className="text-xs sm:text-sm font-semibold mb-3 sm:mb-4">Resources</h3>
             <ul className="space-y-2 sm:space-y-3">
@@ -89,7 +86,6 @@ export function Footer() {
             </ul>
           </div>
 
-          {/* Contact Info */}
           <div>
             <h3 className="text-xs sm:text-sm font-semibold mb-3 sm:mb-4">Contact Us</h3>
             <ul className="space-y-2 sm:space-y-3">
@@ -117,7 +113,6 @@ export function Footer() {
           </div>
         </div>
 
-        {/* Bottom Bar */}
         <div className="mt-8 sm:mt-10 lg:mt-12 pt-6 sm:pt-8 border-t">
           <div className="flex flex-col md:flex-row justify-between items-center gap-3 sm:gap-4">
             <p className="text-xs sm:text-sm text-muted-foreground text-center md:text-left">

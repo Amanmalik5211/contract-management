@@ -25,21 +25,17 @@ interface KPIData {
 }
 
 export function KPICards({ contracts, blueprints }: KPICardsProps) {
-  // Calculate metrics
   const totalContracts = contracts.length;
   const totalBlueprints = blueprints.length;
   
-  // Active contracts: signed, locked, sent (in progress)
   const activeContracts = contracts.filter(
     (c) => c.status === "signed" || c.status === "locked" || c.status === "sent"
   ).length;
   
-  // Pending approval: created, approved (waiting for action)
   const pendingApproval = contracts.filter(
     (c) => c.status === "created" || c.status === "approved"
   ).length;
   
-  // Calculate date ranges for metrics
   const now = new Date();
   const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
   const sixtyDaysAgo = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
@@ -63,10 +59,8 @@ export function KPICards({ contracts, blueprints }: KPICardsProps) {
     return Math.round(change * 10) / 10;
   };
 
-  // Calculate changes for each metric
   const totalChange = getPercentageChange(contractsLastMonth, contractsPreviousMonth);
   
-  // For active contracts, calculate based on contracts that became active in last month
   const activeLastMonth = contracts.filter(
     (c) => {
       const created = new Date(c.createdAt);
@@ -84,7 +78,6 @@ export function KPICards({ contracts, blueprints }: KPICardsProps) {
   
   const activeChange = getPercentageChange(activeLastMonth, activePreviousMonth);
   
-  // For pending, calculate based on contracts in pending status
   const pendingLastMonth = contracts.filter(
     (c) => {
       const created = new Date(c.createdAt);
@@ -102,7 +95,6 @@ export function KPICards({ contracts, blueprints }: KPICardsProps) {
   
   const pendingChange = getPercentageChange(pendingLastMonth, pendingPreviousMonth);
   
-  // For blueprints, calculate based on blueprints created in last month vs previous month
   const blueprintsLastMonth = blueprints.filter(
     (bp) => new Date(bp.createdAt) >= thirtyDaysAgo
   ).length;

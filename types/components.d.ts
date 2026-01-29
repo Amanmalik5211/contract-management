@@ -4,7 +4,7 @@ import type { Contract, ContractStatus } from "./contract";
 import type { Blueprint, DocumentSection } from "./blueprint";
 import type { Field, FieldType } from "./field";
 
-// Shared component props
+
 export interface PageLayoutProps {
   children: ReactNode;
   isLoading?: boolean;
@@ -21,7 +21,7 @@ export interface SearchAndFilterProps<T extends string> {
   showToggle?: boolean;
   toggleValue?: "contract" | "blueprint";
   onToggleChange?: (value: "contract" | "blueprint") => void;
-  // Legacy props - kept for backward compatibility but not used
+
   onFilterToggle?: (filter: T) => void;
   filterOptions?: Array<{ value: T; label: string }>;
   filterLabel?: string;
@@ -36,7 +36,7 @@ export interface DeleteConfirmationDialogProps {
   isDeleting?: boolean;
 }
 
-// Contract component props
+
 export interface ContractHeaderProps {
   contract: Contract;
   canEdit: boolean;
@@ -174,7 +174,7 @@ export interface DownloadWarningsDialogProps {
   onConfirm: () => void;
 }
 
-// Blueprint component props
+
 export interface BlueprintCardProps {
   blueprint: Blueprint;
   fieldTypeLabels: Record<FieldType, string>;
@@ -201,18 +201,7 @@ export interface BlueprintHeaderProps {
   isEditing?: boolean;
 }
 
-export interface BlueprintEditFormProps {
-  blueprint: Blueprint;
-  onSave: (updates: Partial<Blueprint>) => void;
-  onCancel: () => void;
-  fieldTypeLabels: Record<FieldType, string>;
-}
 
-export interface AddFieldFormProps {
-  onAdd: (field: Omit<Field, "id">) => void;
-  onCancel: () => void;
-  fieldTypeLabels: Record<FieldType, string>;
-}
 
 export interface BlueprintFormProps {
   blueprint?: Blueprint;
@@ -221,7 +210,7 @@ export interface BlueprintFormProps {
   fieldTypeLabels: Record<FieldType, string>;
 }
 
-// Dashboard component props
+
 export interface KPIIconContainerProps {
   icon: ReactNode;
   className?: string;
@@ -310,12 +299,7 @@ export interface ContractTableRowProps {
   getStatusLabel: (status: string) => string;
 }
 
-export interface StatusChangeModalInlineProps {
-  contract: Contract;
-  onStatusChange: (id: string, status: ContractStatus) => void;
-  canTransitionTo: (from: ContractStatus, to: ContractStatus) => boolean;
-  getStatusVariant: (status: string) => "default" | "secondary" | "destructive" | "success" | "warning";
-}
+
 
 export interface EmptyStateCardProps {
   title: string;
@@ -346,7 +330,7 @@ export interface ContractsTableProps {
   getStatusLabel: (status: string) => string;
 }
 
-// Document renderer component props
+
 import type { DocumentSection } from "./blueprint";
 
 export interface DocumentRendererProps {
@@ -386,7 +370,7 @@ export interface EditableFieldRendererProps {
   onChange: (value: string | boolean) => void;
 }
 
-// PDF editor component props
+
 export interface PdfBlueprintEditorProps {
   pdfUrl: string;
   fields: Field[];
@@ -511,7 +495,7 @@ export interface OverflowWarningBannerProps {
   onDismiss?: () => void;
 }
 
-// PDF viewer component props
+
 export interface PdfPageProps {
   pageNum: number;
   numPages: number;

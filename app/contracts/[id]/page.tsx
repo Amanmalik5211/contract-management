@@ -31,7 +31,6 @@ function ContractViewPageContent() {
   const contractId = Array.isArray(params.id) ? params.id[0] : params.id;
   const contract = typeof contractId === "string" ? getContract(contractId) : undefined;
 
-  // Initialize hooks before any early returns
   const [localFieldValues, setLocalFieldValues] = useState<Record<string, string | boolean | Date | null>>(contract?.fieldValues || {});
   const [localFields, setLocalFields] = useState(contract?.fields || []);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
@@ -52,10 +51,8 @@ function ContractViewPageContent() {
   const isCreated = contract?.status === "created";
   const isLocked = contract?.status === "locked";
   const isRevoked = contract?.status === "revoked";
-  // Only allow editing if explicitly in edit mode AND status is "created"
   const canEdit = isEditMode && isCreated;
 
-  // Listen for storage quota warnings
   useEffect(() => {
     const handleStorageWarning = (event: CustomEvent) => {
       addToast({
@@ -82,10 +79,7 @@ function ContractViewPageContent() {
     };
   }, [addToast]);
 
-  // Wait for store hydration before showing "not found"
   useEffect(() => {
-    // Zustand persist plugin attaches `persist` helpers on the store hook.
-    // We wait for hydration so we don't incorrectly show "Contract not found".
     const persistApi = (useStore as unknown as { persist?: { hasHydrated?: () => boolean; onFinishHydration?: (cb: () => void) => () => void } }).persist;
     const hasHydrated = persistApi?.hasHydrated?.() ?? true;
     if (hasHydrated) {
@@ -100,19 +94,15 @@ function ContractViewPageContent() {
     };
   }, []);
 
-  // Update local state when contract changes (only if not in edit mode or no unsaved changes)
   useEffect(() => {
     if (!contract) return;
-    // Only sync if we're not in edit mode, or if we're in edit mode but have no unsaved changes
     if (!canEdit || !hasUnsavedChanges) {
       setLocalFieldValues(contract.fieldValues);
       setLocalFields(contract.fields);
       setHasUnsavedChanges(false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [contract?.id]);
 
-  // Show loading during initial load to prevent "not found" flash and layout shifts
   if (isInitialLoad) {
     return (
       <PageLayout isLoading={true} loadingText="Loading contract...">
@@ -121,7 +111,6 @@ function ContractViewPageContent() {
     );
   }
 
-  // Only show "not found" after initial load is complete
   if (!contract) {
     return (
       <PageLayout>
@@ -152,7 +141,6 @@ function ContractViewPageContent() {
 
     setIsSaving(true);
     try {
-      // Update contract immediately (Zustand operations are synchronous)
       updateContract(contract.id, {
         fieldValues: localFieldValues,
         fields: localFields,
@@ -167,7 +155,6 @@ function ContractViewPageContent() {
       router.push("/dashboard");
     } catch (error: unknown) {
       setIsSaving(false);
-      // Handle storage quota errors
       const errorMessage = error instanceof Error ? error.message : 
         (typeof error === "object" && error !== null && "message" in error && typeof error.message === "string") 
           ? error.message 
@@ -185,7 +172,6 @@ function ContractViewPageContent() {
           variant: "error",
         });
       } else {
-        // Handle other errors
         addToast({
           title: "Error Saving Contract",
           description: errorMessage || "An error occurred while saving the contract.",
@@ -202,7 +188,6 @@ function ContractViewPageContent() {
       const fieldsToUse = canEdit ? localFields : contract.fields;
       const valuesToUse = canEdit ? localFieldValues : contract.fieldValues;
       
-      // Load PDF.js for text overlap detection
       const pdfjsLib = await getPdfjsLib();
       
       const bytes = await generateContractPdf({
@@ -239,7 +224,6 @@ function ContractViewPageContent() {
     const fieldsToUse = canEdit ? localFields : contract.fields;
     const valuesToUse = canEdit ? localFieldValues : contract.fieldValues;
     
-    // Load PDF.js for text overlap detection
     const pdfjsLib = await getPdfjsLib();
     const warnings = await getDownloadWarnings(
       fieldsToUse,
@@ -266,7 +250,6 @@ function ContractViewPageContent() {
     return "default";
   };
 
-  // Status management handlers
   const handleStatusChange = async (newStatus: ContractStatus) => {
     if (!contract || isStatusChanging) return;
     if (canTransitionTo(contract.status, newStatus)) {

@@ -12,7 +12,6 @@ export function HeroSection() {
 
 
         <div className="grid gap-6 sm:gap-8 lg:grid-cols-2 lg:gap-12 items-center">
-          {/* Left side - Content */}
           <div className="space-y-4 sm:space-y-6">
             <div className="space-y-3 sm:space-y-4">
               <h1 className="text-3xl font-bold tracking-tight xs:text-4xl sm:text-5xl lg:text-6xl leading-tight">
@@ -43,7 +42,6 @@ export function HeroSection() {
             </div>
           </div>
           
-          {/* Right side - Image */}
           <div className="relative w-full h-full min-h-[250px] xs:min-h-[300px] sm:min-h-[350px] lg:min-h-[500px] rounded-2xl sm:rounded-3xl 
 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.25)] 
 border border-border/50 overflow-hidden bg-muted">

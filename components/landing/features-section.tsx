@@ -17,7 +17,6 @@ export function FeaturesSection() {
         </div>
 
         <div className="grid gap-6 sm:gap-8 md:grid-cols-2 lg:grid-cols-3">
-          {/* Card 1 - Blueprint-Based Contract Creation */}
           <Card className="group relative overflow-hidden rounded-2xl sm:rounded-3xl border-border/50 bg-gradient-to-br from-background to-muted/30 shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 hover:scale-[1.02] hover:border-primary/20">
             <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent opacity-100 group-hover:opacity-100 group-hover:from-primary/15 group-hover:via-primary/8 transition-opacity duration-500" />
             <CardHeader className="relative z-10">
@@ -33,7 +32,6 @@ export function FeaturesSection() {
             </CardHeader>
           </Card>
 
-          {/* Card 2 - Controlled Contract Lifecycle */}
           <Card className="group relative overflow-hidden rounded-2xl sm:rounded-3xl border-border/50 bg-gradient-to-br from-background to-muted/30 shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 hover:scale-[1.02] hover:border-primary/20">
             <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent opacity-100 group-hover:opacity-100 group-hover:from-primary/15 group-hover:via-primary/8 transition-opacity duration-500" />
             <CardHeader className="relative z-10">
@@ -49,7 +47,6 @@ export function FeaturesSection() {
             </CardHeader>
           </Card>
 
-          {/* Card 3 - Status-Aware Editing & Security */}
           <Card className="group relative overflow-hidden rounded-2xl sm:rounded-3xl border-border/50 bg-gradient-to-br from-background to-muted/30 shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 hover:scale-[1.02] hover:border-primary/20 md:col-span-2 lg:col-span-1">
             <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent opacity-100 group-hover:opacity-100 group-hover:from-primary/15 group-hover:via-primary/8 transition-opacity duration-500" />
             <CardHeader className="relative z-10">

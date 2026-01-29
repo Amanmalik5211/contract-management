@@ -15,7 +15,6 @@ interface DashboardHighlightsProps {
 export function DashboardHighlights({ contracts, blueprints }: DashboardHighlightsProps) {
   const chartData = useMemo(() => {
     const now = new Date();
-    // 12 months history
     const twelveMonthsAgo = subMonths(now, 12);
     const months = eachMonthOfInterval({ start: twelveMonthsAgo, end: now });
 
@@ -30,8 +29,6 @@ export function DashboardHighlights({ contracts, blueprints }: DashboardHighligh
       }).length;
 
       const signed = contracts.filter((c) => {
-        // Approximate signed date using updatedAt for signed contracts
-        // ideally we'd store signedAt, but updatedAt works for this visual
         const d = new Date(c.updatedAt);
         return (c.status === "signed" || c.status === "locked") && d >= monthStart && d <= monthEnd;
       }).length;

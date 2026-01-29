@@ -14,20 +14,20 @@ import {
 } from "@/components/ui/chart";
 
 const STATUS_COLORS = {
-  Draft: "#3b82f6",   // Blue
-  Pending: "#f59e0b", // Amber
-  Signed: "#10b981",  // Emerald
-  Locked: "#6366f1",  // Indigo
-  Rejected: "#ef4444", // Red
+  Draft: "#3b82f6",   
+  Pending: "#f59e0b", 
+  Signed: "#10b981",  
+  Locked: "#6366f1",  
+  Rejected: "#ef4444", 
 };
 
 const CHART_COLORS = [
-  "#3b82f6", // Blue
-  "#8b5cf6", // Violet
-  "#10b981", // Emerald
-  "#f59e0b", // Amber
-  "#ef4444", // Red
-  "#06b6d4", // Cyan
+  "#3b82f6", 
+  "#8b5cf6", 
+  "#10b981", 
+  "#f59e0b", 
+  "#ef4444", 
+  "#06b6d4", 
 ];
 
 interface DistributionChartProps {
@@ -36,7 +36,6 @@ interface DistributionChartProps {
 }
 
 export function DistributionChart({ data, viewType }: DistributionChartProps) {
-  // Construct config dynamically
   const chartConfig = React.useMemo(() => {
     return data.reduce((acc, curr, index) => {
         let color;

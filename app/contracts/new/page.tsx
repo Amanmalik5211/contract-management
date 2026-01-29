@@ -21,7 +21,6 @@ function NewContractForm() {
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const initializedRef = useRef(false);
 
-  // Wait for store hydration
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsInitialLoad(false);
@@ -81,7 +80,6 @@ function NewContractForm() {
         description: `"${contractName}" has been created successfully.`,
         variant: "success",
       });
-      // Navigate immediately - don't wait
       router.push(`/contracts/${contract.id}?edit=true`);
     } catch {
       setIsCreating(false);

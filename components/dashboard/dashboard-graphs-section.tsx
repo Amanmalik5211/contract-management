@@ -20,7 +20,6 @@ export function DashboardGraphsSection({ contracts, blueprints, viewType }: Dash
   const data = viewType === "contract" ? contracts : blueprints;
   const dataType = viewType === "contract" ? "Contracts" : "Blueprints";
 
-  // Graph 1: Contracts/Blueprints Over Time
   const itemsOverTime = useMemo(() => {
     const now = new Date();
     const sixMonthsAgo = subMonths(now, 6);
@@ -42,7 +41,6 @@ export function DashboardGraphsSection({ contracts, blueprints, viewType }: Dash
     });
   }, [data, dataType]);
 
-  // Graph 2: Status Distribution (for contracts) or Field Type Distribution (for blueprints)
   const distribution = useMemo(() => {
     if (viewType === "contract") {
       const statusMap = {
@@ -67,7 +65,6 @@ export function DashboardGraphsSection({ contracts, blueprints, viewType }: Dash
     }
   }, [contracts, blueprints, viewType]);
 
-  // Graph 3: Signed vs Revoked (for contracts) or Active vs Inactive (for blueprints)
   const comparison = useMemo(() => {
     if (viewType === "contract") {
       const signed = contracts.filter((c) => c.status === "signed" || c.status === "locked").length;

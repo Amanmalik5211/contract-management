@@ -11,7 +11,6 @@ import { PdfPageRenderer } from "./pdf-blueprint-editor/pdf-page-renderer";
 import { findFieldsOverlappingPdfText } from "@/lib/pdf-text-overlap";
 import type { PdfBlueprintEditorProps } from "@/types/components";
 
-// Dynamically import pdf.js only on client side to avoid DOMMatrix SSR error
 const getPdfjsLib = async () => {
   if (typeof window === "undefined") return null;
   const lib = await import("pdfjs-dist");
@@ -44,7 +43,6 @@ export function PdfBlueprintEditor({
   const pageRefs = useRef<Map<number, HTMLDivElement | null>>(new Map());
   const fieldRefs = useRef<Map<string, HTMLDivElement | null>>(new Map());
 
-  // Group fields by page number
   const fieldsByPage = new Map<number, Field[]>();
   fields.forEach((field) => {
     if (field.pageNumber) {
@@ -56,21 +54,18 @@ export function PdfBlueprintEditor({
     }
   });
 
-  // Check if two fields overlap
   const doFieldsOverlap = useCallback((field1: Field, field2: Field): boolean => {
     if (!field1.x || !field1.y || !field1.width || !field1.height) return false;
     if (!field2.x || !field2.y || !field2.width || !field2.height) return false;
     if (field1.id === field2.id) return false; // Don't check self
     if (field1.pageNumber !== field2.pageNumber) return false; // Only check same page
 
-    // Calculate bounding boxes
     const field1Right = field1.x + field1.width;
     const field1Bottom = field1.y + field1.height;
     const field2Right = field2.x + field2.width;
     const field2Bottom = field2.y + field2.height;
 
-    // Check for overlap (with a small threshold to account for rounding)
-    const threshold = 0.5; // 0.5% threshold
+    const threshold = 0.5; 
     return !(
       field1Right <= field2.x + threshold ||
       field2Right <= field1.x + threshold ||
@@ -79,7 +74,6 @@ export function PdfBlueprintEditor({
     );
   }, []);
 
-  // Find all overlapping fields
   const findOverlappingFields = useCallback((fieldsToCheck: Field[]): Set<string> => {
     const overlapping = new Set<string>();
     
@@ -95,20 +89,16 @@ export function PdfBlueprintEditor({
     return overlapping;
   }, [doFieldsOverlap]);
 
-  // Update overlapping fields whenever fields change — no toast; warning shown near each overlapping field
   useEffect(() => {
     const overlapping = findOverlappingFields(fields);
     setOverlappingFields(overlapping);
 
-    // Check for text overflow
     const overflowIs = new Set<string>();
     fields.forEach(field => {
-      // Find page width to convert percentage to pixels
       const page = pages.find(p => p.pageNum === field.pageNumber);
       if (!page) return;
       
       const fieldWidthPx = ((field.width || 25) / 100) * page.width;
-      // Estimate text width: ~8px per character for standard font size
       const textWidthPx = (field.label?.length || 0) * 8; 
       
       if (textWidthPx > fieldWidthPx) {
@@ -118,7 +108,6 @@ export function PdfBlueprintEditor({
     setFieldsWithTextOverflow(overflowIs);
   }, [fields, findOverlappingFields, pages]);
 
-  // Check for fields overlapping PDF text whenever fields or PDF changes
   useEffect(() => {
     if (!pdfjsLib || fields.length === 0) {
       setFieldsOverlappingPdfText(new Set());
@@ -157,7 +146,6 @@ export function PdfBlueprintEditor({
         setLoading(true);
         setError(null);
 
-        // Dynamically import pdf.js on client side
         const pdfjsLibInstance = await getPdfjsLib();
         if (!pdfjsLibInstance) {
           setError("PDF.js not available");
@@ -225,20 +213,17 @@ export function PdfBlueprintEditor({
     };
   }, [pdfUrl]);
 
-  // Handle pointer down on PDF to place field (works for mouse + touch + pen)
   const handlePageClick = useCallback((e: React.PointerEvent<HTMLDivElement>, pageNum: number) => {
     if (!isPlacingField) return;
 
     const rect = e.currentTarget.getBoundingClientRect();
-    // Use actual rendered dimensions from the bounding rect
     const actualWidth = rect.width;
     const actualHeight = rect.height;
     const x = ((e.clientX - rect.left) / actualWidth) * 100;
     const y = ((e.clientY - rect.top) / actualHeight) * 100;
 
-    // Default field dimensions (percentage-based) - Larger for better visibility and usability
-    const defaultWidth = 25; // 25% of page width (increased from 20%)
-    const defaultHeight = 8; // 8% of page height (increased from 5%)
+    const defaultWidth = 25; // 25% of page width 
+    const defaultHeight = 8; // 8% of page height 
 
     const newField: Field = {
       id: `field-${generateUUID()}`,
@@ -253,7 +238,6 @@ export function PdfBlueprintEditor({
       height: defaultHeight,
     };
 
-    // Check for overlaps with existing fields on the same page
     const pageFields = fields.filter(f => f.pageNumber === pageNum);
     const overlappingField = pageFields.find(existingField => doFieldsOverlap(newField, existingField));
 
@@ -262,14 +246,14 @@ export function PdfBlueprintEditor({
         "⚠️ Warning: This field overlaps with an existing field. Do you want to place it anyway?"
       );
       if (!shouldPlace) {
-        return; // Cancel placement
+        return; 
       }
     }
 
     onFieldsChange([...fields, newField]);
     setIsPlacingField(false);
     setSelectedField(newField.id);
-    setAllowOverlap(false); // Reset after placement
+    setAllowOverlap(false); 
   }, [isPlacingField, selectedFieldType, fields, onFieldsChange, allowOverlap, doFieldsOverlap]);
 
   const handleTogglePlacingField = useCallback(() => {
@@ -288,7 +272,6 @@ export function PdfBlueprintEditor({
     setSelectedField(null);
   }, []);
 
-  // Handle field deletion
   const handleDeleteField = useCallback((fieldId: string) => {
     onFieldsChange(fields.filter((f) => f.id !== fieldId));
     if (selectedField === fieldId) {
@@ -296,14 +279,12 @@ export function PdfBlueprintEditor({
     }
   }, [fields, onFieldsChange, selectedField]);
 
-  // Handle field label update
   const handleFieldLabelChange = useCallback((fieldId: string, label: string) => {
     onFieldsChange(
       fields.map((f) => (f.id === fieldId ? { ...f, label } : f))
     );
   }, [fields, onFieldsChange]);
 
-  // Handle field drag start (works for mouse and touch via pointer events)
   const handleFieldDragStart = useCallback((e: React.PointerEvent, fieldId: string) => {
     e.stopPropagation();
     if (e.pointerType === "touch") e.preventDefault();
@@ -320,7 +301,7 @@ export function PdfBlueprintEditor({
     try {
       (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
     } catch {
-      // Ignore if capture fails (e.g. invalid pointer id); window pointermove/pointerup still work
+      console.log("Pointer capture failed");
     }
 
     setDraggingField(fieldId);
@@ -328,7 +309,6 @@ export function PdfBlueprintEditor({
     setSelectedField(fieldId);
   }, [fields]);
 
-  // Handle field drag (works for mouse and touch)
   const handleFieldDrag = useCallback((e: PointerEvent | MouseEvent, pageNum: number) => {
     if (!draggingField || !dragStart) return;
 
@@ -346,7 +326,6 @@ export function PdfBlueprintEditor({
     const newX = Math.max(0, Math.min(100 - (field.width || 25), currentX - dragStart.x));
     const newY = Math.max(0, Math.min(100 - (field.height || 8), currentY - dragStart.y));
 
-    // Update field position (overlap will be detected by effect and shown via yellow border + list indicator)
     onFieldsChange(
       fields.map((f) =>
         f.id === draggingField
@@ -356,13 +335,11 @@ export function PdfBlueprintEditor({
     );
   }, [draggingField, dragStart, fields, onFieldsChange]);
 
-  // Handle field drag end
   const handleFieldDragEnd = useCallback(() => {
     setDraggingField(null);
     setDragStart(null);
   }, []);
 
-  // Handle field resize start (works for mouse and touch via pointer events)
   const handleFieldResizeStart = useCallback((e: React.PointerEvent, fieldId: string) => {
     e.stopPropagation();
     if (e.pointerType === "touch") e.preventDefault();
@@ -379,7 +356,7 @@ export function PdfBlueprintEditor({
     try {
       (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
     } catch {
-      // Ignore if capture fails (e.g. invalid pointer id); window pointermove/pointerup still work
+console.log("Pointer capture failed");
     }
 
     setResizingField(fieldId);
@@ -392,7 +369,6 @@ export function PdfBlueprintEditor({
     setSelectedField(fieldId);
   }, [fields]);
 
-  // Handle field resize (works for mouse and touch)
   const handleFieldResize = useCallback((e: PointerEvent | MouseEvent, pageNum: number) => {
     if (!resizingField || !resizeStart) return;
 
@@ -410,11 +386,9 @@ export function PdfBlueprintEditor({
     const deltaX = currentX - resizeStart.x;
     const deltaY = currentY - resizeStart.y;
 
-    // Minimum sizes increased for better usability
     const newWidth = Math.max(8, Math.min(100 - field.x, resizeStart.width + deltaX));
     const newHeight = Math.max(4, Math.min(100 - field.y, resizeStart.height + deltaY));
 
-    // Update field size (overlap will be detected by effect and shown via yellow border + list indicator)
     onFieldsChange(
       fields.map((f) =>
         f.id === resizingField
@@ -424,13 +398,11 @@ export function PdfBlueprintEditor({
     );
   }, [resizingField, resizeStart, fields, onFieldsChange]);
 
-  // Handle field resize end
   const handleFieldResizeEnd = useCallback(() => {
     setResizingField(null);
     setResizeStart(null);
   }, []);
 
-  // Set up global pointer event listeners for dragging and resizing (works for mouse + touch)
   useEffect(() => {
     if (!draggingField && !resizingField) return;
 
@@ -499,7 +471,6 @@ export function PdfBlueprintEditor({
         fieldsCount={fields.length}
       />
 
-      {/* PDF Pages with Field Overlays */}
       <div className="space-y-3 sm:space-y-4">
         {pages.map(({ pageNum, imageData, width, height }) => {
           const pageFields = fieldsByPage.get(pageNum) || [];

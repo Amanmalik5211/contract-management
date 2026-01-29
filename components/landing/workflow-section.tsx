@@ -19,7 +19,6 @@ export function WorkflowSection() {
         </div>
 
         <div className="grid gap-6 sm:gap-8 lg:grid-cols-2 lg:gap-12 items-center">
-          {/* Left side - Image */}
           <div className="relative w-full h-[250px] xs:h-[300px] sm:h-[350px] md:h-[400px] lg:h-[500px] rounded-xl sm:rounded-2xl overflow-hidden shadow-lg order-2 lg:order-1">
             <Image
               src="/contract-landing-page.png"
@@ -31,7 +30,6 @@ export function WorkflowSection() {
             />
           </div>
 
-          {/* Right side - Content */}
           <div className="space-y-4 sm:space-y-6 order-1 lg:order-2">
             <div className="space-y-2 sm:space-y-3">
               <p className="text-base text-muted-foreground sm:text-lg lg:text-xl leading-relaxed">

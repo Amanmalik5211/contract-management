@@ -19,7 +19,6 @@ interface ContractsTableProps {
   contracts: Contract[];
   blueprints: Blueprint[];
   fieldTypeLabels: Record<FieldType, string>;
-  getStatusVariant: (status: string) => "default" | "secondary" | "destructive" | "success" | "warning";
   onView?: (id: string, e: React.MouseEvent) => void;
   onEdit: (id: string, e: React.MouseEvent) => void;
   onDelete: (id: string, name: string, e: React.MouseEvent) => void;
@@ -31,7 +30,6 @@ export function ContractsTable({
   contracts,
   blueprints,
   fieldTypeLabels,
-  getStatusVariant,
   onView,
   onEdit,
   onDelete,
@@ -66,7 +64,6 @@ export function ContractsTable({
                 <ContractTableRow
                   key={contract.id}
                   contract={contract}
-                  getStatusVariant={getStatusVariant}
                   onView={onView}
                   onEdit={onEdit}
                   onDelete={onDelete}

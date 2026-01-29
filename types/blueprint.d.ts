@@ -5,7 +5,7 @@ export interface DocumentSection {
   type: "section" | "text" | "field";
   title?: string;
   content?: string;
-  fieldId?: string; // For field type sections
+  fieldId?: string;
   order: number;
 }
 
@@ -14,11 +14,10 @@ export interface Blueprint {
   name: string;
   description?: string;
   fields: Field[];
-  sections: DocumentSection[]; // Document structure
-  // PDF template support
-  pdfFileName?: string; // Name of the PDF file
-  pdfUrl?: string; // Object URL or base64 encoded PDF
-  pageCount?: number; // Number of pages in the PDF
+  sections: DocumentSection[];
+  pdfFileName?: string;
+  pdfUrl?: string;
+  pageCount?: number;
   createdAt: Date;
   updatedAt: Date;
 }

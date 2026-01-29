@@ -26,12 +26,10 @@ export default function BlueprintManager() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   
-  // New State for View Mode
   const [isCreating, setIsCreating] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [filter, setFilter] = useState("All");
 
-  // Wait for store hydration
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsInitialLoad(false);
@@ -47,7 +45,6 @@ export default function BlueprintManager() {
     pdfUrl?: string;
     pageCount?: number;
   }) => {
-    // Validate at least one field exists
     if (formData.fields.length === 0) {
       addToast({
         title: "Validation Error",
@@ -78,7 +75,6 @@ export default function BlueprintManager() {
         variant: "success",
       });
       
-      // Return to blueprints list
       setIsCreating(false);
     } catch {
       addToast({
@@ -109,7 +105,6 @@ export default function BlueprintManager() {
 
   const filteredBlueprints = blueprints.filter(bp => {
     const matchesSearch = bp.name.toLowerCase().includes(searchQuery.toLowerCase());
-    // Mock logic for status filters since status isn't stored yet
     const matchesFilter = filter === "All" || filter === "Active"; 
     return matchesSearch && matchesFilter;
   });
@@ -120,8 +115,7 @@ export default function BlueprintManager() {
         
         {!isCreating ? (
           <>
-            {/* List View Header */}
-            <section className="flex flex-col sm:flex-row items-center justify-between gap-4">
+              <section className="flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="space-y-1 text-center sm:text-left w-full sm:w-auto">
                 <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Blueprints</h1>
                 <p className="text-muted-foreground text-sm sm:text-base">
@@ -133,7 +127,6 @@ export default function BlueprintManager() {
               </Button>
             </section>
 
-             {/* Toolbar */}
             <section className="flex flex-col sm:flex-row justify-between items-center gap-4">
                <div className="flex bg-muted/50 p-1 rounded-lg w-full sm:w-auto overflow-x-auto">
                   {["All", "Active", "Drafts", "Archived"].map((f) => (
@@ -162,7 +155,6 @@ export default function BlueprintManager() {
                </div>
             </section>
 
-            {/* Grid */}
             <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                {filteredBlueprints.length > 0 ? (
                  filteredBlueprints.map(bp => (

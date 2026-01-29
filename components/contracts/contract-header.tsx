@@ -53,7 +53,6 @@ export function ContractHeader({
             </div>
           </div>
 
-          {/* Edit mode strip: same card, below title row */}
           {canEdit && (
             <div
               className="flex flex-wrap items-center gap-3 rounded-lg border border-primary/20 bg-primary/5 dark:border-primary/30 dark:bg-primary/10 px-3 py-2.5 sm:px-4 sm:py-3"
@@ -81,7 +80,6 @@ export function ContractHeader({
             </div>
           )}
 
-          {/* Read-only strip: same card, when not created */}
           {!canEdit && !isCreated && (
             <div
               className="flex flex-wrap items-center gap-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50/80 dark:bg-gray-900/50 px-3 py-2.5 sm:px-4 sm:py-3"

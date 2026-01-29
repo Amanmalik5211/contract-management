@@ -11,8 +11,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { getStatusLabel } from "@/lib/contract-utils";
+import { getStatusLabel, getStatusColor } from "@/lib/contract-utils";
 import type { Contract } from "@/types/contract";
+import { cn } from "@/lib/utils";
 
 const MAX_NAME_CHARS = 22;
 
@@ -23,7 +24,6 @@ function truncateName(name: string, maxChars: number = MAX_NAME_CHARS): string {
 
 interface ContractTableRowProps {
   contract: Contract;
-  getStatusVariant: (status: string) => "default" | "secondary" | "destructive" | "success" | "warning";
   onView?: (id: string, e: React.MouseEvent) => void;
   onEdit: (id: string, e: React.MouseEvent) => void;
   onDelete: (id: string, name: string, e: React.MouseEvent) => void;
@@ -32,7 +32,6 @@ interface ContractTableRowProps {
 
 export function ContractTableRow({
   contract,
-  getStatusVariant,
   onView,
   onEdit,
   onDelete,
@@ -56,7 +55,7 @@ export function ContractTableRow({
         {truncateName(contract.blueprintName)}
       </TableCell>
       <TableCell>
-        <Badge variant={getStatusVariant(contract.status)} className="whitespace-nowrap">
+        <Badge variant="secondary" className={cn("whitespace-nowrap border", getStatusColor(contract.status))}>
           {getStatusLabel(contract.status)}
         </Badge>
       </TableCell>

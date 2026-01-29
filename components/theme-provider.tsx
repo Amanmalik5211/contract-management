@@ -13,12 +13,10 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     startTransition(() => {
       setMounted(true);
       
-      // Check localStorage for saved theme preference
       const savedTheme = localStorage.getItem("theme") as Theme | null;
       if (savedTheme) {
         setTheme(savedTheme);
       } else {
-        // Check system preference
         const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
         setTheme(prefersDark ? "dark" : "light");
       }
@@ -41,7 +39,6 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     setTheme((prev) => (prev === "light" ? "dark" : "light"));
   };
 
-  // Prevent flash of unstyled content
   if (!mounted) {
     return <>{children}</>;
   }
@@ -56,7 +53,6 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 export function useTheme() {
   const context = useContext(ThemeContext);
   if (context === undefined) {
-    // Return default theme during SSR or when not in provider
     return { theme: "light" as Theme, toggleTheme: () => {} };
   }
   return context;

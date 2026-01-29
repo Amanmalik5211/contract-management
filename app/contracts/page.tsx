@@ -24,30 +24,25 @@ export default function ContractsPage() {
   const router = useRouter();
   const { addToast } = useToast();
   
-  // State for Creation
   const [selectedBlueprintId, setSelectedBlueprintId] = useState("");
   const [contractName, setContractName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCreatingMode, setIsCreatingMode] = useState(false);
   const [creationStep, setCreationStep] = useState<0 | 1>(0); // 0: Select Blueprint, 1: Details
 
-  // State for Deletion
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [contractToDelete, setContractToDelete] = useState<{ id: string; name: string } | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // State for Status Management
   const [statusModalOpen, setStatusModalOpen] = useState(false);
   const [revokeDialogOpen, setRevokeDialogOpen] = useState(false);
   const [selectedContractForStatus, setSelectedContractForStatus] = useState<Contract | null>(null);
   const [isStatusChanging, setIsStatusChanging] = useState(false);
   
-  // State for Loading & Filters
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [filter, setFilter] = useState("All");
 
-  // Wait for store hydration
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsInitialLoad(false);
@@ -114,7 +109,6 @@ export default function ContractsPage() {
         description: `"${contractName}" has been created successfully.`,
         variant: "success",
       });
-      // Navigate immediately
       router.push(`/contracts/${contract.id}?edit=true`);
     } catch {
       setIsSubmitting(false);
@@ -144,7 +138,6 @@ export default function ContractsPage() {
     }
   };
 
-  // Status Management Handlers
   const handleStatusClick = (contract: Contract) => {
     setSelectedContractForStatus(contract);
     setStatusModalOpen(true);
@@ -216,7 +209,6 @@ export default function ContractsPage() {
         
         {!isCreatingMode ? (
           <>
-            {/* List View Header */}
             <section className="flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="space-y-1 text-center sm:text-left w-full sm:w-auto">
                 <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Contracts</h1>
@@ -229,7 +221,6 @@ export default function ContractsPage() {
               </Button>
             </section>
 
-             {/* Toolbar */}
              <section className="flex flex-col sm:flex-row justify-between items-center gap-4">
                 <div className="flex bg-muted/50 p-1 rounded-lg w-full sm:w-auto overflow-x-auto">
                    {["All", "Active", "Pending", "Revoked"].map((f) => (
@@ -258,7 +249,6 @@ export default function ContractsPage() {
                 </div>
              </section>
 
-             {/* Grid */}
              <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredContracts.length > 0 ? (
                   filteredContracts.map(c => (

@@ -6,9 +6,8 @@ import type { Blueprint } from "@/types/blueprint";
 import type { Contract, ContractStatus } from "@/types/contract";
 import type { SerializedBlueprint, SerializedContract, AppState } from "@/types/store";
 
-// Custom storage adapter with quota error handling
 const createSafeStorage = () => {
-  const MAX_SIZE = 4 * 1024 * 1024; // 4MB safety limit (localStorage is typically 5-10MB)
+  const MAX_SIZE = 4 * 1024 * 1024; // 4MB safety 
   const warnedKeys = new Set<string>();
   const byMostRecent = (a: unknown, b: unknown) => {
     const ar = a as Record<string, unknown>;
@@ -18,22 +17,18 @@ const createSafeStorage = () => {
     return bTime - aTime;
   };
 
-  // Helper to estimate size of a string in bytes
   const getSize = (str: string): number => {
     return new Blob([str]).size;
   };
 
-  // Helper to remove large base64 data from state to reduce size
   const removeLargeData = (state: unknown): unknown => {
     if (!state) return state;
 
     const cleaned = { ...(state as Record<string, unknown>) };
 
-    // Remove base64 PDF URLs from blueprints (keep only metadata)
     if (Array.isArray(cleaned.blueprints)) {
       cleaned.blueprints = (cleaned.blueprints as Array<Record<string, unknown>>).map((bp) => {
         const cleanedBp = { ...bp } as Record<string, unknown>;
-        // If pdfUrl is a base64 data URL, remove it (it's too large for localStorage)
         if (typeof cleanedBp.pdfUrl === "string" && cleanedBp.pdfUrl.startsWith("data:")) {
           cleanedBp.pdfUrl = undefined;
         }
@@ -41,7 +36,6 @@ const createSafeStorage = () => {
       });
     }
 
-    // Remove base64 PDF URLs from contracts
     if (Array.isArray(cleaned.contracts)) {
       cleaned.contracts = (cleaned.contracts as Array<Record<string, unknown>>).map((c) => {
         const cleanedC = { ...c } as Record<string, unknown>;
@@ -55,13 +49,11 @@ const createSafeStorage = () => {
     return cleaned;
   };
 
-  // Helper function to save with cleanup
   const setItemWithCleanup = (name: string, parsedData: unknown): void => {
     if (typeof window === "undefined") {
       return;
     }
     try {
-      // Get current data to merge if needed
       let dataToSave: unknown = parsedData;
       
       if (!dataToSave) {
@@ -75,10 +67,8 @@ const createSafeStorage = () => {
         }
       }
 
-      // Remove large base64 data
       const cleaned = removeLargeData(dataToSave);
       
-      // If still too large, keep only recent items
       if (Array.isArray((cleaned as Record<string, unknown>).contracts) && ((cleaned as Record<string, unknown>).contracts as unknown[]).length > 50) {
         (cleaned as Record<string, unknown>).contracts = ((cleaned as Record<string, unknown>).contracts as Array<Record<string, unknown>>)
           .sort((a, b) => 

@@ -1,5 +1,5 @@
-import type { PDFTypographyConfig } from "./types";
-import type { FieldValidationResult } from "./types";
+import type { PDFTypographyConfig } from "../../types/pdf";
+import type { FieldValidationResult } from "../../types/pdf";
 
 export function calculateLineHeightPx(fontSize: number, lineHeightRatio: number): number {
   return Math.round(fontSize * lineHeightRatio);

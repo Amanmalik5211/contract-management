@@ -40,9 +40,7 @@ export function BlueprintCard({
       className="group overflow-hidden hover:shadow-md transition-all cursor-pointer border-border/60 hover:border-primary/50"
       onClick={handleCardClick}
     >
-      {/* Placeholder Image Area */}
       <div className="aspect-[1.6] bg-muted/30 p-6 flex flex-col gap-3 justify-center items-center border-b border-border/40 group-hover:bg-muted/50 transition-colors">
-         {/* Skeleton-like design matching the image provided */}
          <div className="w-1/3 h-2.5 bg-muted-foreground/10 rounded-full self-start mb-2" />
          <div className="w-full h-2 bg-muted-foreground/10 rounded-full" />
          <div className="w-full h-2 bg-muted-foreground/10 rounded-full" />

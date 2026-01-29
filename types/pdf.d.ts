@@ -1,6 +1,5 @@
 import type { Field } from "./field";
 
-// PDF text overlap detection
 export interface PdfTextItem {
   str: string;
   transform: number[];
@@ -8,7 +7,6 @@ export interface PdfTextItem {
   height: number;
 }
 
-// PDF viewer types
 export interface PdfViewerProps {
   pdfUrl: string;
   className?: string;
@@ -21,7 +19,6 @@ export type PdfDocument = {
   getPage: (pageNum: number) => Promise<unknown>;
 };
 
-// PDF contract editor types
 export interface FieldValidationResult {
   isValid: boolean;
   wouldExceed: boolean;
@@ -59,7 +56,6 @@ export interface PdfContractEditorProps {
   className?: string;
 }
 
-// PDF generation types
 export interface GenerateContractPdfParams {
   pdfUrl: string;
   fields: Field[];

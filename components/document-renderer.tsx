@@ -24,20 +24,15 @@ export function DocumentRenderer({
   const [draggedFieldIndex, setDraggedFieldIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   
-  // Sort fields by position for consistent ordering
   const orderedFields = [...fields].sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
   
-  // Create a map of fields by ID for quick lookup
   const fieldsMap = new Map(orderedFields.map((f) => [f.id, f]));
 
-  // Sort sections by order
   const sortedSections = [...sections].sort((a, b) => a.order - b.order);
 
-  // Drag and drop handlers for field reordering
   const handleDragStart = (e: React.DragEvent, index: number) => {
     if (!isEditable || !onFieldsReorder) return;
     
-    // Prevent drag if starting from an interactive element
     const target = e.target as HTMLElement;
     if (['INPUT', 'TEXTAREA', 'BUTTON', 'LABEL'].includes(target.tagName) || target.closest('input, textarea, button, label')) {
       e.preventDefault();
@@ -77,7 +72,6 @@ export function DocumentRenderer({
     const [draggedField] = newFields.splice(dragIndex, 1);
     newFields.splice(dropIndex, 0, draggedField);
 
-    // Update positions in the reordered fields
     const updatedFields = newFields.map((field, idx) => ({
       ...field,
       position: idx,
@@ -98,7 +92,6 @@ export function DocumentRenderer({
     const fieldId = field.id;
 
     if (isEditable && onFieldChange) {
-      // Editable mode logic (same as before)
       switch (field.type) {
         case "text":
           return (
@@ -117,7 +110,6 @@ export function DocumentRenderer({
               />
             </div>
           );
-        // ... include other cases identical to original code ...
         case "date":
           return (
             <div key={fieldId} className="space-y-2">
@@ -181,7 +173,6 @@ export function DocumentRenderer({
           return null;
       }
     } else {
-      // Read-only mode logic (same as before)
       switch (field.type) {
         case "text":
           return (
@@ -328,7 +319,6 @@ export function DocumentRenderer({
         if (section.fieldId) {
           const field = fieldsMap.get(section.fieldId);
           if (field) {
-            // Find the index in the orderedFields array to support drag-and-drop
             const fieldIndex = orderedFields.findIndex(f => f.id === field.id);
             return (
               <div key={section.id} className="my-6">
@@ -345,7 +335,6 @@ export function DocumentRenderer({
 
   return (
     <div className={`${className} relative`}>
-      {/* Background shadow layer for depth */}
       <div 
         className="absolute inset-0 -z-10"
         style={{
@@ -355,7 +344,6 @@ export function DocumentRenderer({
         }}
       />
       
-      {/* Document Container */}
       <div 
         className="relative max-w-4xl mx-auto px-4 sm:px-6 md:px-8 lg:px-10 py-6 sm:py-8 md:py-10 lg:py-14 border border-gray-100 dark:border-gray-800 shadow-2xl overflow-hidden"
         style={{ 
@@ -363,26 +351,22 @@ export function DocumentRenderer({
         }}
       >
         
-          {/* Document Title */}
           <div className="text-center mb-6 sm:mb-8 border-b-2 border-gray-300 dark:border-gray-700 pb-4 sm:pb-6">
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2 sm:mb-3 tracking-tight break-words overflow-wrap-anywhere">
               {capitalizeWords(title)}
             </h1>
           </div>
 
-        {/* Document Content */}
         <div className="space-y-4 sm:space-y-6">
           {sortedSections.length > 0 ? (
             sortedSections.map((section) => renderSection(section))
           ) : (
-            // Fallback: render all fields if no sections defined
             <div className={`space-y-4 sm:space-y-6 ${isEditable && onFieldsReorder ? "pl-4 sm:pl-6 md:pl-8 lg:pl-10" : ""}`}>
               {orderedFields.map((field, index) => renderDraggableField(field, index))}
             </div>
           )}
         </div>
 
-        {/* Document Footer */}
         <div className="mt-12 sm:mt-16 md:mt-20 pt-6 sm:pt-8 border-t-2 border-gray-200 dark:border-gray-700 text-center text-xs sm:text-sm font-medium">
           <p>This document was generated on {format(new Date(), "MMMM d, yyyy")}</p>
         </div>

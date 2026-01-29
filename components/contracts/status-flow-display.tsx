@@ -16,10 +16,8 @@ export function StatusFlowDisplay({ statusFlow, currentStatus }: StatusFlowDispl
   return (
     <div className="w-full py-4">
       <div className="relative flex items-center justify-between w-full">
-        {/* Connecting Line background */}
         <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-1 bg-muted z-0 rounded-full" />
         
-        {/* Active Line (progress) */}
         <div 
            className="absolute left-0 top-1/2 -translate-y-1/2 h-1 bg-primary z-0 rounded-full transition-all duration-500"
            style={{ width: `${(currentIndex / (statusFlow.length - 1)) * 100}%` }}
@@ -62,7 +60,6 @@ export function StatusFlowDisplay({ statusFlow, currentStatus }: StatusFlowDispl
           );
         })}
       </div>
-      {/* Spacer for labels */}
       <div className="h-8" />
     </div>
   );

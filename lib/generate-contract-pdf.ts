@@ -17,10 +17,7 @@ import {
 const DEFAULT_FONT_SIZE = 12;
 const LINE_HEIGHT_RATIO = 1.2;
 
-/**
- * Wrap text into lines that fit within maxWidthPt when rendered at fontSize.
- * Uses font.widthOfTextAtSize for measuring. Breaks on spaces when possible.
- */
+
 function wrapTextToLines(
   font: { widthOfTextAtSize: (text: string, size: number) => number },
   text: string,
@@ -43,7 +40,6 @@ function wrapTextToLines(
         lines.push(currentLine);
         currentLine = word;
       } else {
-        // Single word longer than line: break by character
         let chunk = "";
         for (const c of word) {
           const next = chunk + c;
@@ -87,7 +83,6 @@ async function getPdfBytes(pdfUrl: string): Promise<Uint8Array> {
   return new Uint8Array(buf);
 }
 
-/** Returns true if two fields overlap on the same page (bounding boxes intersect). */
 function doFieldsOverlap(a: Field, b: Field): boolean {
   if (a.id === b.id) return false;
   if (a.pageNumber !== b.pageNumber) return false;
@@ -101,7 +96,6 @@ function doFieldsOverlap(a: Field, b: Field): boolean {
   return !(aR <= b.x + t || bR <= a.x + t || aB <= b.y + t || bB <= a.y + t);
 }
 
-/** Value is considered filled if it would produce non-empty text in the PDF (same rule as formatFieldValue). */
 function isFilled(value: string | boolean | Date | null | undefined, _fieldType: Field["type"]): boolean {
   if (value == null) return false;
   if (typeof value === "boolean") return value; // checkbox: checked = filled, unchecked = unfilled
@@ -109,14 +103,6 @@ function isFilled(value: string | boolean | Date | null | undefined, _fieldType:
   return String(value).trim() !== "";
 }
 
-
-/**
- * Returns labels of fields that overlap (and may not display correctly on the downloaded PDF)
- * and of fields that are unfilled. Use before download to show warnings.
- * 
- * @param pdfUrl - URL of the PDF to check for text overlaps (optional, only needed for PDF text overlap detection)
- * @param pdfjsLib - PDF.js library instance (optional, only needed for PDF text overlap detection)
- */
 export async function getDownloadWarnings(
   fields: Field[],
   fieldValues: Record<string, string | boolean | Date | null>,
@@ -137,7 +123,6 @@ export async function getDownloadWarnings(
     (f) => !isFilled(fieldValues[f.id], f.type)
   ).map((f) => f.label);
 
-  // Check for fields overlapping PDF text if pdfUrl and pdfjsLib are provided
   let fieldsOverlappingPdfTextLabels: string[] = [];
   if (pdfUrl && pdfjsLib) {
     try {
@@ -147,18 +132,12 @@ export async function getDownloadWarnings(
         .map((f) => f.label);
     } catch (error) {
       console.warn("Failed to check PDF text overlaps:", error);
-      // Continue without PDF text overlap detection
     }
   }
 
   return { overlappingFieldLabels, unfilledFieldLabels, fieldsOverlappingPdfTextLabels };
 }
 
-/**
- * Generates a complete, flattened PDF from the original template and filled field values.
- * All pages are preserved in order; all field values are drawn as static text.
- * Returns PDF bytes ready for download. Throws on failure.
- */
 export async function generateContractPdf({
   pdfUrl,
   fields,
@@ -175,14 +154,12 @@ export async function generateContractPdf({
     throw new Error("PDF has no pages");
   }
 
-  // Pre-compute which fields overlap with PDF text (if detection is enabled)
   let fieldsOverlappingPdfText: Set<string> = new Set();
   if (skipOverlappingPdfText && pdfjsLib) {
     try {
       fieldsOverlappingPdfText = await findFieldsOverlappingPdfText(pdfUrl, fields, pdfjsLib);
     } catch (error) {
       console.warn("Failed to check PDF text overlaps during generation:", error);
-      // Continue without skipping overlapping text
     }
   }
 
@@ -195,7 +172,6 @@ export async function generateContractPdf({
     for (const field of fieldsOnPage) {
       if (field.x === undefined || field.y === undefined) continue;
 
-      // Skip drawing field text if it overlaps with PDF text
       if (skipOverlappingPdfText && fieldsOverlappingPdfText.has(field.id)) {
         continue;
       }
@@ -204,7 +180,6 @@ export async function generateContractPdf({
       const displayText = formatFieldValue(value, field.type);
       if (displayText === "") continue;
 
-      // Field box in page coordinates (percent → points). PDF y is bottom-up.
       const widthPct = field.width ?? 20;
       const heightPct = field.height ?? 5;
       let leftPt = (field.x / 100) * pageWidth;
@@ -213,7 +188,6 @@ export async function generateContractPdf({
       let topOfBoxPt = pageHeight - (field.y / 100) * pageHeight;
       let bottomOfBoxPt = pageHeight - ((field.y + heightPct) / 100) * pageHeight;
 
-      // Clamp to shared page margins so text stays within PDF margins (same as preview)
       const marginL = contractMarginLeft(pageWidth);
       const marginR = contractMarginRight(pageWidth);
       const marginB = contractMarginBottom(pageHeight);
@@ -232,20 +206,16 @@ export async function generateContractPdf({
       let fontSize = DEFAULT_FONT_SIZE;
       let linesToDraw: string[] = [];
 
-      // Auto-scale font size to fit text in box
       for (let size = DEFAULT_FONT_SIZE; size >= minFontSize; size--) {
         const lineHeight = size * LINE_HEIGHT_RATIO;
         const availableHeight = heightPtClamped - 2 * paddingY;
-        // Ensure at least 1 line is allowed if height is small
         const currentMaxLines = Math.max(1, Math.floor(availableHeight / lineHeight));
         const currentMaxWidth = Math.max(1, widthPt - 2 * paddingX);
 
         const wrapped = wrapTextToLines(font, displayText, size, currentMaxWidth);
 
-        // If it fits, or if we are at the minimum size (take what we can get)
         if (wrapped.length <= currentMaxLines || size === minFontSize) {
           fontSize = size;
-          // If it still doesn't fit at min size, we unfortunately have to truncate
           linesToDraw = wrapped.slice(0, currentMaxLines);
           break;
         }
@@ -253,20 +223,14 @@ export async function generateContractPdf({
 
       const lineHeightPt = fontSize * LINE_HEIGHT_RATIO;
 
-      // Draw from top of box downward (PDF y decreases)
-      // pdf-lib drawText y coordinate is the baseline. 
-      // Cap height approximation: usually font size is close to cap height.
-      // We align to top padding.
       const firstBaselineY = topOfBoxPt - paddingY - fontSize + (fontSize * 0.2); // adjusting baseline slightly up
       const xPt = leftPt + paddingX;
 
       const textColor = rgb(0, 0, 0);
       for (let L = 0; L < linesToDraw.length; L++) {
         const yPt = firstBaselineY - L * lineHeightPt;
-        // Check bounds (redundant if maxLines logic is correct, but safe)
         if (L > 0 && yPt < bottomOfBoxPt) break;
 
-        // Safety check for empty lines
         if (!linesToDraw[L]) continue;
 
         page.drawText(linesToDraw[L], {
@@ -292,9 +256,7 @@ export function downloadPdfBlob(blob: Blob, filename: string): void {
   URL.revokeObjectURL(url);
 }
 
-/**
- * Sanitizes a string for use in a filename (alphanumeric, hyphens, underscores).
- */
+
 export function safeFilename(name: string): string {
   return name.replace(/[^a-zA-Z0-9-_]/g, "-").replace(/-+/g, "-").slice(0, 80) || "contract";
 }

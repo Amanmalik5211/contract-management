@@ -1,6 +1,6 @@
-import type { PDFTypographyConfig } from "./types";
+import type { PDFTypographyConfig } from "../../types/pdf";
 
-export type { PDFTypographyConfig } from "./types";
+export type { PDFTypographyConfig } from "../../types/pdf";
 
 export const DEFAULT_PDF_TYPOGRAPHY: PDFTypographyConfig = {
   fontFamily: "Times, 'Times New Roman', serif",

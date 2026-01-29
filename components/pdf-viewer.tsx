@@ -6,7 +6,6 @@ import { PdfLoadingState } from "./pdf-viewer/pdf-loading-state";
 import { PdfErrorState } from "./pdf-viewer/pdf-error-state";
 import type { PdfViewerProps, PdfDocument } from "@/types/pdf";
 
-// Dynamically import pdf.js only on client side to avoid DOMMatrix SSR error
 const getPdfjsLib = async () => {
   if (typeof window === "undefined") return null;
   const lib = await import("pdfjs-dist");
@@ -14,7 +13,6 @@ const getPdfjsLib = async () => {
   return lib;
 };
 
-// Yield to the event loop to prevent blocking
 const yieldToEventLoop = () => {
   return new Promise<void>((resolve) => {
     if (typeof requestIdleCallback !== "undefined") {
@@ -25,9 +23,7 @@ const yieldToEventLoop = () => {
   });
 };
 
-// Render a single page with lower scale for faster rendering
 const renderPage = async (pdf: PdfDocument, pageNum: number, scale: number = 1.2) => {
-  // Yield before starting
   await yieldToEventLoop();
   
   const page = await pdf.getPage(pageNum) as {
@@ -42,7 +38,6 @@ const renderPage = async (pdf: PdfDocument, pageNum: number, scale: number = 1.2
     }) => { promise: Promise<void> };
   };
   
-  // Yield after getting page
   await yieldToEventLoop();
   
   const viewport = page.getViewport({ scale });
@@ -62,10 +57,8 @@ const renderPage = async (pdf: PdfDocument, pageNum: number, scale: number = 1.2
 
   await page.render(renderContext).promise;
   
-  // Yield after rendering
   await yieldToEventLoop();
   
-  // Convert to data URL in chunks to avoid blocking
   const imageData = canvas.toDataURL("image/jpeg", 0.85); // Use JPEG with compression for faster processing
   
   return {
@@ -86,7 +79,6 @@ export function PdfViewer({ pdfUrl, className = "", onPageRefsReady, onPageRende
   const renderingRef = useRef<Set<number>>(new Set());
   const renderedPagesRef = useRef<Set<number>>(new Set());
 
-  // Progressive rendering: render pages one at a time with yielding (stable callback, no deps)
   const renderPagesBatch = useCallback(async (pdf: PdfDocument, startPage: number, endPage: number) => {
     const pagesToRender: number[] = [];
     
@@ -96,18 +88,13 @@ export function PdfViewer({ pdfUrl, className = "", onPageRefsReady, onPageRende
       }
     }
 
-    // Render one page at a time to prevent blocking
     for (const pageNum of pagesToRender) {
-      // Mark as rendering
       renderingRef.current.add(pageNum);
       
-      // Yield before rendering
       await yieldToEventLoop();
       
-      // Render single page
       const result = await renderPage(pdf, pageNum);
       
-      // Update state and ref after each page
       if (result) {
         renderedPagesRef.current.add(pageNum);
         setPages(prev => {
@@ -126,15 +113,12 @@ export function PdfViewer({ pdfUrl, className = "", onPageRefsReady, onPageRende
         });
       }
       
-      // Remove from rendering set
       renderingRef.current.delete(pageNum);
       
-      // Yield after each page to keep UI responsive
       await yieldToEventLoop();
     }
   }, []);
 
-  // Lazy load pages when they come into view
   useEffect(() => {
     if (!pdfRef.current || numPages === 0) return;
 
@@ -144,9 +128,7 @@ export function PdfViewer({ pdfUrl, className = "", onPageRefsReady, onPageRende
           if (entry.isIntersecting) {
             const pageNum = parseInt(entry.target.getAttribute("data-page-num") || "0");
             if (pageNum > 0 && !renderedPagesRef.current.has(pageNum) && !renderingRef.current.has(pageNum) && pdfRef.current) {
-              // Render this page and one ahead (reduced from 2 to keep it lighter)
               const endPage = Math.min(pageNum + 1, numPages);
-              // Use setTimeout to defer rendering and not block the observer callback
               setTimeout(() => {
                 if (pdfRef.current) {
                   renderPagesBatch(pdfRef.current, pageNum, endPage);
@@ -159,7 +141,6 @@ export function PdfViewer({ pdfUrl, className = "", onPageRefsReady, onPageRende
       { rootMargin: "200px" } // Start loading 200px before page is visible
     );
 
-    // Observe all page containers
     pageRefs.current.forEach((ref) => {
       if (ref && observerRef.current) {
         observerRef.current.observe(ref);
@@ -185,7 +166,6 @@ export function PdfViewer({ pdfUrl, className = "", onPageRefsReady, onPageRende
         renderingRef.current.clear();
         renderedPagesRef.current.clear();
 
-        // Dynamically import pdf.js on client side
         const pdfjsLib = await getPdfjsLib();
         if (!pdfjsLib) {
           setError("PDF.js not available");
@@ -193,37 +173,30 @@ export function PdfViewer({ pdfUrl, className = "", onPageRefsReady, onPageRende
           return;
         }
 
-        // Load the PDF document (yield during loading)
         const loadingTask = pdfjsLib.getDocument({ url: pdfUrl });
         
-        // Yield to allow UI to update
         await yieldToEventLoop();
         
         const pdf = await loadingTask.promise;
 
         if (!isMounted) return;
 
-        // Yield again after loading
         await yieldToEventLoop();
 
         const totalPages = pdf.numPages;
         setNumPages(totalPages);
         pdfRef.current = pdf;
 
-        // Initialize pages array with placeholders
         const initialPages = Array.from({ length: totalPages }, (_, i) => ({
           pageNum: i + 1,
           imageData: null as string | null,
         }));
         setPages(initialPages);
 
-        // Show UI immediately, then render first page
         setLoading(false);
         
-        // Yield before starting to render
         await yieldToEventLoop();
         
-        // Only render first page immediately to keep UI responsive
         if (totalPages > 0) {
           await renderPagesBatch(pdf, 1, 1);
         }
@@ -242,7 +215,6 @@ export function PdfViewer({ pdfUrl, className = "", onPageRefsReady, onPageRende
     };
   }, [pdfUrl, renderPagesBatch]);
 
-  // Update page refs when pages are rendered
   useEffect(() => {
     if (pages.length > 0 && onPageRefsReady) {
       onPageRefsReady(pageRefs.current);
@@ -255,7 +227,6 @@ export function PdfViewer({ pdfUrl, className = "", onPageRefsReady, onPageRende
       onPageRender(pageNum, element);
     }
     
-    // Observe the element for lazy loading
     if (element && observerRef.current) {
       observerRef.current.observe(element);
     }

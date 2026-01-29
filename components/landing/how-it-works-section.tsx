@@ -15,13 +15,10 @@ export function HowItWorksSection() {
           </p>
         </div>
 
-        {/* Timeline Steps */}
         <div className="relative">
-          {/* Connecting Line - Desktop */}
           <div className="hidden lg:block absolute top-12 left-0 right-0 h-0.5 bg-gradient-to-r from-primary/20 via-primary/30 to-primary/20" />
           
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 sm:gap-8 lg:gap-4">
-            {/* Step 1 - Create a Blueprint */}
             <div className="relative group">
               <div className="flex flex-col items-center text-center">
                 <div className="relative z-10 flex h-12 w-12 sm:h-14 sm:w-14 lg:h-16 lg:w-16 items-center justify-center rounded-xl sm:rounded-2xl bg-gradient-to-br from-primary/20 to-primary/10 group-hover:from-primary/30 group-hover:to-primary/20 transition-all duration-300 group-hover:scale-110 shadow-lg group-hover:shadow-xl mb-3 sm:mb-4">
@@ -36,13 +33,11 @@ export function HowItWorksSection() {
                   Define contract structure with fields and layout.
                 </p>
               </div>
-              {/* Arrow - Desktop */}
               <div className="hidden lg:block absolute top-12 left-full w-full">
                 <ChevronRight className="h-6 w-6 text-primary/40 mx-auto" />
               </div>
             </div>
 
-            {/* Step 2 - Generate Contract */}
             <div className="relative group">
               <div className="flex flex-col items-center text-center">
                 <div className="relative z-10 flex h-12 w-12 sm:h-14 sm:w-14 lg:h-16 lg:w-16 items-center justify-center rounded-xl sm:rounded-2xl bg-gradient-to-br from-primary/20 to-primary/10 group-hover:from-primary/30 group-hover:to-primary/20 transition-all duration-300 group-hover:scale-110 shadow-lg group-hover:shadow-xl mb-3 sm:mb-4">
@@ -57,13 +52,11 @@ export function HowItWorksSection() {
                   Create a contract instance from an existing blueprint.
                 </p>
               </div>
-              {/* Arrow - Desktop */}
               <div className="hidden lg:block absolute top-12 left-full w-full">
                 <ChevronRight className="h-6 w-6 text-primary/40 mx-auto" />
               </div>
             </div>
 
-            {/* Step 3 - Manage Lifecycle */}
             <div className="relative group">
               <div className="flex flex-col items-center text-center">
                 <div className="relative z-10 flex h-12 w-12 sm:h-14 sm:w-14 lg:h-16 lg:w-16 items-center justify-center rounded-xl sm:rounded-2xl bg-gradient-to-br from-primary/20 to-primary/10 group-hover:from-primary/30 group-hover:to-primary/20 transition-all duration-300 group-hover:scale-110 shadow-lg group-hover:shadow-xl mb-3 sm:mb-4">
@@ -78,13 +71,11 @@ export function HowItWorksSection() {
                   Move contract through Created → Approved → Sent.
                 </p>
               </div>
-              {/* Arrow - Desktop */}
               <div className="hidden lg:block absolute top-12 left-full w-full">
                 <ChevronRight className="h-6 w-6 text-primary/40 mx-auto" />
               </div>
             </div>
 
-            {/* Step 4 - Sign & Lock */}
             <div className="relative group">
               <div className="flex flex-col items-center text-center">
                 <div className="relative z-10 flex h-12 w-12 sm:h-14 sm:w-14 lg:h-16 lg:w-16 items-center justify-center rounded-xl sm:rounded-2xl bg-gradient-to-br from-primary/20 to-primary/10 group-hover:from-primary/30 group-hover:to-primary/20 transition-all duration-300 group-hover:scale-110 shadow-lg group-hover:shadow-xl mb-3 sm:mb-4">
@@ -99,13 +90,11 @@ export function HowItWorksSection() {
                   Capture signature and lock the contract permanently.
                 </p>
               </div>
-              {/* Arrow - Desktop */}
               <div className="hidden lg:block absolute top-12 left-full w-full">
                 <ChevronRight className="h-6 w-6 text-primary/40 mx-auto" />
               </div>
             </div>
 
-            {/* Step 5 - View & Track */}
             <div className="relative group">
               <div className="flex flex-col items-center text-center">
                 <div className="relative z-10 flex h-12 w-12 sm:h-14 sm:w-14 lg:h-16 lg:w-16 items-center justify-center rounded-xl sm:rounded-2xl bg-gradient-to-br from-primary/20 to-primary/10 group-hover:from-primary/30 group-hover:to-primary/20 transition-all duration-300 group-hover:scale-110 shadow-lg group-hover:shadow-xl mb-3 sm:mb-4">

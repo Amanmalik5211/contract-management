@@ -30,7 +30,6 @@ export function ReadOnlyFieldRenderer({
   switch (field.type) {
     case "text":
       const textValue = hasValue ? (value as string) : "";
-      // Use field's percentage values directly for responsive scaling
       const leftPercent = field.x ?? 0;
       const topPercent = field.y ?? 0;
       const widthPercent = field.width ?? 25;
@@ -50,7 +49,6 @@ export function ReadOnlyFieldRenderer({
             boxSizing: "border-box",
             overflow: "hidden",
             fontFamily: fieldTypography.fontFamily,
-            // Smaller font size for small screens - no scrollbar
             fontSize: `clamp(6px, 0.9vw, ${fieldTypography.fontSize}px)`,
             lineHeight: 1.2,
             fontWeight: fieldTypography.fontWeight,

@@ -19,7 +19,6 @@ import {
 import { useTheme } from "@/components/theme-provider"
 import { Button } from "@/components/ui/button"
 
-// Application Data
 const data = {
   navMain: [
     {
@@ -52,7 +51,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <SidebarMenuButton size="lg" asChild>
               <a href="/">
                 <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                   {/* Using the image if possible, or fallback icon */}
                    <GalleryVerticalEnd className="size-4" />
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">

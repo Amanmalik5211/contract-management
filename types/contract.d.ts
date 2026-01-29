@@ -18,7 +18,6 @@ export interface Contract {
   status: ContractStatus;
   fields: Field[];
   fieldValues: Record<string, string | boolean | Date | null>;
-  // PDF metadata (for PDF-based contracts)
   pdfUrl?: string;
   pageCount?: number;
   createdAt: Date;

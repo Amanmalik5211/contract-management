@@ -69,7 +69,6 @@ export function StatusManagementModal({
         </DialogHeader>
         
         <div className="space-y-6">
-          {/* Status Display Area */}
           <div className="bg-muted/30 p-4 rounded-xl border border-border/50">
              {isRevoked ? (
                 <StatusAlert type="revoked" />
@@ -83,7 +82,6 @@ export function StatusManagementModal({
              )}
           </div>
 
-          {/* Actions */}
           {!isRevoked && !isLocked && (
             <div className="grid gap-3">
               {nextStatus ? (
@@ -125,7 +123,6 @@ export function StatusManagementModal({
             </div>
           )}
           
-          {/* Close for Read-only states */}
           {(isRevoked || isLocked || (!nextStatus && !canRevoke)) && (
              <Button variant="outline" onClick={() => onOpenChange(false)} className="w-full">
                 Close

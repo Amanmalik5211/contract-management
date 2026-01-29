@@ -3,18 +3,7 @@
 import type { Field } from "@/types/field";
 import type { PdfTextItem } from "@/types/pdf";
 
-/**
- * Check which fields overlap with PDF text content.
- * Returns a Set of field IDs that overlap.
- *
- * This implementation is optimized to:
- * - Load the PDF document only once per call
- * - Extract text for each page only once
- * - Check all fields on a page against the same set of text boxes
- *
- * This makes warnings appear much faster compared to checking each field
- * with its own PDF load/text extraction.
- */
+
 export async function findFieldsOverlappingPdfText(
   pdfUrl: string,
   fields: Field[],
@@ -22,7 +11,6 @@ export async function findFieldsOverlappingPdfText(
 ): Promise<Set<string>> {
   const overlappingIds = new Set<string>();
 
-  // Group fields by page so we only parse each page once
   const fieldsByPage = new Map<number, Field[]>();
   for (const field of fields) {
     if (
@@ -44,7 +32,6 @@ export async function findFieldsOverlappingPdfText(
   }
 
   try {
-    // Load PDF document once
     const loadingTask = pdfjsLib.getDocument({ url: pdfUrl });
     const pdf = await loadingTask.promise;
 
@@ -57,10 +44,8 @@ export async function findFieldsOverlappingPdfText(
           const viewport = page.getViewport({ scale: 1.0 });
           const { width: pageWidth, height: pageHeight } = viewport;
 
-          // Extract text content once for this page
           const textContent = await page.getTextContent();
 
-          // Pre-compute text bounding boxes
           const textBoxes = (textContent.items as PdfTextItem[])
             .filter(
               (item) =>
@@ -87,7 +72,6 @@ export async function findFieldsOverlappingPdfText(
 
           const threshold = 2; // pixels
 
-          // For each field on this page, check against all text boxes
           for (const field of pageFields) {
             const fieldLeft = (field.x! / 100) * pageWidth;
             const fieldTop = (field.y! / 100) * pageHeight;
@@ -116,7 +100,6 @@ export async function findFieldsOverlappingPdfText(
     await Promise.all(pageChecks);
   } catch (error) {
     console.warn("Failed to check PDF text overlaps:", error);
-    // Fail silently, don't block user interaction
   }
 
   return overlappingIds;
