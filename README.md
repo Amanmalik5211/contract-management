@@ -1,6 +1,6 @@
 # Contract Management System
 
-🌐 **Live Demo**: [https://contract-management-wft1.onrender.com/](https://contract-management-wft1.onrender.com/)
+🌐 **Live Demo**: [https://contract-management-wft1.onrender.com/](https://contract-management-wft1.onrender.com/dashboard)
 
 A dynamic, web-based Contract Management System built with **Next.js 16**, **React 19**, and **Tailwind CSS**. This application facilitates the complete lifecycle of contract management, from blueprint creation to contract generation, editing, and status tracking with full PDF template support.
 
