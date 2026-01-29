@@ -4,7 +4,6 @@ import { useMemo } from "react";
 import type { Contract } from "@/types/contract";
 import type { Blueprint } from "@/types/blueprint";
 import { format, subMonths, startOfMonth, eachMonthOfInterval } from "date-fns";
-import { DashboardGraphsHeader } from "./dashboard-graphs-header";
 import { ChartCard } from "./chart-card";
 import { ItemsOverTimeChart } from "./items-over-time-chart";
 import { DistributionChart } from "./distribution-chart";
@@ -89,8 +88,6 @@ export function DashboardGraphsSection({ contracts, blueprints, viewType }: Dash
 
   return (
     <section className="py-6 sm:py-8 mb-8">
-      <DashboardGraphsHeader viewType={viewType} />
-
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
         <ChartCard
           title={`${dataType} Over Time`}

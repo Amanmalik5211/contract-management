@@ -1,102 +1,95 @@
 "use client";
 
-import Link from "next/link";
-import { Pencil, Trash2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useRouter } from "next/navigation";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { format } from "date-fns";
+import { Button } from "@/components/ui/button";
+import { Clock, Users, FileText, Pencil } from "lucide-react";
 import type { Blueprint } from "@/types/blueprint";
-import type { FieldType } from "@/types/field";
+import { formatDistanceToNow } from "date-fns";
 
 interface BlueprintCardProps {
   blueprint: Blueprint;
-  fieldTypeLabels: Record<FieldType, string>;
-  onEdit: (blueprintId: string, e: React.MouseEvent) => void;
-  onDelete: (blueprintId: string, blueprintName: string, e: React.MouseEvent) => void;
+  onClick?: () => void;
+  usageCount?: number; 
+  version?: string;     
 }
 
-export function BlueprintCard({
-  blueprint,
-  fieldTypeLabels,
-  onEdit,
-  onDelete,
+export function BlueprintCard({ 
+  blueprint, 
+  onClick,
+   
 }: BlueprintCardProps) {
-  return (
-    <div className="group relative">
-      <Card className="group relative overflow-hidden rounded-2xl sm:rounded-3xl border-border/50 bg-gradient-to-br from-background to-muted/30 shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 hover:scale-[1.02] hover:border-primary/20 h-full flex flex-col">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent opacity-100 group-hover:opacity-100 group-hover:from-primary/15 group-hover:via-primary/8 transition-opacity duration-500" />
+  const router = useRouter();
 
-        <Link
-          href={`/blueprints/${blueprint.id}`}
-          className="flex-1 flex flex-col relative z-0"
-        >
-          <CardHeader className="pb-3">
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex-1 min-w-0">
-                <CardTitle className="text-lg sm:text-xl break-words group-hover:text-primary transition-colors duration-300">
-                  {blueprint.name}
-                </CardTitle>
-                <p className="mt-2 text-xs sm:text-sm text-muted-foreground">
-                  Created: {format(new Date(blueprint.createdAt), "MMM d, yyyy")}
-                </p>
-              </div>
-            </div>
-          </CardHeader>
-          
-          <CardContent className="space-y-3 pb-15">
-            <div className="text-sm sm:text-base">
-              <p className="font-medium mb-2">
-                {blueprint.fields.length} field{blueprint.fields.length !== 1 ? "s" : ""}
-              </p>
-              <ul className="space-y-2">
-                {blueprint.fields.map((field) => (
-                  <li key={field.id} className="text-xs sm:text-sm break-words text-muted-foreground">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="w-1.5 h-1.5 rounded-full bg-primary/60 flex-shrink-0"></span>
-                      <span className="flex-1">{field.label}</span>
-                      <Badge variant="secondary" className="text-xs px-1.5 py-0 flex-shrink-0">
-                        {fieldTypeLabels[field.type]}
-                      </Badge>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </CardContent>
-        </Link>
-        
-        {/* Action Icons */}
-        <div className="absolute bottom-4 right-4 flex items-center gap-2 z-0">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-8 w-8 p-0 hover:bg-primary/10"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              onEdit(blueprint.id, e);
-            }}
-            title="Edit blueprint"
-          >
-            <Pencil className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              onDelete(blueprint.id, blueprint.name, e);
-            }}
-            title="Delete blueprint"
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
+  const handleCardClick = () => {
+    if (onClick) {
+      onClick();
+    } else {
+      router.push(`/blueprints/${blueprint.id}`);
+    }
+  };
+
+  const handleEditClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    router.push(`/blueprints/${blueprint.id}?edit=true`);
+  };
+  
+  return (
+    <Card 
+      className="group overflow-hidden hover:shadow-md transition-all cursor-pointer border-border/60 hover:border-primary/50"
+      onClick={handleCardClick}
+    >
+      {/* Placeholder Image Area */}
+      <div className="aspect-[1.6] bg-muted/30 p-6 flex flex-col gap-3 justify-center items-center border-b border-border/40 group-hover:bg-muted/50 transition-colors">
+         {/* Skeleton-like design matching the image provided */}
+         <div className="w-1/3 h-2.5 bg-muted-foreground/10 rounded-full self-start mb-2" />
+         <div className="w-full h-2 bg-muted-foreground/10 rounded-full" />
+         <div className="w-full h-2 bg-muted-foreground/10 rounded-full" />
+         <div className="w-3/4 h-2 bg-muted-foreground/10 rounded-full self-start" />
+      </div>
+
+      <CardContent className="p-4 pt-5 pb-2">
+        <div className="flex justify-between items-start gap-2 mb-2">
+          <h3 className="font-semibold text-base leading-tight line-clamp-1 group-hover:text-primary transition-colors flex-1 min-w-0 pr-1">
+            {blueprint.name}
+          </h3>
+          <Badge variant="secondary" className="bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 border-0 text-[10px] px-1.5 h-5 shrink-0">
+            Active
+          </Badge>
         </div>
-      </Card>
-    </div>
+      </CardContent>
+
+      <CardFooter className="p-4 pt-0 text-muted-foreground text-xs flex items-center justify-between">
+         <div className="flex items-center gap-3">
+            <Button 
+               variant="outline" 
+               size="sm" 
+               className="h-6 text-[10px] px-2 gap-1"
+               onClick={(e) => {
+                  e.stopPropagation();
+                  router.push(`/contracts/new?blueprintId=${blueprint.id}`);
+               }}
+            >
+               Create Contract
+            </Button>
+  
+         </div>
+         <div className="flex items-center gap-3">
+            <div className="flex items-center" title={`Created ${formatDistanceToNow(new Date(blueprint.createdAt))} ago`}>
+               <Clock className="h-3 w-3 hover:text-foreground transition-colors" />
+            </div>
+            <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-7 w-7 text-muted-foreground hover:text-primary hover:bg-primary/10"
+                onClick={handleEditClick}
+                title="Edit Blueprint"
+            >
+                <Pencil className="h-3.5 w-3.5" />
+            </Button>
+         </div>
+      </CardFooter>
+    </Card>
   );
 }
-

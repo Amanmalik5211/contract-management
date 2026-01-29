@@ -1,11 +1,16 @@
-"use client";
-
 import Link from "next/link";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { TableCell, TableRow } from "@/components/ui/table";
-import { Eye, Pencil, Trash2 } from "lucide-react";
+import { MoreHorizontal } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { getStatusLabel } from "@/lib/contract-utils";
 import type { Contract } from "@/types/contract";
 
@@ -38,84 +43,61 @@ export function ContractTableRow({
 
   return (
     <TableRow key={contract.id}>
-      <TableCell className="font-medium text-center text-xs sm:text-sm max-w-0 px-2 sm:px-4" title={contract.name}>
+      <TableCell className="font-medium">
         <Link
           href={`/contracts/${contract.id}`}
-          className="hover:text-primary transition-colors block truncate"
+          className="hover:underline hover:text-primary transition-colors block truncate"
+          title={contract.name}
         >
           {truncateName(contract.name)}
         </Link>
       </TableCell>
-      <TableCell className="text-center text-xs sm:text-sm max-w-0 px-2 sm:px-4 truncate" title={contract.blueprintName}>
+      <TableCell className="text-muted-foreground" title={contract.blueprintName}>
         {truncateName(contract.blueprintName)}
       </TableCell>
-      <TableCell className="text-center text-xs sm:text-sm px-2 sm:px-4">
-        <Badge variant={getStatusVariant(contract.status)} className="text-xs whitespace-nowrap">
+      <TableCell>
+        <Badge variant={getStatusVariant(contract.status)} className="whitespace-nowrap">
           {getStatusLabel(contract.status)}
         </Badge>
       </TableCell>
-      <TableCell className="text-center text-xs sm:text-sm whitespace-nowrap px-2 sm:px-4">
+      <TableCell className="text-muted-foreground whitespace-nowrap">
         {format(new Date(contract.createdAt), "MMM d, yyyy")}
       </TableCell>
-      <TableCell className="text-center text-xs sm:text-sm px-2 sm:px-4">
-        {onStatusChange && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={(e) => onStatusChange(contract, e)}
-            className="text-xs px-2 sm:px-3"
-          >
-            <span className="hidden sm:inline">Change Status</span>
-            <span className="sm:hidden">Status</span>
-          </Button>
-        )}
-      </TableCell>
-      <TableCell className="text-center text-xs sm:text-sm px-2 sm:px-4">
-        <div className="flex items-center justify-center gap-1 sm:gap-2 flex-wrap">
-          {onView && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                onView(contract.id, e);
-              }}
-              title="View contract"
-            >
-              <Eye className="h-4 w-4" />
+      <TableCell className="text-right">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="size-8">
+              <MoreHorizontal className="h-4 w-4" />
+              <span className="sr-only">Open menu</span>
             </Button>
-          )}
-          {canEdit && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                onEdit(contract.id, e);
-              }}
-              title="Edit contract"
-            >
-              <Pencil className="h-4 w-4" />
-            </Button>
-          )}
-          {canDelete && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-red-600 hover:text-red-700 hover:bg-red-50"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                onDelete(contract.id, contract.name, e);
-              }}
-              title="Delete contract"
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          )}
-        </div>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {onView && (
+              <DropdownMenuItem onClick={(e) => onView(contract.id, e)}>
+                View Details
+              </DropdownMenuItem>
+            )}
+            {canEdit && (
+              <DropdownMenuItem onClick={(e) => onEdit(contract.id, e)}>
+                Edit Contract
+              </DropdownMenuItem>
+            )}
+            {onStatusChange && (
+              <DropdownMenuItem onClick={(e) => onStatusChange(contract, e)}>
+                Change Status
+              </DropdownMenuItem>
+            )}
+            {(canEdit || canDelete) && <DropdownMenuSeparator />}
+            {canDelete && (
+              <DropdownMenuItem 
+                className="text-destructive focus:text-destructive" 
+                onClick={(e) => onDelete(contract.id, contract.name, e)}
+              >
+                Delete
+              </DropdownMenuItem>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </TableCell>
     </TableRow>
   );

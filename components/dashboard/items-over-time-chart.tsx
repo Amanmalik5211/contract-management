@@ -1,16 +1,26 @@
-"use client";
-
+import * as React from "react";
 import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
+  PieChart,
+  Pie,
   Cell,
 } from "recharts";
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  ChartLegend,
+  ChartLegendContent,
+  type ChartConfig,
+} from "@/components/ui/chart";
+
+const CHART_COLORS = [
+  "#3b82f6", // Blue
+  "#8b5cf6", // Violet
+  "#10b981", // Emerald
+  "#f59e0b", // Amber
+  "#ef4444", // Red
+  "#06b6d4", // Cyan
+];
 
 interface ItemsOverTimeChartProps {
   data: Array<{ month: string; [key: string]: string | number }>;
@@ -18,52 +28,47 @@ interface ItemsOverTimeChartProps {
 }
 
 export function ItemsOverTimeChart({ data, dataType }: ItemsOverTimeChartProps) {
+  
+  const chartConfig = React.useMemo(() => {
+    return data.reduce((acc, curr, index) => {
+        const color = CHART_COLORS[index % CHART_COLORS.length];
+        acc[curr.month] = {
+            label: curr.month,
+            color: color, 
+        };
+        return acc;
+    }, {} as ChartConfig);
+  }, [data]);
+
+  const valueKey = dataType.toLowerCase();
+
   return (
-    <div className="w-full h-[250px] sm:h-[300px] md:h-[300px]">
-      <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={data} margin={{ bottom: 60, right: 10, top: 10, left: 10 }} barCategoryGap="30%">
-          <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-          <XAxis
-            dataKey="month"
-            className="text-[10px] sm:text-xs"
-            tick={{ fill: "currentColor", fontSize: 10 }}
-            angle={-45}
-            textAnchor="end"
-            height={80}
-            interval={0}
-            tickFormatter={(value) => {
-              // Shorten month labels for better display
-              return value.length > 8 ? value.substring(0, 3) + ' ' + value.substring(value.length - 2) : value;
-            }}
-          />
-          <YAxis
-            tick={{ fill: "currentColor", fontSize: 10 }}
-            className="text-[10px] sm:text-xs"
-            width={40}
-          />
-          <Tooltip
-            contentStyle={{
-              backgroundColor: "hsl(var(--background))",
-              border: "1px solid hsl(var(--border))",
-              borderRadius: "0.5rem",
-              color: "hsl(var(--foreground))",
-            }}
-            labelStyle={{
-              color: "hsl(var(--foreground))",
-            }}
-            itemStyle={{
-              color: "hsl(var(--foreground))",
-            }}
-          />
-          <Legend wrapperStyle={{ fontSize: '10px' }} className="hidden sm:block" />
-          <Bar dataKey={dataType.toLowerCase()} name={dataType} radius={[8, 8, 0, 0]} fill="#3b82f6" barSize={25}>
-            {data.map((entry, index) => (
-              <Cell key={`cell-${index}`} fill="#3b82f6" />
-            ))}
-          </Bar>
-        </BarChart>
-      </ResponsiveContainer>
-    </div>
+    <ChartContainer config={chartConfig} className="mx-auto aspect-square min-h-[250px]">
+      <PieChart>
+        <ChartTooltip
+          cursor={false}
+          content={<ChartTooltipContent hideLabel />}
+        />
+        <Pie
+          data={data}
+          dataKey={valueKey}
+          nameKey="month"
+          innerRadius={60}
+          strokeWidth={5}
+        >
+          {data.map((entry, index) => (
+            <Cell 
+                key={`cell-${index}`} 
+                fill={CHART_COLORS[index % CHART_COLORS.length]} 
+            />
+          ))}
+        </Pie>
+        <ChartLegend 
+            content={<ChartLegendContent nameKey="month" />} 
+            className="-translate-y-2 flex-wrap gap-2 [&>*]:basis-1/4 [&>*]:justify-center" 
+        />
+      </PieChart>
+    </ChartContainer>
   );
 }
 

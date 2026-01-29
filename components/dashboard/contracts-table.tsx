@@ -38,59 +38,54 @@ export function ContractsTable({
   onStatusChange,
 }: ContractsTableProps) {
   return (
-    <Card className="rounded-xl sm:rounded-2xl md:rounded-3xl border-border/50 bg-gradient-to-br from-background to-muted/30 shadow-lg overflow-hidden">
-      <CardContent className="p-0 sm:p-2 md:p-4">
-        <div className="overflow-x-auto -mx-2 sm:mx-0 max-w-full">
-          <Table className="table-fixed min-w-[840px] caption-bottom text-sm">
-            <TableHeader>
-              <TableRow>
-                {viewType === "contract" ? (
-                  <>
-                    <TableHead className="text-center text-xs sm:text-sm w-[180px] min-w-[180px]">Contract Name</TableHead>
-                    <TableHead className="text-center text-xs sm:text-sm w-[160px] min-w-[160px]">Blueprint Name</TableHead>
-                    <TableHead className="text-center text-xs sm:text-sm w-[100px] min-w-[100px]">Status</TableHead>
-                    <TableHead className="text-center text-xs sm:text-sm w-[120px] min-w-[120px]">Created Date</TableHead>
-                    <TableHead className="text-center text-xs sm:text-sm w-[100px] min-w-[100px]">Settings</TableHead>
-                    <TableHead className="text-center text-xs sm:text-sm w-[180px] min-w-[180px]">Actions</TableHead>
-                  </>
-                ) : (
-                  <>
-                    <TableHead className="text-center text-xs sm:text-sm w-[200px] min-w-[200px]">Blueprint Name</TableHead>
-                    <TableHead className="text-center text-xs sm:text-sm w-[280px] min-w-[280px]">Fields</TableHead>
-                    <TableHead className="text-center text-xs sm:text-sm w-[140px] min-w-[140px]">Created Date</TableHead>
-                    <TableHead className="text-center text-xs sm:text-sm w-[180px] min-w-[180px]">Actions</TableHead>
-                  </>
-                )}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {viewType === "contract"
-                ? contracts.map((contract) => (
-                    <ContractTableRow
-                      key={contract.id}
-                      contract={contract}
-                      getStatusVariant={getStatusVariant}
-                      onView={onView}
-                      onEdit={onEdit}
-                      onDelete={onDelete}
-                      onStatusChange={onStatusChange}
-                    />
-                  ))
-                : blueprints.map((blueprint) => (
-                    <BlueprintTableRow
-                      key={blueprint.id}
-                      blueprint={blueprint}
-                      fieldTypeLabels={fieldTypeLabels}
-                      onView={onView}
-                      onEdit={onEdit}
-                      onDelete={onDelete}
-                    />
-                  ))}
-            </TableBody>
-          </Table>
-        </div>
-      </CardContent>
-    </Card>
+    <div className="rounded-md border overflow-x-auto">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            {viewType === "contract" ? (
+              <>
+                <TableHead>Contract Name</TableHead>
+                <TableHead>Blueprint Name</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Created Date</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </>
+            ) : (
+              <>
+                <TableHead>Blueprint Name</TableHead>
+                <TableHead>Fields</TableHead>
+                <TableHead>Created Date</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </>
+            )}
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {viewType === "contract"
+            ? contracts.map((contract) => (
+                <ContractTableRow
+                  key={contract.id}
+                  contract={contract}
+                  getStatusVariant={getStatusVariant}
+                  onView={onView}
+                  onEdit={onEdit}
+                  onDelete={onDelete}
+                  onStatusChange={onStatusChange}
+                />
+              ))
+            : blueprints.map((blueprint) => (
+                <BlueprintTableRow
+                  key={blueprint.id}
+                  blueprint={blueprint}
+                  fieldTypeLabels={fieldTypeLabels}
+                  onView={onView}
+                  onEdit={onEdit}
+                  onDelete={onDelete}
+                />
+              ))}
+        </TableBody>
+      </Table>
+    </div>
   );
 }
 

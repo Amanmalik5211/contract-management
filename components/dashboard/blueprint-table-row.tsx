@@ -5,7 +5,14 @@ import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { TableCell, TableRow } from "@/components/ui/table";
-import { Eye, Pencil, Trash2 } from "lucide-react";
+import { MoreHorizontal } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import type { Blueprint } from "@/types/blueprint";
 import type { FieldType } from "@/types/field";
 
@@ -33,72 +40,60 @@ export function BlueprintTableRow({
 }: BlueprintTableRowProps) {
   return (
     <TableRow key={blueprint.id}>
-      <TableCell className="font-medium text-center text-xs sm:text-sm max-w-0 px-2 sm:px-4" title={blueprint.name}>
+      <TableCell className="font-medium">
         <Link
           href={`/blueprints/${blueprint.id}`}
-          className="hover:text-primary transition-colors block truncate"
+          className="hover:underline hover:text-primary transition-colors block truncate"
+          title={blueprint.name}
         >
           {truncateName(blueprint.name)}
         </Link>
       </TableCell>
-      <TableCell className="text-center text-xs sm:text-sm px-2 sm:px-4 min-w-0">
-        <div className="flex flex-wrap gap-1 justify-center">
+      <TableCell>
+        <div className="flex flex-wrap gap-1">
           {blueprint.fields.length > 0 ? (
-            blueprint.fields.map((field) => (
-              <Badge key={field.id} variant="secondary" className="text-[10px] sm:text-xs whitespace-nowrap">
+            blueprint.fields.slice(0, 3).map((field) => (
+              <Badge key={field.id} variant="secondary" className="text-[10px] whitespace-nowrap">
                 {fieldTypeLabels[field.type]}
               </Badge>
             ))
           ) : (
-            <span className="text-xs sm:text-sm text-muted-foreground whitespace-nowrap">No fields</span>
+            <span className="text-sm text-muted-foreground whitespace-nowrap">No fields</span>
+          )}
+          {blueprint.fields.length > 3 && (
+             <Badge variant="secondary" className="text-[10px] whitespace-nowrap">+{blueprint.fields.length - 3}</Badge>
           )}
         </div>
       </TableCell>
-      <TableCell className="text-center text-xs sm:text-sm whitespace-nowrap px-2 sm:px-4">
+      <TableCell className="text-muted-foreground whitespace-nowrap">
         {format(new Date(blueprint.createdAt), "MMM d, yyyy")}
       </TableCell>
-      <TableCell className="text-center text-xs sm:text-sm px-2 sm:px-4">
-        <div className="flex items-center justify-center gap-1 sm:gap-2 flex-wrap">
-          {onView && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                onView(blueprint.id, e);
-              }}
-              title="View blueprint"
-            >
-              <Eye className="h-4 w-4" />
+      <TableCell className="text-right">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="size-8">
+              <MoreHorizontal className="h-4 w-4" />
+              <span className="sr-only">Open menu</span>
             </Button>
-          )}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              onEdit(blueprint.id, e);
-            }}
-            title="Edit blueprint"
-          >
-            <Pencil className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-red-600 hover:text-red-700 hover:bg-red-50"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              onDelete(blueprint.id, blueprint.name, e);
-            }}
-            title="Delete blueprint"
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        </div>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {onView && (
+              <DropdownMenuItem onClick={(e) => onView(blueprint.id, e)}>
+                View Details
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuItem onClick={(e) => onEdit(blueprint.id, e)}>
+              Edit Blueprint
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem 
+              className="text-destructive focus:text-destructive" 
+              onClick={(e) => onDelete(blueprint.id, blueprint.name, e)}
+            >
+              Delete
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </TableCell>
     </TableRow>
   );

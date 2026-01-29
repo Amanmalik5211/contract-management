@@ -12,6 +12,7 @@ export interface DocumentSection {
 export interface Blueprint {
   id: string;
   name: string;
+  description?: string;
   fields: Field[];
   sections: DocumentSection[]; // Document structure
   // PDF template support

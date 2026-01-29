@@ -228,26 +228,46 @@ export async function generateContractPdf({
       const paddingX = contractFieldPaddingX(pageWidth);
       const paddingY = contractFieldPaddingY(pageHeight);
 
-      const fontSize = DEFAULT_FONT_SIZE;
+      const minFontSize = 6;
+      let fontSize = DEFAULT_FONT_SIZE;
+      let linesToDraw: string[] = [];
+
+      // Auto-scale font size to fit text in box
+      for (let size = DEFAULT_FONT_SIZE; size >= minFontSize; size--) {
+        const lineHeight = size * LINE_HEIGHT_RATIO;
+        const availableHeight = heightPtClamped - 2 * paddingY;
+        // Ensure at least 1 line is allowed if height is small
+        const currentMaxLines = Math.max(1, Math.floor(availableHeight / lineHeight));
+        const currentMaxWidth = Math.max(1, widthPt - 2 * paddingX);
+
+        const wrapped = wrapTextToLines(font, displayText, size, currentMaxWidth);
+
+        // If it fits, or if we are at the minimum size (take what we can get)
+        if (wrapped.length <= currentMaxLines || size === minFontSize) {
+          fontSize = size;
+          // If it still doesn't fit at min size, we unfortunately have to truncate
+          linesToDraw = wrapped.slice(0, currentMaxLines);
+          break;
+        }
+      }
+
       const lineHeightPt = fontSize * LINE_HEIGHT_RATIO;
-      const maxWidthPt = Math.max(1, widthPt - 2 * paddingX);
-      const maxLines = Math.max(1, Math.floor((heightPtClamped - 2 * paddingY) / lineHeightPt));
-
-      if (widthPt <= 0 || heightPtClamped <= 0) continue;
-
-      const lines = wrapTextToLines(font, displayText, fontSize, maxWidthPt);
-      const linesToDraw = lines.slice(0, maxLines);
 
       // Draw from top of box downward (PDF y decreases)
-      const firstBaselineY = topOfBoxPt - paddingY - fontSize;
+      // pdf-lib drawText y coordinate is the baseline. 
+      // Cap height approximation: usually font size is close to cap height.
+      // We align to top padding.
+      const firstBaselineY = topOfBoxPt - paddingY - fontSize + (fontSize * 0.2); // adjusting baseline slightly up
       const xPt = leftPt + paddingX;
 
       const textColor = rgb(0, 0, 0);
       for (let L = 0; L < linesToDraw.length; L++) {
         const yPt = firstBaselineY - L * lineHeightPt;
-        // For the first line, draw it even if it slightly overlaps the bottom.
-        // For subsequent lines, stop if we go below the box bottom.
+        // Check bounds (redundant if maxLines logic is correct, but safe)
         if (L > 0 && yPt < bottomOfBoxPt) break;
+
+        // Safety check for empty lines
+        if (!linesToDraw[L]) continue;
 
         page.drawText(linesToDraw[L], {
           x: xPt,

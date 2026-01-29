@@ -5,7 +5,6 @@ import type { Contract, ContractStatus } from "@/types/contract";
 import type { Blueprint } from "@/types/blueprint";
 import type { FieldType } from "@/types/field";
 import { canTransitionTo } from "@/lib/contract-utils";
-import { ContractsListHeader } from "./contracts-list-header";
 import { FilterSectionCard } from "./filter-section-card";
 import { EmptyStateCard } from "./empty-state-card";
 import { ContractsTable } from "./contracts-table";
@@ -104,13 +103,6 @@ export function ContractsListSection({
   };
   return (
     <section className="py-6 sm:py-8">
-      <ContractsListHeader
-        viewType={viewType}
-        selectedStatuses={selectedStatuses}
-        selectedFieldTypes={selectedFieldTypes}
-        itemCount={filteredItems.length}
-      />
-
       <FilterSectionCard
         searchQuery={searchQuery}
         selectedFilters={selectedFilters}

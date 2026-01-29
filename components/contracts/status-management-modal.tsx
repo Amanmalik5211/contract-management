@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowRight, X } from "lucide-react";
+import { ArrowRight, X, CheckCircle2, Ban } from "lucide-react";
 import { InlineLoader } from "@/components/ui/loader";
 import {
   Dialog,
@@ -10,6 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import { getNextStatus, getStatusLabel } from "@/lib/contract-utils";
 import { StatusAlert } from "./status-alert";
@@ -52,74 +53,86 @@ export function StatusManagementModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-xs sm:max-w-md md:max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-md md:max-w-xl p-6 gap-6">
         <DialogHeader>
-          <DialogTitle className="text-lg sm:text-xl md:text-2xl">Manage Contract Status</DialogTitle>
-          <DialogDescription className="text-sm sm:text-base break-words">
-            {contractName}
-          </DialogDescription>
+          <div className="flex items-center gap-3 mb-2">
+             <div className="p-2 bg-primary/10 rounded-full text-primary">
+                <CheckCircle2 className="w-6 h-6" />
+             </div>
+             <div>
+                <DialogTitle className="text-xl">Update Status</DialogTitle>
+                <DialogDescription className="text-sm mt-1 line-clamp-1">
+                   {contractName}
+                </DialogDescription>
+             </div>
+          </div>
         </DialogHeader>
         
-        <div className="space-y-4 sm:space-y-6 py-2 sm:py-4">
-          <div>
-            <h3 className="mb-2 sm:mb-3 text-base sm:text-lg font-semibold">Current Status</h3>
-            <Badge variant={getStatusVariant(status)} className="text-sm sm:text-base px-3 sm:px-4 py-1.5 sm:py-2">
-              {getStatusLabel(status)}
-            </Badge>
+        <div className="space-y-6">
+          {/* Status Display Area */}
+          <div className="bg-muted/30 p-4 rounded-xl border border-border/50">
+             {isRevoked ? (
+                <StatusAlert type="revoked" />
+             ) : isLocked ? (
+                <div className="space-y-4">
+                   <StatusAlert type="locked" />
+                   <StatusFlowDisplay statusFlow={STATUS_FLOW} currentStatus={status} />
+                </div>
+             ) : (
+                <StatusFlowDisplay statusFlow={STATUS_FLOW} currentStatus={status} />
+             )}
           </div>
 
-          {isRevoked && <StatusAlert type="revoked" />}
-          {isLocked && <StatusAlert type="locked" />}
-
+          {/* Actions */}
           {!isRevoked && !isLocked && (
-            <>
-              <StatusFlowDisplay statusFlow={STATUS_FLOW} currentStatus={status} />
+            <div className="grid gap-3">
+              {nextStatus ? (
+                <Button
+                  size="lg"
+                  onClick={() => onStatusChange(nextStatus)}
+                  disabled={isStatusChanging}
+                  className="w-full text-base font-semibold shadow-lg hover:shadow-primary/20 transition-all h-12"
+                >
+                  {isStatusChanging ? (
+                    <>
+                      <InlineLoader size="sm" className="mr-2" />
+                      Updating...
+                    </>
+                  ) : (
+                    <>
+                      Mark as {getStatusLabel(nextStatus)}
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </>
+                  )}
+                </Button>
+              ) : (
+                 <p className="text-center text-sm text-muted-foreground">
+                    Contract has reached final stage.
+                 </p>
+              )}
 
-              <div className="space-y-2 sm:space-y-3">
-                {nextStatus && (
-                  <Button
-                    size="lg"
-                    onClick={() => onStatusChange(nextStatus)}
-                    className="w-full text-sm sm:text-base"
-                    disabled={isStatusChanging}
-                  >
-                    {isStatusChanging ? (
-                      <>
-                        <InlineLoader size="sm" className="mr-2" />
-                        Updating...
-                      </>
-                    ) : (
-                      <>
-                        Advance to {getStatusLabel(nextStatus)}
-                        <ArrowRight className="ml-2 h-4 w-4" />
-                      </>
-                    )}
-                  </Button>
-                )}
-
-                {canRevoke && (
-                  <Button
-                    variant="destructive"
-                    size="lg"
-                    onClick={onRevoke}
-                    className="w-full text-sm sm:text-base"
-                  >
-                    <X className="mr-2 h-4 w-4" />
-                    Revoke Contract
-                  </Button>
-                )}
-
-                {!nextStatus && !canRevoke && (
-                  <p className="text-sm sm:text-base text-muted-foreground">
-                    No further actions available for this contract.
-                  </p>
-                )}
-              </div>
-            </>
+              {canRevoke && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={onRevoke}
+                  className="w-full text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/20"
+                >
+                  <Ban className="mr-2 h-4 w-4" />
+                  Revoke Contract
+                </Button>
+              )}
+            </div>
+          )}
+          
+          {/* Close for Read-only states */}
+          {(isRevoked || isLocked || (!nextStatus && !canRevoke)) && (
+             <Button variant="outline" onClick={() => onOpenChange(false)} className="w-full">
+                Close
+             </Button>
           )}
         </div>
       </DialogContent>
     </Dialog>
   );
 }
-

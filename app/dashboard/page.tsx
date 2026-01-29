@@ -8,6 +8,7 @@ import type { FieldType } from "@/types/field";
 import { useToast } from "@/components/ui/toaster";
 import { getStatusLabel } from "@/lib/contract-utils";
 import { KPICards } from "@/components/dashboard/kpi-cards";
+import { DashboardHighlights } from "@/components/dashboard/dashboard-highlights";
 import { DashboardGraphsSection } from "@/components/dashboard/dashboard-graphs-section";
 import { ContractsListSection } from "@/components/dashboard/contracts-list-section";
 import { DeleteConfirmationDialog } from "@/components/shared/delete-confirmation-dialog";
@@ -177,6 +178,8 @@ export default function Dashboard() {
   return (
     <PageLayout isLoading={isInitialLoad} loadingText="Loading dashboard...">
       <KPICards contracts={contracts} blueprints={blueprints} />
+
+      <DashboardHighlights contracts={contracts} blueprints={blueprints} />
 
       <DashboardGraphsSection 
         contracts={viewType === "contract" ? contracts : []} 

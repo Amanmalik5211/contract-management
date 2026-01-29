@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import type { LucideIcon } from "lucide-react";
 import { KPIIconContainer } from "./kpi-icon-container";
 import { KPIChangeIndicator } from "./kpi-change-indicator";
+import { cn } from "@/lib/utils";
 
 interface KPICardProps {
   title: string;
@@ -30,27 +31,38 @@ export function KPICard({
 }: KPICardProps) {
   return (
     <Card
-      className={`group relative overflow-hidden ${
-        isCritical ? "ring-2 ring-red-500/50" : ""
-      }`}
+      className={cn(
+        "group relative overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1 border-muted/60",
+        isCritical && "border-red-500/50 ring-1 ring-red-500/20"
+      )}
     >
-      <div className={`absolute inset-0 bg-gradient-to-br ${bgGradient} opacity-100 group-hover:opacity-100 transition-opacity duration-500`} />
-      <CardContent className="p-4 sm:p-6 relative z-10">
-        <div className="flex items-start justify-between mb-4">
+      <div 
+        className={cn(
+          "absolute inset-0 bg-gradient-to-br opacity-30 group-hover:opacity-50 transition-opacity duration-500",
+          bgGradient
+        )} 
+      />
+      
+      <CardContent className="p-4 sm:p-5 relative z-10">
+        <div className="flex items-start justify-between mb-3">
           <KPIIconContainer icon={icon} iconBg={iconBg} iconColor={iconColor} />
-          <KPIChangeIndicator change={change} />
+          {change !== null && <KPIChangeIndicator change={change} />}
         </div>
-        <div>
-          <p className="text-xs sm:text-sm font-medium text-muted-foreground mb-1">
+        
+        <div className="space-y-0.5">
+          <p className="text-sm font-medium text-muted-foreground tracking-wide uppercase text-[10px] sm:text-xs">
             {title}
           </p>
-          <p className={`text-2xl sm:text-3xl font-bold ${valueColor} group-hover:scale-105 transition-transform duration-300`}>
-            {value}
-          </p>
+          <div className="flex items-baseline gap-2">
+            <h3 className={cn("text-2xl sm:text-3xl font-bold tracking-tight", valueColor)}>
+              {value.toLocaleString()}
+            </h3>
+          </div>
+          
           {isCritical && (
-            <p className="text-xs text-red-600 font-medium mt-1">
-              ⚠️ Requires attention
-            </p>
+            <div className="flex items-center gap-1.5 mt-1.5 text-red-600 bg-red-50/50 dark:bg-red-900/10 px-2 py-0.5 rounded-md w-fit">
+              <span className="text-[10px] font-semibold uppercase tracking-wider">Attention Needed</span>
+            </div>
           )}
         </div>
       </CardContent>

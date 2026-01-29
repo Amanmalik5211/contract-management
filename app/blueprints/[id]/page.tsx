@@ -13,6 +13,7 @@ import { BlueprintHeader } from "@/components/blueprints/blueprint-header";
 import { BlueprintPreviewSection } from "@/components/blueprints/blueprint-preview-section";
 import { BlueprintEditForm } from "@/components/blueprints/blueprint-edit-form";
 import { BlueprintNotFound } from "@/components/blueprints/blueprint-not-found";
+import { FileText } from "lucide-react";
 
 function BlueprintViewPageContent() {
   const params = useParams();
@@ -162,17 +163,27 @@ function BlueprintViewPageContent() {
           </section>
         </>
       ) : (
-        <BlueprintEditForm
-          blueprint={blueprint}
-          formData={formData}
-          newField={newField}
-          fieldTypeLabels={fieldTypeLabels}
-          onFormDataChange={setFormData}
-          onNewFieldChange={setNewField}
-          onAddField={handleAddField}
-          onRemoveField={handleRemoveField}
-          onUpdate={handleUpdate}
-        />
+        <div className="space-y-8">
+          <div className="flex justify-end border-b pb-4">
+             <Link href={`/contracts/new?blueprintId=${blueprint.id}`}>
+               <Button variant="outline" size="sm" className="gap-2">
+                  <FileText className="h-4 w-4" />
+                  Create Contract
+               </Button>
+             </Link>
+          </div>
+          <BlueprintEditForm
+            blueprint={blueprint}
+            formData={formData}
+            newField={newField}
+            fieldTypeLabels={fieldTypeLabels}
+            onFormDataChange={setFormData}
+            onNewFieldChange={setNewField}
+            onAddField={handleAddField}
+            onRemoveField={handleRemoveField}
+            onUpdate={handleUpdate}
+          />
+        </div>
       )}
     </PageLayout>
   );
